@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "ESNext",
+    "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "strict": true,
     "esModuleInterop": true,
@@ -9,13 +9,15 @@
     "skipLibCheck": true,
     "rootDir": ".",
     "noEmit": true,
+    "baseUrl": ".",
     "paths": {
-      "@workspace/*": ["workspace/src/*"],
-      "@workspace-tests/*": ["workspace/tests/*"]
+      "@workspace/*": ["./workspace/src/*.ts"],
+      "@workspace-tests/*": ["./workspace/tests/*.ts"]
     }
   },
   "include": [
     "tests/**/*.ts",
-    "workspace/src/**/*.ts"
+    "workspace/src/**/*.ts",
+    "workspace/tests/**/*.ts"
   ]
 }

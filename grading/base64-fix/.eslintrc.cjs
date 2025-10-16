@@ -1,11 +1,4 @@
-const fs = require('node:fs');
 const path = require('node:path');
-
-const preferredWorkspaceRoot = path.resolve(__dirname, 'workspace');
-const fallbackWorkspaceRoot = path.resolve(__dirname, '../../problems/base64-fix/workspace');
-const workspaceRoot = fs.existsSync(preferredWorkspaceRoot)
-  ? preferredWorkspaceRoot
-  : fallbackWorkspaceRoot;
 
 module.exports = {
   root: true,
@@ -13,8 +6,8 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 'latest',
     sourceType: 'module',
-    project: path.join(workspaceRoot, 'tsconfig.json'),
-    tsconfigRootDir: workspaceRoot
+    project: path.join(__dirname, 'tsconfig.json'),
+    tsconfigRootDir: __dirname
   },
   plugins: ['@typescript-eslint', 'sonarjs'],
   extends: [
@@ -27,15 +20,6 @@ module.exports = {
     node: true,
     es2021: true
   },
-  overrides: [
-    {
-      files: ['tests/**/*.ts'],
-      parserOptions: {
-        project: [path.join(__dirname, 'tsconfig.json')],
-        tsconfigRootDir: __dirname
-      }
-    }
-  ],
   ignorePatterns: [],
   rules: {
     complexity: ['error', 10],

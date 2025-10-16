@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
-import { mkdir, mkdtemp, readFile, rm, symlink, cp, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, cp, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { performance } from 'node:perf_hooks';
@@ -122,10 +122,25 @@ async function copyWorkspace(src: string): Promise<string> {
   return target;
 }
 
-async function linkWorkspaceForGrading(source: string): Promise<void> {
-  const linkPath = path.join(gradingDir, 'workspace');
-  await rm(linkPath, { recursive: true, force: true });
-  await symlink(source, linkPath, 'dir');
+async function syncWorkspaceForGrading(source: string): Promise<void> {
+  const targetPath = path.join(gradingDir, 'workspace');
+  await rm(targetPath, { recursive: true, force: true });
+  await cp(source, targetPath, {
+    recursive: true,
+    filter: (src) => {
+      const segments = src.split(path.sep);
+      if (segments.includes('node_modules')) {
+        return false;
+      }
+      if (segments.includes('coverage')) {
+        return false;
+      }
+      if (segments.includes('dist')) {
+        return false;
+      }
+      return true;
+    }
+  });
 }
 
 async function archiveWorkspace(
@@ -213,7 +228,7 @@ async function main(): Promise<void> {
     commandResults.push(agentResult);
 
     // Prepare grading workspace symlink
-    await linkWorkspaceForGrading(workspaceCopy);
+    await syncWorkspaceForGrading(workspaceCopy);
 
     const gradeCommands = [
       {

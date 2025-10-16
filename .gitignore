@@ -1,0 +1,5 @@
+node_modules/
+grading/*/node_modules/
+grading/*/workspace/
+evals/results/
+npm-debug.log*
