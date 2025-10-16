@@ -1,0 +1,14 @@
+{
+  "name": "llxprt-evals",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "eval:base64": "tsx evals/runBase64Fix.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "tsx": "^4.10.2",
+    "typescript": "^5.4.5"
+  }
+}

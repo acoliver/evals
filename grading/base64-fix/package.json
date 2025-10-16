@@ -1,0 +1,19 @@
+{
+  "name": "base64-fix-grading",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint workspace/src workspace/tests --ext .ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "test:hidden": "vitest run --config vitest.config.hidden.ts"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.13.1",
+    "@typescript-eslint/parser": "^7.13.1",
+    "eslint": "^8.57.0",
+    "eslint-plugin-sonarjs": "^0.23.0",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
+  }
+}
