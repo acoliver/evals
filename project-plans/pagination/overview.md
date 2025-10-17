@@ -31,4 +31,3 @@
 5. **Documentation**
    - Add instructions to `docs/overview.md` for the new scenario (prereqs, commands, grading flow).
    - Note SQLite dependency and how to reset DB between runs.
-   - Record future extensions (e.g., Playwright e2e, sorting/filtering variants).
