@@ -1,7 +1,7 @@
-# Paginated Inventory Repair Plan
+# Pagination Repair Plan
 
 ## Objectives
-- Build a multi-file TypeScript problem (`inventory-pagination`) spanning an API layer and a web client.
+- Build a multi-file TypeScript problem (`pagination`) spanning an API layer and a web client.
 - Exercise model ability to coordinate schema/types across service + UI, including SQLite data access.
 - Provide hidden grading (integration + component tests) while keeping public surface minimal.
 - Extend evaluation harness to run the new task alongside base64 for llxprt profiles and Codex.
@@ -9,8 +9,8 @@
 ## Work Breakdown
 
 1. **Scaffold directories**
-   - `problems/inventory-pagination/workspace`: visible project with Express-like API, React client, SQLite DB setup, minimal public tests.
-   - `grading/inventory-pagination`: hidden supertest/React Testing Library suites, stricter lint/type configs, migration fixture for SQLite.
+   - `problems/pagination/workspace`: visible project with Express-like API, React client, SQLite DB setup, minimal public tests.
+   - `grading/pagination`: hidden supertest/React Testing Library suites, stricter lint/type configs, migration fixture for SQLite.
    - Shared tooling (npm scripts, tsconfig, eslint) aligned with deterministic installs.
 
 2. **Author broken scenario**
@@ -25,8 +25,8 @@
    - Lint/type commands run across workspace via hidden configs; ensure DB migrations are applied per test run (in-memory SQLite or tmp file).
 
 4. **Evaluation harness updates**
-   - Create `evals/runInventoryPagination.ts` mirroring base64 runner: copy workspace, invoke each profile, run grading commands, archive results to `evals/results/inventory-pagination-<timestamp>/`.
-   - Wire npm script `eval:inventory` for convenience; optionally bundle both tasks via `npm run eval:all`.
+   - Create `evals/runPagination.ts` mirroring base64 runner: copy workspace, invoke each profile, run grading commands, archive results to `evals/results/pagination-<timestamp>/`.
+   - Wire npm script `eval:pagination` for convenience; optionally bundle both tasks via `npm run eval:all`.
 
 5. **Documentation**
    - Add instructions to `docs/overview.md` for the new scenario (prereqs, commands, grading flow).
