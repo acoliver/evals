@@ -3,8 +3,10 @@
 ## Repo Layout
 - `problems/base64-fix/workspace/`: TypeScript project the agent edits. Includes the broken Base64 CLI, public tests, and task brief.
 - `grading/base64-fix/`: Hidden lint/type/test harness. The `workspace` folder inside is ephemeral and created by the evaluator.
-- `evals/runBase64Fix.ts`: Driver script that copies a fresh workspace, runs each configured agent profile (llxprt models and/or Codex), then executes grading commands.
-- `project-plans/initial/`: Planning notes and usage guidance.
+- `problems/pagination/workspace/`: Multi-file pagination scenario (Express + React + SQLite seed).
+- `grading/pagination/`: Hidden integration/component tests and tooling for the pagination task.
+- `evals/runBase64Fix.ts` / `evals/runPagination.ts`: Driver scripts that copy a fresh workspace, run each configured agent profile (llxprt models and/or Codex), then execute grading commands.
+- `project-plans/initial/` & `project-plans/pagination/`: Planning notes and usage guidance.
 
 ## Prerequisites
 - Node.js 20+ and npm.
@@ -16,6 +18,7 @@ Install dependencies once:
 ```bash
 npm install
 npm --prefix grading/base64-fix install
+npm --prefix grading/pagination install
 ```
 
 ## Running the Base64 Eval
@@ -40,6 +43,29 @@ What it does:
 4. Archives each agent’s edited workspace and command log under `evals/results/base64-fix-<timestamp>/<profile>/`.
 
 Results summary lives in `evals/results/base64-fix-<timestamp>/summary.json`.
+
+## Running the Pagination Eval
+
+```bash
+npm run eval:pagination
+```
+
+This flow mirrors the base64 run but targets `problems/pagination` and `grading/pagination`. The harness copies the workspace, runs each agent, then executes:
+
+1. `npm run typecheck`
+2. `npm run lint`
+3. `npm run test:public`
+4. `npm --prefix grading/pagination run lint`
+5. `npm --prefix grading/pagination run typecheck`
+6. `npm --prefix grading/pagination run test:hidden`
+
+The SQLite seed lives inside each copied workspace, so every evaluation run starts with a clean database. Results are archived under `evals/results/pagination-<timestamp>/<profile>/` with a `summary.json` alongside the per-profile logs.
+
+To run both tasks back-to-back:
+
+```bash
+npm run eval:all
+```
 
 ## Running a Single Agent Manually
 If you want to run just Codex (outside the harness) against the task:

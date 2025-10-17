@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "eval:base64": "tsx evals/runBase64Fix.ts"
+    "eval:base64": "tsx evals/runBase64Fix.ts",
+    "eval:pagination": "tsx evals/runPagination.ts",
+    "eval:all": "npm run eval:base64 && npm run eval:pagination"
   },
   "devDependencies": {
     "@types/node": "^20.12.7",
