@@ -30,4 +30,4 @@
 
 5. **Documentation**
    - Add instructions to `docs/overview.md` for the new scenario (prereqs, commands, grading flow).
-   - Note SQLite dependency and how to reset DB between runs.
+   - Mention that SQLite files live inside the copied workspace so each evaluation run starts from a fresh database.
