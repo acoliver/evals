@@ -11,7 +11,7 @@ The CLI in this workspace is intended to encode and decode UTF-8 text using stan
 The current implementation is incorrect. Your goal is to restore compliance with the Base64 specification:
 
 - Encoded output must use the canonical Base64 alphabet (`A-Z`, `a-z`, `0-9`, `+`, `/`) and include padding (`=`) when required.
-- Decoding must accept valid Base64 input (with or without padding) and recover the original Unicode string.
+- Decoding must accept valid Base64 input (with or without padding) and recover the original Unicode string, **and** must reject clearly invalid payloads by throwing an error so the CLI can signal failure.
 - Keep the CLI behavior intact: return exit code `0` on success, `1` on failure, and write error messages to `stderr`.
 
 You may refactor the module layout if needed, but preserve the exposed functions so tests continue to import them.

@@ -3,6 +3,7 @@
 ## Prerequisites
 - Node.js 20+ and npm available on the host.
 - `llxprt` CLI installed and accessible on `PATH`.
+- `codex` CLI available on `PATH` (used via `codex --dangerously-bypass-approvals-and-sandbox exec "<prompt>"`).
 - Profiles `cerebrasqwen3` and `synthetic` configured via `llxprt --profile-load`.
 
 Install root tooling:
@@ -22,7 +23,7 @@ npm --prefix grading/base64-fix install
    ```bash
    rm -rf grading/base64-fix/workspace
    ```
-2. Execute the harness:
+2. Execute the harness (defaults to `cerebrasqwen3`, `synthetic`, and the local Codex CLI):
    ```bash
    npm run eval:base64
    ```

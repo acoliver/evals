@@ -31,13 +31,27 @@ type EvalRunResult = {
   notes?: string;
 };
 
+type ProfileConfig =
+  | {
+      name: string;
+      kind: 'llxprt';
+    }
+  | {
+      name: string;
+      kind: 'codex';
+    };
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
 const workspaceSource = path.join(rootDir, 'problems', 'base64-fix', 'workspace');
 const gradingDir = path.join(rootDir, 'grading', 'base64-fix');
 const resultsDir = path.join(__dirname, 'results');
 
-const PROFILES = ['cerebrasqwen3', 'synthetic'];
+const PROFILES: ProfileConfig[] = [
+  { name: 'cerebrasqwen3', kind: 'llxprt' },
+  { name: 'synthetic', kind: 'llxprt' },
+  { name: 'codex', kind: 'codex' }
+];
 const REQUIRED_GRADE_COMMANDS = new Set([
   'workspace:typecheck',
   'workspace:lint',
@@ -191,7 +205,7 @@ async function main(): Promise<void> {
   const results: EvalRunResult[] = [];
 
   for (const profile of PROFILES) {
-    console.log(`\n=== Evaluating profile: ${profile} ===`);
+    console.log(`\n=== Evaluating profile: ${profile.name} (${profile.kind}) ===`);
     const startedAt = new Date().toISOString();
     const workspaceCopy = await copyWorkspace(workspaceSource);
     const commandResults: CommandResult[] = [];
@@ -205,26 +219,39 @@ async function main(): Promise<void> {
     );
     commandResults.push(installResult);
     if (installResult.exitCode !== 0) {
-      console.error(`npm install failed for profile ${profile}. Skipping grading.`);
+      console.error(
+        `npm install failed for profile ${profile.name}. Skipping grading.`
+      );
       results.push({
-        profile,
+        profile: profile.name,
         startedAt,
         finishedAt: new Date().toISOString(),
         runId,
         commands: commandResults,
         status: 'fail',
-        workspaceArchive: path.join(`results/base64-fix-${runId}`, profile, 'workspace')
+        workspaceArchive: path.join(
+          `results/base64-fix-${runId}`,
+          profile.name,
+          'workspace'
+        )
       });
       continue;
     }
 
     // Run llxprt agent
-    const agentResult = await runCommand(
-      'llxprt',
-      'llxprt',
-      ['--profile-load', profile, '--yolo', '--prompt', prompt],
-      { cwd: workspaceCopy }
-    );
+    let agentResult: CommandResult;
+    if (profile.kind === 'llxprt') {
+      agentResult = await runCommand(
+        'llxprt',
+        'llxprt',
+        ['--profile-load', profile.name, '--yolo', '--prompt', prompt],
+        { cwd: workspaceCopy }
+      );
+    } else {
+      agentResult = await runCommand('codex', 'codex', ['exec', '--dangerously-bypass-approvals-and-sandbox', '--skip-git-repo-check', prompt], {
+        cwd: workspaceCopy
+      });
+    }
     commandResults.push(agentResult);
 
     // Prepare grading workspace symlink
@@ -276,13 +303,13 @@ async function main(): Promise<void> {
       commandResults.push(result);
       if (result.exitCode !== 0) {
         console.warn(
-          `Command "${cmd.name}" failed for profile ${profile} with exit code ${result.exitCode}.`
+          `Command "${cmd.name}" failed for profile ${profile.name} with exit code ${result.exitCode}.`
         );
       }
     }
 
     // Archive workspace (without node_modules)
-    const profileDir = path.join(runResultsDir, profile);
+    const profileDir = path.join(runResultsDir, profile.name);
     await ensureDir(profileDir);
     const archivePath = path.join(profileDir, 'workspace');
     await archiveWorkspace(workspaceCopy, archivePath);
@@ -301,7 +328,7 @@ async function main(): Promise<void> {
 
     const finishedAt = new Date().toISOString();
     const runResult: EvalRunResult = {
-      profile,
+      profile: profile.name,
       startedAt,
       finishedAt,
       runId,
@@ -313,7 +340,7 @@ async function main(): Promise<void> {
     results.push(runResult);
 
     console.log(
-      `Profile ${profile} status: ${runResult.status.toUpperCase()} (workspace archived at ${runResult.workspaceArchive})`
+      `Profile ${profile.name} status: ${runResult.status.toUpperCase()} (workspace archived at ${runResult.workspaceArchive})`
     );
   }
 
