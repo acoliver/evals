@@ -9,7 +9,9 @@
 - `grading/report-builder/`: Hidden unit/CLI tests and quality gates for the report builder.
 - `problems/form-capture/workspace/`: Express + SQLite form capture app with runtime server validation.
 - `grading/form-capture/`: Hidden integration tests that boot the compiled server and inspect persistence/styling.
-- `evals/runBase64Fix.ts` / `evals/runPagination.ts` / `evals/runReportBuilder.ts` / `evals/runFormCapture.ts`: Driver scripts that copy a fresh workspace, run each configured agent profile (llxprt models and/or Codex), then execute grading commands.
+- `problems/regex-challenge/workspace/`: Regex-heavy utility toolkit with validators, transformations, and puzzle functions.
+- `grading/regex-challenge/`: Hidden suites that hammer edge cases and record per-task results.
+- `evals/runBase64Fix.ts` / `evals/runPagination.ts` / `evals/runReportBuilder.ts` / `evals/runFormCapture.ts` / `evals/runRegexChallenge.ts`: Driver scripts that copy a fresh workspace, run each configured agent profile (llxprt models and/or Codex), then execute grading commands.
 - `project-plans/initial/` & `project-plans/pagination/`: Planning notes and usage guidance.
 
 ## Prerequisites
@@ -25,6 +27,7 @@ npm --prefix grading/base64-fix install
 npm --prefix grading/pagination install
 npm --prefix grading/report-builder install
 npm --prefix grading/form-capture install
+npm --prefix grading/regex-challenge install
 ```
 
 ## Running the Base64 Eval
@@ -84,6 +87,14 @@ We compile the workspace before grading, so the sequence is:
 7. `npm --prefix grading/report-builder run test:hidden`
 
 Hidden tests execute the compiled CLI via `node dist/cli/report.js …`, tolerating whitespace differences. Results are archived under `evals/results/report-builder-<timestamp>/<profile>/` with a `summary.json` for quick inspection.
+
+## Running the Regex Challenge Eval
+
+```bash
+npm run eval:regex
+```
+
+This scenario focuses on regex validation and transformations. Hidden tests validate international inputs, URL rewrites, and other tricky cases, logging per-task outcomes (validators/transformations/puzzles) under `evals/results/regex-challenge-<timestamp>/`.
 
 ## Running Everything
 
