@@ -1,0 +1,9 @@
+{
+  "title": "Quarterly Financial Summary",
+  "summary": "Highlights include record revenue across regions and a healthy outlook for the next quarter.",
+  "entries": [
+    { "label": "North Region", "amount": 12345.67 },
+    { "label": "South Region", "amount": 23456.78 },
+    { "label": "West Region", "amount": 34567.89 }
+  ]
+}
