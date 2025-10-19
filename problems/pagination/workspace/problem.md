@@ -22,4 +22,4 @@ npm run lint
 npm run test:public
 ```
 
-Additional grading checks (hidden) exercise the API via Supertest and the React components via Testing Library with in-memory SQLite databases. Expect to coordinate edits across server, shared types, and client files to satisfy all requirements.
+Expect thorough review runs that exercise the API via Supertest and the React components via Testing Library with in-memory SQLite databases. Plan to coordinate edits across server, shared types, and client files to satisfy all requirements.

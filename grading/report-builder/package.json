@@ -1,0 +1,21 @@
+{
+  "name": "report-builder-grading",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint workspace/src workspace/tests --ext .ts,.tsx",
+    "typecheck": "tsc -p tsconfig.json",
+    "test:hidden": "vitest run --config vitest.config.hidden.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "@typescript-eslint/eslint-plugin": "^7.13.1",
+    "@typescript-eslint/parser": "^7.13.1",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
+  }
+}

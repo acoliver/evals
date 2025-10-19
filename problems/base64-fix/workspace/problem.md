@@ -26,4 +26,4 @@ npm run test:public
 npm run start -- --encode "hello world"
 ```
 
-Only public tests are included here; additional grading checks will be run separately. Attempt to cover tricky cases (padding, non-ASCII characters, binary-like data) when validating your fix.
+This suite covers the essentials, but expect reviewers to poke at tricky inputs (padding, non-ASCII characters, binary-like data), so exercise those paths before you wrap up.

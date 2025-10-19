@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@workspace/*": [
+        "workspace/src/*"
+      ],
+      "@workspace-bin/*": [
+        "workspace/bin/*"
+      ],
+      "@workspace-tests/*": [
+        "workspace/tests/*"
+      ]
+    }
+  },
+  "include": [
+    "tests/**/*.ts",
+    "workspace/src/**/*.ts",
+    "workspace/src/**/*.tsx",
+    "workspace/bin/**/*.ts"
+  ]
+}

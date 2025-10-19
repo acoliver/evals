@@ -5,7 +5,9 @@
 - `grading/base64-fix/`: Hidden lint/type/test harness. The `workspace` folder inside is ephemeral and created by the evaluator.
 - `problems/pagination/workspace/`: Multi-file pagination scenario (Express + React + SQLite seed).
 - `grading/pagination/`: Hidden integration/component tests and tooling for the pagination task.
-- `evals/runBase64Fix.ts` / `evals/runPagination.ts`: Driver scripts that copy a fresh workspace, run each configured agent profile (llxprt models and/or Codex), then execute grading commands.
+- `problems/report-builder/workspace/`: CLI-focused report generation scenario (JSON → Markdown/Text).
+- `grading/report-builder/`: Hidden unit/CLI tests and quality gates for the report builder.
+- `evals/runBase64Fix.ts` / `evals/runPagination.ts` / `evals/runReportBuilder.ts`: Driver scripts that copy a fresh workspace, run each configured agent profile (llxprt models and/or Codex), then execute grading commands.
 - `project-plans/initial/` & `project-plans/pagination/`: Planning notes and usage guidance.
 
 ## Prerequisites
@@ -19,6 +21,7 @@ Install dependencies once:
 npm install
 npm --prefix grading/base64-fix install
 npm --prefix grading/pagination install
+npm --prefix grading/report-builder install
 ```
 
 ## Running the Base64 Eval
@@ -61,7 +64,27 @@ This flow mirrors the base64 run but targets `problems/pagination` and `grading/
 
 The SQLite seed lives inside each copied workspace, so every evaluation run starts with a clean database. Results are archived under `evals/results/pagination-<timestamp>/<profile>/` with a `summary.json` alongside the per-profile logs.
 
-To run both tasks back-to-back:
+## Running the Report Builder Eval
+
+```bash
+npm run eval:report
+```
+
+We compile the workspace before grading, so the sequence is:
+
+1. `npm run lint`
+2. `npm run test:public`
+3. `npm run typecheck`
+4. `npm run build`
+5. `npm --prefix grading/report-builder run lint`
+6. `npm --prefix grading/report-builder run typecheck`
+7. `npm --prefix grading/report-builder run test:hidden`
+
+Hidden tests execute the compiled CLI via `node dist/cli/report.js …`, tolerating whitespace differences. Results are archived under `evals/results/report-builder-<timestamp>/<profile>/` with a `summary.json` for quick inspection.
+
+## Running Everything
+
+To run base64, pagination, and report-builder sequentially:
 
 ```bash
 npm run eval:all
