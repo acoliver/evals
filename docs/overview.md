@@ -7,7 +7,9 @@
 - `grading/pagination/`: Hidden integration/component tests and tooling for the pagination task.
 - `problems/report-builder/workspace/`: CLI-focused report generation scenario (JSON → Markdown/Text).
 - `grading/report-builder/`: Hidden unit/CLI tests and quality gates for the report builder.
-- `evals/runBase64Fix.ts` / `evals/runPagination.ts` / `evals/runReportBuilder.ts`: Driver scripts that copy a fresh workspace, run each configured agent profile (llxprt models and/or Codex), then execute grading commands.
+- `problems/form-capture/workspace/`: Express + SQLite form capture app with runtime server validation.
+- `grading/form-capture/`: Hidden integration tests that boot the compiled server and inspect persistence/styling.
+- `evals/runBase64Fix.ts` / `evals/runPagination.ts` / `evals/runReportBuilder.ts` / `evals/runFormCapture.ts`: Driver scripts that copy a fresh workspace, run each configured agent profile (llxprt models and/or Codex), then execute grading commands.
 - `project-plans/initial/` & `project-plans/pagination/`: Planning notes and usage guidance.
 
 ## Prerequisites
@@ -22,6 +24,7 @@ npm install
 npm --prefix grading/base64-fix install
 npm --prefix grading/pagination install
 npm --prefix grading/report-builder install
+npm --prefix grading/form-capture install
 ```
 
 ## Running the Base64 Eval
@@ -84,7 +87,7 @@ Hidden tests execute the compiled CLI via `node dist/cli/report.js …`, tolerat
 
 ## Running Everything
 
-To run base64, pagination, and report-builder sequentially:
+To run all scenarios sequentially:
 
 ```bash
 npm run eval:all

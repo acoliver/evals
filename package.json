@@ -7,7 +7,8 @@
     "eval:base64": "tsx evals/runBase64Fix.ts",
     "eval:pagination": "tsx evals/runPagination.ts",
     "eval:report": "tsx evals/runReportBuilder.ts",
-    "eval:all": "npm run eval:base64 && npm run eval:pagination && npm run eval:report"
+    "eval:form": "tsx evals/runFormCapture.ts",
+    "eval:all": "npm run eval:base64 && npm run eval:pagination && npm run eval:report && npm run eval:form"
   },
   "devDependencies": {
     "@types/node": "^20.12.7",
