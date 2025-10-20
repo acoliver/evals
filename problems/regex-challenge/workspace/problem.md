@@ -25,7 +25,7 @@ Implement the utility functions in `src/validators.ts`, `src/transformations.ts`
 9. `rewriteDocsUrls(text)` – For URLs `http://example.com/...`:
    - Always upgrade the scheme to `https://`.
    - When the path begins with `/docs/`, rewrite the host to `docs.example.com` so the final URL becomes `https://docs.example.com/...`.
-   - Skip rewriting when the path contains dynamic hints such as `cgi-bin`, query strings (`?`, `&`, `=`), or legacy extensions like `.jsp`, `.php`, `.asp`, `.aspx`, `.do`, `.cgi`, `.pl`, `.py`.
+   - Skip the **host** rewrite when the path contains dynamic hints such as `cgi-bin`, query strings (`?`, `&`, `=`), or legacy extensions like `.jsp`, `.php`, `.asp`, `.aspx`, `.do`, `.cgi`, `.pl`, `.py`, but still upgrade the scheme to `https://`.
    - Preserve nested paths (e.g., `/docs/api/v1`).
 10. `extractYear(value)` – Return the four-digit year for `mm/dd/yyyy`. If the string doesn’t match that format or month/day are invalid, return `N/A`.
 
@@ -36,6 +36,10 @@ Implement the utility functions in `src/validators.ts`, `src/transformations.ts`
 14. `containsIPv6(value)` – Detect IPv6 addresses (including shorthand `::`) and ensure IPv4 addresses do not trigger a positive result.
 
 Feel free to add helper functions (e.g., `runLuhnCheck`) but keep the exported signatures intact.
+
+### Constraints
+- **Do not** modify `tsconfig.json`, lint/format configs, or `package.json`.
+- Maintain strict typing—avoid introducing `any` unless a type truly cannot be expressed.
 
 ## Constraints
 - TypeScript only. Do **not** downgrade files to JavaScript.

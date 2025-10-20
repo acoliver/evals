@@ -59,8 +59,8 @@ describe('transformations hidden suite', () => {
     const rewritten = rewriteDocsUrls(text).split('\n');
     expect(rewritten[0]).toBe('Docs: https://docs.example.com/docs/guide');
     expect(rewritten[1]).toBe('API: https://example.com/api/v1');
-    expect(rewritten[2]).toBe('Skip CGI: http://example.com/cgi-bin/script');
-    expect(rewritten[3]).toBe('Skip query: http://example.com/docs/guide?lang=en');
+    expect(rewritten[2]).toBe('Skip CGI: https://example.com/cgi-bin/script');
+    expect(rewritten[3]).toBe('Skip query: https://example.com/docs/guide?lang=en');
     status.set('rewrite-docs', true);
   });
 

@@ -70,3 +70,7 @@ npm run build
   - Launch the compiled server, perform live requests, and confirm server shutdown works.
 
 Stick to the provided dependencies and configuration files. Creativity in the copy and styling is encouraged—just meet the functional requirements and keep things tasteful (apart from the playful scam warning).
+
+### Constraints
+- **Do not** modify `tsconfig.json`, `package.json`, or the ESLint/Prettier configs.
+- Keep everything fully typed—avoid `any` unless absolutely necessary.
