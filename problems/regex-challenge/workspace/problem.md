@@ -7,17 +7,25 @@ Implement the utility functions in `src/validators.ts`, `src/transformations.ts`
 ### Validators (`src/validators.ts`)
 1. `isValidEmail(value)` – Accept typical addresses such as `name+tag@example.co.uk`. Reject double dots, trailing dots, domains with underscores, and other obviously invalid forms.
 2. `isValidUSPhone(value, options?)` – Support `(123) 456-7890`, `123-456-7890`, `1234567890`, optional `+1` prefix. Disallow impossible area codes (leading 0/1) and too short inputs.
-3. `isValidArgentinePhone(value)` – Handle landlines and mobiles: `+54 9 11 1234-5678`, `011 1234-5678`, `+54 341 123 4567`, etc. Optional trunk `0`, optional `9`, area codes 2–4 digits, subscriber segments 6–8 digits.
+3. `isValidArgentinePhone(value)` – Handle landlines and mobiles such as `+54 9 11 1234 5678`, `011 1234 5678`, `+54 341 123 4567`, `0341 4234567`.
+   - Optional country code `+54`.
+   - Optional trunk prefix `0` immediately before the area code.
+   - Optional mobile indicator `9` between country/trunk and the area code.
+   - Area code must be 2–4 digits (leading digit 1–9).
+   - Subscriber number (after the area code) must contain 6–8 digits in total.
+   - When the country code is omitted, the number must begin with trunk prefix `0` before the area code.
+   - Allow single spaces or hyphens as separators; ignore punctuation when validating.
 4. `isValidName(value)` – Permit unicode letters, accents, apostrophes, hyphens, spaces. Reject digits, symbols, and `X Æ A-12` style names.
 5. `isValidCreditCard(value)` – Accept Visa/Mastercard/AmEx prefixes and lengths. Run a Luhn checksum.
 
 ### Text Transformations (`src/transformations.ts`)
-6. `capitalizeSentences(text)` – Capitalize the first character of each sentence (after `.?!`), collapse extra spaces sensibly, leave abbreviations intact when possible.
+6. `capitalizeSentences(text)` – Capitalize the first character of each sentence (after `.?!`), insert exactly one space between sentences even if the input omitted it, and collapse extra spaces sensibly while leaving abbreviations intact when possible.
 7. `extractUrls(text)` – Return all URLs detected in the text without trailing punctuation.
 8. `enforceHttps(text)` – Replace `http://` schemes with `https://` while leaving existing secure URLs untouched.
 9. `rewriteDocsUrls(text)` – For URLs `http://example.com/...`:
-   - Paths beginning with `/docs/` → rewrite to `https://docs.example.com/...`.
-   - Skip URLs containing `cgi-bin`, `?`, `&`, `.jsp`, or other dynamic hints.
+   - Always upgrade the scheme to `https://`.
+   - When the path begins with `/docs/`, rewrite the host to `docs.example.com` so the final URL becomes `https://docs.example.com/...`.
+   - Skip rewriting when the path contains dynamic hints such as `cgi-bin`, query strings (`?`, `&`, `=`), or legacy extensions like `.jsp`, `.php`, `.asp`, `.aspx`, `.do`, `.cgi`, `.pl`, `.py`.
    - Preserve nested paths (e.g., `/docs/api/v1`).
 10. `extractYear(value)` – Return the four-digit year for `mm/dd/yyyy`. If the string doesn’t match that format or month/day are invalid, return `N/A`.
 

@@ -20,8 +20,8 @@ export function enforceHttps(text: string): string {
 }
 
 /**
- * TODO: Rewrite http://example.com/docs/... to https://docs.example.com/..., obeying the rules in problem.md.
- */
+ * TODO: Rewrite http://example.com/... to https://..., moving docs paths to https://docs.example.com/ where applicable.
+*/
 export function rewriteDocsUrls(text: string): string {
   throw new Error('TODO: implement rewriteDocsUrls');
 }

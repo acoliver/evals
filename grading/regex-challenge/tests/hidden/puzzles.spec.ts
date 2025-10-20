@@ -27,7 +27,7 @@ describe('puzzles hidden suite', () => {
   it('finds prefixed words excluding exceptions', () => {
     const text = 'preview preflight prefix prevent prequel';
     const result = findPrefixedWords(text, 'pre', ['prefix', 'prevent']);
-    expect(result.sort()).toEqual(['preflight', 'preview', 'prequel']);
+    expect([...result].sort()).toEqual(['preflight', 'prequel', 'preview']);
     status.set('prefixed-words', true);
   });
 
@@ -40,7 +40,7 @@ describe('puzzles hidden suite', () => {
 
   it('enforces strong password policy', () => {
     const valid = ['Abcd!23456', 'P@ssw0rd!#!'];
-    const invalid = ['short1!', 'NoDigitsHere!', 'noUppercase1!', 'AAA111!!!', 'abcabcabcABC1!'];
+    const invalid = ['short1!', 'NoDigitsHere!', 'nouppercase1!', 'AAA111!!!', 'abcabcabcABC1!'];
     valid.forEach((sample) => expect(isStrongPassword(sample)).toBe(true));
     invalid.forEach((sample) => expect(isStrongPassword(sample)).toBe(false));
     status.set('strong-password', true);
