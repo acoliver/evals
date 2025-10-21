@@ -190,15 +190,9 @@ async function main(): Promise<void> {
     'utf8'
   );
 
-  const prompt = [
-    'You are assisting with the "Base64 CLI Repair" TypeScript project.',
-    'Repair the encode/decode implementations to match canonical RFC 4648 Base64, including "+" and "/" characters and required "=" padding.',
-    'Ensure the CLI `run` helper returns the correct exit codes and surfaces errors.',
-    'After implementing the fix, run these commands: npm run typecheck, npm run lint, npm run test:public.',
-    'Do not fabricate test results; share any command output that fails.',
-    'Problem context:',
-    problemDescription
-  ].join('\n\n');
+  const problemPrompt = await readFile(path.join(__dirname, '../prompts/problems/base64-fix.md'), 'utf8');
+  const sharedInstructions = await readFile(path.join(__dirname, '../prompts/shared/evaluation-instructions.md'), 'utf8');
+  const prompt = [problemPrompt, problemDescription, sharedInstructions].join('\n\n');
 
   await ensureDependencies(gradingDir);
 

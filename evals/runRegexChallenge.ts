@@ -184,12 +184,9 @@ async function main(): Promise<void> {
 
   const problemDescription = await readFile(path.join(workspaceSource, 'problem.md'), 'utf8');
 
-  const prompt = [
-    'You are enhancing a TypeScript regex utility toolkit.',
-    'Implement the functions in validators.ts, transformations.ts, and puzzles.ts using regular expressions and helper logic per the brief below. Keep configs untouched, rely only on provided dependencies, and run lint/test/typecheck/build before finishing. Report any failures honestly.',
-    'Problem context:',
-    problemDescription
-  ].join('\n\n');
+  const problemPrompt = await readFile(path.join(__dirname, '../prompts/problems/regex-challenge.md'), 'utf8');
+  const sharedInstructions = await readFile(path.join(__dirname, '../prompts/shared/evaluation-instructions.md'), 'utf8');
+  const prompt = [problemPrompt, problemDescription, sharedInstructions].join('\n\n');
 
   await installDependencies(gradingDir);
 

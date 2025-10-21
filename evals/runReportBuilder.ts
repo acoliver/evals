@@ -185,13 +185,9 @@ async function main(): Promise<void> {
     'utf8'
   );
 
-  const prompt = [
-    'You are assisting with the "Report Builder" TypeScript project.',
-    'Implement a clean CLI and supporting modules that read structured JSON, render markdown or text reports, keep formatters modular for future extensions, and rely solely on built-in Node APIs. Run the lint/test/typecheck/build commands specified in the task before finishing, and do not modify the provided configuration files or dependencies.',
-    'After completing the work, report any command failures honestly.',
-    'Problem context:',
-    problemDescription
-  ].join('\n\n');
+  const problemPrompt = await readFile(path.join(__dirname, '../prompts/problems/report-builder.md'), 'utf8');
+  const sharedInstructions = await readFile(path.join(__dirname, '../prompts/shared/evaluation-instructions.md'), 'utf8');
+  const prompt = [problemPrompt, problemDescription, sharedInstructions].join('\n\n');
 
   await ensureDependencies(gradingDir);
 

@@ -176,13 +176,9 @@ async function main(): Promise<void> {
 
   const problemDescription = await readFile(path.join(workspaceSource, 'problem.md'), 'utf8');
 
-  const prompt = [
-    'You are building a friendly (and slightly cheeky) contact form web app.',
-    'Implement an Express + TypeScript server that renders the form, validates international inputs, stores submissions in SQLite, and shows the thank-you page described below. Keep everything in TypeScript, no config edits, and rely only on the provided dependencies.',
-    'Before finishing you must run: npm run lint, npm run test:public, npm run typecheck, npm run build. Report any command failures honestly.',
-    'Problem context:',
-    problemDescription
-  ].join('\n\n');
+  const problemPrompt = await readFile(path.join(__dirname, '../prompts/problems/form-capture.md'), 'utf8');
+  const sharedInstructions = await readFile(path.join(__dirname, '../prompts/shared/evaluation-instructions.md'), 'utf8');
+  const prompt = [problemPrompt, problemDescription, sharedInstructions].join('\n\n');
 
   await ensureDependencies(gradingDir);
 

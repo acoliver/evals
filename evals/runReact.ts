@@ -174,30 +174,9 @@ async function main(): Promise<void> {
 
   const problemDescription = await readFile(path.join(workspaceSource, 'problem.md'), 'utf8');
 
-  const prompt = [
-    'You are implementing a reactive programming system in TypeScript.',
-    '',
-    'Implement the functions in src/core/input.ts, src/core/computed.ts, and src/core/callback.ts to create',
-    'a reactive programming system with:',
-    '',
-    '- createInput<T>() - Input closure with getter/setter pairs',
-    '- createComputed<T>() - Computed values with dependency tracking',
-    '- createCallback<T>() - Callback closures with subscription management',
-    '',
-    'The type definitions in src/types/reactive.ts and src/types/observers.ts are already provided.',
-    'Focus on type safety, memory management, and proper observer pattern implementation.',
-    '',
-    'The current implementations in the core files are incomplete/stubs. You need to implement the full functionality.',
-    '',
-    'Before finishing, run these commands and report any failures honestly:',
-    'npm run typecheck, npm run lint, npm run test:public, npm run build',
-    '',
-    'IMPORTANT: You must run lint and the build as a final step and resolve ANY lint or build errors before finishing.',
-    'Fix all ESLint errors (unused variables, any types, etc.) and ensure the build completes successfully.',
-    '',
-    'Problem context:',
-    problemDescription
-  ].join('\n');
+  const problemPrompt = await readFile(path.join(__dirname, '../prompts/problems/reactive-programming.md'), 'utf8');
+  const sharedInstructions = await readFile(path.join(__dirname, '../prompts/shared/evaluation-instructions.md'), 'utf8');
+  const prompt = [problemPrompt, problemDescription, sharedInstructions].join('\n\n');
 
   await ensureDependencies(gradingDir);
 

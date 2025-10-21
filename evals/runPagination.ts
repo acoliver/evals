@@ -190,14 +190,9 @@ async function main(): Promise<void> {
     'utf8'
   );
 
-  const prompt = [
-    'You are assisting with the "Pagination Service Repair" TypeScript project.',
-    'Restore correct pagination behaviour across the Express API (SQLite-backed) and the React client. Validate `page`/`limit`, return accurate metadata, and ensure the UI navigates between pages while showing errors for invalid input.',
-    'After implementing the fix, run these commands: npm run typecheck, npm run lint, npm run test:public.',
-    'Do not fabricate test results; report any command output that fails.',
-    'Problem context:',
-    problemDescription
-  ].join('\n\n');
+  const problemPrompt = await readFile(path.join(__dirname, '../prompts/problems/pagination.md'), 'utf8');
+  const sharedInstructions = await readFile(path.join(__dirname, '../prompts/shared/evaluation-instructions.md'), 'utf8');
+  const prompt = [problemPrompt, problemDescription, sharedInstructions].join('\n\n');
 
   await ensureDependencies(gradingDir);
 
