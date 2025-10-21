@@ -8,7 +8,8 @@
     "eval:pagination": "tsx evals/runPagination.ts",
     "eval:report": "tsx evals/runReportBuilder.ts",
     "eval:form": "tsx evals/runFormCapture.ts",
-    "eval:all": "npm run eval:base64 && npm run eval:pagination && npm run eval:report && npm run eval:form"
+    "eval:all": "npm run eval:base64 && npm run eval:pagination && npm run eval:report && npm run eval:form && npm run eval:regex",
+    "eval:regex": "tsx evals/runRegexChallenge.ts"
   },
   "devDependencies": {
     "@types/node": "^20.12.7",

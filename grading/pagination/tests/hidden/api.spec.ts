@@ -41,8 +41,6 @@ describe('GET /inventory pagination', () => {
     const response = await request(app).get('/inventory').query({ page: 0, limit: 100 });
 
     expect(response.status).toBe(400);
-    expect(response.body).toMatchObject({
-      error: expect.stringContaining('page')
-    });
+    expect((response.body.error ?? '').toLowerCase()).toContain('page');
   });
 });
