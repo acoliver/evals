@@ -7,7 +7,8 @@
 2. **Hardcoded CLI Configuration**: Model settings scattered across every script
 3. **Maintenance Overhead**: Adding new evaluations requires copying 350+ line scripts
 4. **Inflexible Testing**: No easy way to run specific configurations or quick iterations
-5. **No Capability Enforcement**: No validation that CLI configs meet eval requirements
+5. **Command Mapping Gap**: Build step names have no mapping to actual commands
+6. **Path Resolution Issues**: Relative paths fragile for workspace locations
 
 ###  **Goals**
 1. **Single unified runner** for all evaluations
@@ -49,8 +50,8 @@
     },
     "codex-exec-gpt5-default": {
       "cli": "codex",
-      "name": "Codex/GPT-5-Codex, Full Access",
-      "description": "Codex with full system access",
+      "name": "Codex/GPT-5-Codex, Default Settings",
+      "description": "Codex with full system access using existing arguments",
       "args": ["exec", "--dangerously-bypass-approvals-and-sandbox", "--skip-git-repo-check"],
       "timeout": 600000
     }
@@ -147,9 +148,6 @@ npx ts-node evals/run-evals.ts --eval regex-challenge --config codex-exec-gpt5-d
 
 # Multiple configurations  
 npx ts-node evals/run-evals.ts --config llxprt-synthetic-glm4.6-temp1,cerebrasqwen3-qwen3-coder-temp1
-
-# Quick smoke test
-npx ts-node evals/run-evals.ts --eval base64-fix --config llxprt-synthetic-glm4.6-temp1 --quick
 ```
 
 #### **Core Implementation Concept**
@@ -179,7 +177,12 @@ class ConfigurationManager {
     });
   }
   
-  runCommand(cwd: string, commandDef: CommandDefinition) {
+  runCommand(cwd: string, stepName: string) {
+    const commandDef = this.commandRegistry[stepName];
+    if (!commandDef) {
+      throw new Error(`Unknown command step: ${stepName}`);
+    }
+    
     return await runCommand(commandDef.command, commandDef.args, {
       cwd,
       timeout: commandDef.timeout
@@ -190,12 +193,56 @@ class ConfigurationManager {
 class UnifiedRunner {
   async runEval(evalName: string, configId: string): Promise<EvalResult> {
     // 1. Load configs with EVAL_ROOT environment variable substitution
+    const evalConfig = this.loadEvalConfig(evalName);
+    const cliConfig = this.loadCLIConfig(configId);
+    
     // 2. Setup workspace (absolute paths from evals/ directory)
+    const workspace = await this.setupWorkspace(evalConfig.workspace);
+    
     // 3. Write prompt to ./prompt.md in workspace
-    // 4. Run configuration CLI in workspace directory
+    await this.writePrompt(workspace, evalConfig.prompt);
+    
+    // 4. Run CLI tool in workspace directory
+    await this.runCLIConfig(configId, 'Execute the instructions in ./prompt.md', workspace);
+    
     // 5. Run build steps in workspace directory
+    for (const step of evalConfig.buildSteps) {
+      await this.runCommand(workspace, step);
+    }
+    
     // 6. Run grading steps in grading directory
+    for (const step of evalConfig.gradeSteps) {
+      await this.runCommand(evalConfig.grading, step);
+    }
+    
     // 7. Collect results
+    return this.collectResults(evalName, configId, workspace);
+  }
+  
+  private async setupWorkspace(workspacePath: string): Promise<string> {
+    // Copy workspace template to temp directory
+    // Substitute ${EVAL_ROOT} with actual path
+    const resolvedPath = workspacePath.replace('${EVAL_ROOT}', __dirname);
+    const workspaceCopy = await copyWorkspace(resolvedPath);
+    return workspaceCopy;
+  }
+  
+  private async writePrompt(workspace: string, promptFile: string): Promise<void> {
+    // Load prompt components and write to ./prompt.md
+    const problemPrompt = await readFile(path.join(__dirname, '../prompts/problems', promptFile), 'utf8');
+    const problemDescription = await readFile(path.join(workspace, 'problem.md'), 'utf8');
+    const sharedInstructions = await readFile(path.join(__dirname, '../prompts/shared/evaluation-instructions.md'), 'utf8');
+    
+    const prompt = [problemPrompt, problemDescription, sharedInstructions].join('\n\n');
+    await writeFile(path.join(workspace, 'prompt.md'), prompt, 'utf8');
+  }
+  
+  private async runCommand(cwd: string, commandName: string): Promise<CommandResult> {
+    return await this.configurationManager.runCommand(cwd, commandName);
+  }
+  
+  private async runCLIConfig(configId: string, instruction: string, cwd: string): Promise<CommandResult> {
+    return await this.configurationManager.runConfiguration(configId, instruction, cwd);
   }
 }
 ```
@@ -204,16 +251,16 @@ class UnifiedRunner {
 
 ##  **KEY ARCHITECTURAL DECISIONS**
 
-### **1. CLI Tool Isolation**
-- **CLI starts in problem workspace directory**: `/tmp/.../workspace-uuid/`
-- **CLI has access to**: `./prompt.md`, `./src/`, `package.json`, etc.
-- **CLI cannot escape workspace**: No looking up/down directories
-- **All CLIs must support file access** or they can't participate
+### **1. Global Command Registry**
+- **Vitest only**: All evals use Vitest test framework
+- **No parallel execution**: Sequential command execution for simplicity
+- **Step name mapping**: Maps `typecheck`, `lint`, `test:public` etc. to actual npm commands
+- **Timeout handling**: Each command has appropriate timeout limits
 
 ### **2. No Capability System**
-- Removed complexity - all CLIs that participate must have file access
-- Simplifies configuration and validation
-- Trust configuration author to match CLI capabilities to eval needs
+- Removed complexity
+- Trust configurations to match CLI capabilities  
+- Simplifies validation and configuration management
 
 ### **3. Prompt System (Keep Current Working Approach)**
 ```typescript
@@ -222,13 +269,27 @@ const prompt = [problemPrompt, problemDescription, sharedInstructions].join('\n\
 await writeFile(path.join(workspaceCopy, 'prompt.md'), prompt, 'utf8');
 const modelInstruction = 'Execute the instructions in ./prompt.md';
 ```
+- All CLIs must support file access to participate
+- Simple and consistent approach that works today
+- CLI tools work within their isolated workspace
 
 ### **4. Codex Full Access**
 - Use existing `--dangerously-bypass-approvals-and-sandbox` setup
 - Codex without full access is useless for these evals
-- No safety controls needed since we trust the configurations
+- No safety controls needed since we trust configurations
 
-### **5. Big Bang Migration**
+### **5. Absolute Path Resolution**
+- Use `${EVAL_ROOT}` substitution for reliable path resolution
+- Paths relative to evals/ directory: `evals/config/`, `evals/problems/`, `evals/grading`
+- Eliminates fragility of `../` relative paths
+
+### **6. Workspace Isolation**
+- CLI starts in problem workspace directory: `/tmp/.../workspace-uuid/`
+- CLI has access to: `./prompt.md`, `./src/`, `package.json`, etc.
+- CLI cannot escape workspace: No directory traversal up or down
+- Each evaluation run gets isolated temporary workspace
+
+### **7. Big Bang Migration**
 - No phased rollout or backward compatibility shims
 - Complete replacement of existing scripts
 - Replace all at once once system is verified working
@@ -260,8 +321,9 @@ const modelInstruction = 'Execute the instructions in ./prompt.md';
 - Orchestrate evaluation lifecycle
 - Copy workspaces and manage temp directories
 - Write prompt files and collect results
-- Execute configured commands without understanding them
+- Execute configured commands via command registry
 - Time each phase and report results
+- Path resolution and environment management
 
 ### **Workspace Responsibility** (`problems/*/workspace/`):
 - Define own build process via `package.json` scripts
@@ -273,7 +335,7 @@ const modelInstruction = 'Execute the instructions in ./prompt.md';
 - Define what exists, not how it works
 - Map step names to actual commands
 - Specify CLI parameters and timeouts
-- No logic - just data
+- No logic - just data with path substitution
 
 ---
 
@@ -283,6 +345,7 @@ const modelInstruction = 'Execute the instructions in ./prompt.md';
 1. **Phase 1**: Build Config Files and Unified Runner
    - Create all config files with current working parameters
    - Implement unified runner with proper path resolution
+   - Implement command registry with step name mapping
    - Test with base64-fix evaluation to verify functionality
 
 2. **Phase 2**: Full System Validation
@@ -315,7 +378,7 @@ git add -A && git commit -m "Replace 6 evaluation scripts with unified configura
 ### **Human-Readable Names**: Required field
 - `LLxprt Code/Synthetic GLM 4.6, Temp 1`
 - `Cerebras Qwen 3 480B, Temp 1` 
-- `Codex/GPT-5-Codex, Full Access`
+- `Codex/GPT-5-Codex, Default Settings`
 
 ### **Descriptions**: Optional detailed explanations
 
@@ -323,11 +386,10 @@ git add -A && git commit -m "Replace 6 evaluation scripts with unified configura
 
 ##  **NEXT STEPS**
 
-1. Create GitHub issue tracking the restructure
-2. Create branch `issue14` based on the issue number
-3. Create and commit the detailed restructure plan to the branch
-4. Implement configuration files and unified runner
-5. Test migration with base64-fix first, then full system
-6. Complete big bang migration
+1. Configuration files implemented in this branch
+2. Core unified runner implementation with command registry
+3. Path resolution with ${EVAL_ROOT} substitution
+4. Testing and validation of new system
+5. Complete migration with big bang approach
 
-This restructure will transform the evaluation system from a maintenance-heavy monolith to a flexible, configuration-driven platform.
+This restructure will transform the evaluation system from a maintenance-heavy monolith to a flexible, configuration-driven platform with proper command mapping and reliable path handling.
