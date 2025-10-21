@@ -204,6 +204,11 @@ async function main(): Promise<void> {
     const workspaceCopy = await copyWorkspace(workspaceSource);
     const commandResults: CommandResult[] = [];
 
+    // Write combined prompt to workspace
+    const prompt = [problemPrompt, problemDescription, sharedInstructions].join('\\n\\n');
+    await writeFile(path.join(workspaceCopy, 'prompt.md'), prompt, 'utf8');
+    const modelInstruction = 'Execute the instructions in ./prompt.md';
+
     // Install workspace dependencies
     const installResult = await runCommand(
       'workspace:npm-install',
@@ -238,11 +243,11 @@ async function main(): Promise<void> {
       agentResult = await runCommand(
         'llxprt',
         'llxprt',
-        ['--profile-load', profile.name, '--yolo', '--prompt', prompt],
+        ['--profile-load', profile.name, '--yolo', '--prompt', modelInstruction],
         { cwd: workspaceCopy }
       );
     } else {
-      agentResult = await runCommand('codex', 'codex', ['exec', '--dangerously-bypass-approvals-and-sandbox', '--skip-git-repo-check', prompt], {
+      agentResult = await runCommand('codex', 'codex', ['exec', '--dangerously-bypass-approvals-and-sandbox', '--skip-git-repo-check', modelInstruction], {
         cwd: workspaceCopy
       });
     }

@@ -97,6 +97,7 @@ function runCommand(
   child.stdout?.on('data', (chunk) => {
     stdout += chunk.toString();
   });
+
   child.stderr?.on('data', (chunk) => {
     stderr += chunk.toString();
   });
@@ -176,8 +177,7 @@ async function main(): Promise<void> {
 
   const problemPrompt = await readFile(path.join(__dirname, '../prompts/problems/reactive-programming.md'), 'utf8');
   const sharedInstructions = await readFile(path.join(__dirname, '../prompts/shared/evaluation-instructions.md'), 'utf8');
-  const prompt = [problemPrompt, problemDescription, sharedInstructions].join('\n\n');
-
+  
   await ensureDependencies(gradingDir);
 
   const results: EvalRunResult[] = [];
@@ -188,10 +188,15 @@ async function main(): Promise<void> {
     : PROFILES;
 
   for (const profile of selectedProfiles) {
-    console.log(`\n=== Evaluating profile: ${profile.name} (${profile.kind}) ===`);
+    console.log(`\\n=== Evaluating profile: ${profile.name} (${profile.kind}) ===`);
     const startedAt = new Date().toISOString();
     const workspaceCopy = await copyWorkspace(workspaceSource);
     const commandResults: CommandResult[] = [];
+
+    // Write combined prompt to workspace
+    const prompt = [problemPrompt, problemDescription, sharedInstructions].join('\\n\\n');
+    await writeFile(path.join(workspaceCopy, 'prompt.md'), prompt, 'utf8');
+    const modelInstruction = 'Execute the instructions in ./prompt.md';
 
     // Install workspace dependencies
     const installResult = await runCommand('workspace:npm-install', 'npm', ['install'], {
@@ -219,14 +224,14 @@ async function main(): Promise<void> {
       agentResult = await runCommand(
         'llxprt',
         'llxprt',
-        ['--profile-load', profile.name, '--yolo', '--prompt', prompt],
+        ['--profile-load', profile.name, '--yolo', '--prompt', modelInstruction],
         { cwd: workspaceCopy }
       );
     } else {
       agentResult = await runCommand(
         'codex',
         'codex',
-        ['exec', '--dangerously-bypass-approvals-and-sandbox', '--skip-git-repo-check', prompt],
+        ['exec', '--dangerously-bypass-approvals-and-sandbox', '--skip-git-repo-check', modelInstruction],
         { cwd: workspaceCopy }
       );
     }
@@ -315,7 +320,7 @@ async function main(): Promise<void> {
   const summaryPath = path.join(runResultsDir, 'summary.json');
   await writeFile(summaryPath, JSON.stringify(results, null, 2), 'utf8');
 
-  console.log(`\nEvaluation complete. Summary written to ${path.relative(rootDir, summaryPath)}`);
+  console.log(`\\nEvaluation complete. Summary written to ${path.relative(rootDir, summaryPath)}`);
 }
 
 main().catch((error) => {
