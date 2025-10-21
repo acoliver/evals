@@ -1,0 +1,22 @@
+[
+  {
+    "taskId": "capitalize-sentences",
+    "passed": true
+  },
+  {
+    "taskId": "extract-urls",
+    "passed": true
+  },
+  {
+    "taskId": "enforce-https",
+    "passed": true
+  },
+  {
+    "taskId": "rewrite-docs",
+    "passed": true
+  },
+  {
+    "taskId": "extract-year",
+    "passed": true
+  }
+]

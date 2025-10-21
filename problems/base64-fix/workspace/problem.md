@@ -16,6 +16,10 @@ The current implementation is incorrect. Your goal is to restore compliance with
 
 You may refactor the module layout if needed, but preserve the exposed functions so tests continue to import them.
 
+### Constraints
+- **Do not** modify `tsconfig.json`, ESLint/Prettier configs, or `package.json`.
+- Keep the project strictly typed—avoid falling back to `any` unless a type really is unavailable.
+
 ## Commands
 
 ```bash
