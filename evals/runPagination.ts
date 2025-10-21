@@ -99,6 +99,7 @@ function runCommand(
   child.stdout?.on('data', (chunk) => {
     stdout += chunk.toString();
   });
+
   child.stderr?.on('data', (chunk) => {
     stderr += chunk.toString();
   });
@@ -190,24 +191,23 @@ async function main(): Promise<void> {
     'utf8'
   );
 
-  const prompt = [
-    'You are assisting with the "Pagination Service Repair" TypeScript project.',
-    'Restore correct pagination behaviour across the Express API (SQLite-backed) and the React client. Validate `page`/`limit`, return accurate metadata, and ensure the UI navigates between pages while showing errors for invalid input.',
-    'After implementing the fix, run these commands: npm run typecheck, npm run lint, npm run test:public.',
-    'Do not fabricate test results; report any command output that fails.',
-    'Problem context:',
-    problemDescription
-  ].join('\n\n');
-
+  const problemPrompt = await readFile(path.join(__dirname, '../prompts/problems/pagination.md'), 'utf8');
+  const sharedInstructions = await readFile(path.join(__dirname, '../prompts/shared/evaluation-instructions.md'), 'utf8');
+  
   await ensureDependencies(gradingDir);
 
   const results: EvalRunResult[] = [];
 
   for (const profile of PROFILES) {
-    console.log(`\n=== Evaluating profile: ${profile.name} (${profile.kind}) ===`);
+    console.log(`\\n=== Evaluating profile: ${profile.name} (${profile.kind}) ===`);
     const startedAt = new Date().toISOString();
     const workspaceCopy = await copyWorkspace(workspaceSource);
     const commandResults: CommandResult[] = [];
+
+    // Write combined prompt to workspace
+    const prompt = [problemPrompt, problemDescription, sharedInstructions].join('\\n\\n');
+    await writeFile(path.join(workspaceCopy, 'prompt.md'), prompt, 'utf8');
+    const modelInstruction = 'Execute the instructions in ./prompt.md';
 
     // Install workspace dependencies
     const installResult = await runCommand(
@@ -243,11 +243,11 @@ async function main(): Promise<void> {
       agentResult = await runCommand(
         'llxprt',
         'llxprt',
-        ['--profile-load', profile.name, '--yolo', '--prompt', prompt],
+        ['--profile-load', profile.name, '--yolo', '--prompt', modelInstruction],
         { cwd: workspaceCopy }
       );
     } else {
-      agentResult = await runCommand('codex', 'codex', ['exec', '--dangerously-bypass-approvals-and-sandbox', '--skip-git-repo-check', prompt], {
+      agentResult = await runCommand('codex', 'codex', ['exec', '--dangerously-bypass-approvals-and-sandbox', '--skip-git-repo-check', modelInstruction], {
         cwd: workspaceCopy
       });
     }
@@ -350,7 +350,7 @@ async function main(): Promise<void> {
   const summaryPath = path.join(runResultsDir, 'summary.json');
   await writeFile(summaryPath, JSON.stringify(results, null, 2), 'utf8');
 
-  console.log(`\nEvaluation complete. Summary written to ${path.relative(rootDir, summaryPath)}`);
+  console.log(`\\nEvaluation complete. Summary written to ${path.relative(rootDir, summaryPath)}`);
 }
 
 main().catch((error) => {

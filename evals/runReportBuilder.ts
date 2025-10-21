@@ -100,6 +100,7 @@ function runCommand(
   child.stdout?.on('data', (chunk) => {
     stdout += chunk.toString();
   });
+
   child.stderr?.on('data', (chunk) => {
     stderr += chunk.toString();
   });
@@ -185,23 +186,23 @@ async function main(): Promise<void> {
     'utf8'
   );
 
-  const prompt = [
-    'You are assisting with the "Report Builder" TypeScript project.',
-    'Implement a clean CLI and supporting modules that read structured JSON, render markdown or text reports, keep formatters modular for future extensions, and rely solely on built-in Node APIs. Run the lint/test/typecheck/build commands specified in the task before finishing, and do not modify the provided configuration files or dependencies.',
-    'After completing the work, report any command failures honestly.',
-    'Problem context:',
-    problemDescription
-  ].join('\n\n');
-
+  const problemPrompt = await readFile(path.join(__dirname, '../prompts/problems/report-builder.md'), 'utf8');
+  const sharedInstructions = await readFile(path.join(__dirname, '../prompts/shared/evaluation-instructions.md'), 'utf8');
+  
   await ensureDependencies(gradingDir);
 
   const results: EvalRunResult[] = [];
 
   for (const profile of PROFILES) {
-    console.log(`\n=== Evaluating profile: ${profile.name} (${profile.kind}) ===`);
+    console.log(`\\n=== Evaluating profile: ${profile.name} (${profile.kind}) ===`);
     const startedAt = new Date().toISOString();
     const workspaceCopy = await copyWorkspace(workspaceSource);
     const commandResults: CommandResult[] = [];
+
+    // Write combined prompt to workspace
+    const prompt = [problemPrompt, problemDescription, sharedInstructions].join('\\n\\n');
+    await writeFile(path.join(workspaceCopy, 'prompt.md'), prompt, 'utf8');
+    const modelInstruction = 'Execute the instructions in ./prompt.md';
 
     // Install workspace dependencies
     const installResult = await runCommand(
@@ -237,11 +238,11 @@ async function main(): Promise<void> {
       agentResult = await runCommand(
         'llxprt',
         'llxprt',
-        ['--profile-load', profile.name, '--yolo', '--prompt', prompt],
+        ['--profile-load', profile.name, '--yolo', '--prompt', modelInstruction],
         { cwd: workspaceCopy }
       );
     } else {
-      agentResult = await runCommand('codex', 'codex', ['exec', '--dangerously-bypass-approvals-and-sandbox', '--skip-git-repo-check', prompt], {
+      agentResult = await runCommand('codex', 'codex', ['exec', '--dangerously-bypass-approvals-and-sandbox', '--skip-git-repo-check', modelInstruction], {
         cwd: workspaceCopy
       });
     }
@@ -365,7 +366,7 @@ async function main(): Promise<void> {
   const summaryPath = path.join(runResultsDir, 'summary.json');
   await writeFile(summaryPath, JSON.stringify(results, null, 2), 'utf8');
 
-  console.log(`\nEvaluation complete. Summary written to ${path.relative(rootDir, summaryPath)}`);
+  console.log(`\\nEvaluation complete. Summary written to ${path.relative(rootDir, summaryPath)}`);
 }
 
 main().catch((error) => {

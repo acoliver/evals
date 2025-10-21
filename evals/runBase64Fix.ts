@@ -190,15 +190,9 @@ async function main(): Promise<void> {
     'utf8'
   );
 
-  const prompt = [
-    'You are assisting with the "Base64 CLI Repair" TypeScript project.',
-    'Repair the encode/decode implementations to match canonical RFC 4648 Base64, including "+" and "/" characters and required "=" padding.',
-    'Ensure the CLI `run` helper returns the correct exit codes and surfaces errors.',
-    'After implementing the fix, run these commands: npm run typecheck, npm run lint, npm run test:public.',
-    'Do not fabricate test results; share any command output that fails.',
-    'Problem context:',
-    problemDescription
-  ].join('\n\n');
+  const problemPrompt = await readFile(path.join(__dirname, '../prompts/problems/base64-fix.md'), 'utf8');
+  const sharedInstructions = await readFile(path.join(__dirname, '../prompts/shared/evaluation-instructions.md'), 'utf8');
+  const prompt = [problemPrompt, problemDescription, sharedInstructions].join('\n\n');
 
   await ensureDependencies(gradingDir);
 
@@ -209,6 +203,11 @@ async function main(): Promise<void> {
     const startedAt = new Date().toISOString();
     const workspaceCopy = await copyWorkspace(workspaceSource);
     const commandResults: CommandResult[] = [];
+
+    // Write combined prompt to workspace
+    const prompt = [problemPrompt, problemDescription, sharedInstructions].join('\\n\\n');
+    await writeFile(path.join(workspaceCopy, 'prompt.md'), prompt, 'utf8');
+    const modelInstruction = 'Execute the instructions in ./prompt.md';
 
     // Install workspace dependencies
     const installResult = await runCommand(
@@ -244,11 +243,11 @@ async function main(): Promise<void> {
       agentResult = await runCommand(
         'llxprt',
         'llxprt',
-        ['--profile-load', profile.name, '--yolo', '--prompt', prompt],
+        ['--profile-load', profile.name, '--yolo', '--prompt', modelInstruction],
         { cwd: workspaceCopy }
       );
     } else {
-      agentResult = await runCommand('codex', 'codex', ['exec', '--dangerously-bypass-approvals-and-sandbox', '--skip-git-repo-check', prompt], {
+      agentResult = await runCommand('codex', 'codex', ['exec', '--dangerously-bypass-approvals-and-sandbox', '--skip-git-repo-check', modelInstruction], {
         cwd: workspaceCopy
       });
     }

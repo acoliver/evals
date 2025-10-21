@@ -93,6 +93,7 @@ function runCommand(
   child.stdout?.on('data', (chunk) => {
     stdout += chunk.toString();
   });
+
   child.stderr?.on('data', (chunk) => {
     stderr += chunk.toString();
   });
@@ -168,9 +169,9 @@ function collectTaskSummaries(resultsDirPath: string): Record<string, unknown> {
     const filePath = path.join(resultsDirPath, entry);
     try {
       const parsed = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-      summaries[entry.replace(/\.json$/, '')] = parsed;
+      summaries[entry.replace(/\\.json$/, '')] = parsed;
     } catch (error) {
-      summaries[entry.replace(/\.json$/, '')] = { error: String(error) };
+      summaries[entry.replace(/\\.json$/, '')] = { error: String(error) };
     }
   }
   return summaries;
@@ -184,13 +185,9 @@ async function main(): Promise<void> {
 
   const problemDescription = await readFile(path.join(workspaceSource, 'problem.md'), 'utf8');
 
-  const prompt = [
-    'You are enhancing a TypeScript regex utility toolkit.',
-    'Implement the functions in validators.ts, transformations.ts, and puzzles.ts using regular expressions and helper logic per the brief below. Keep configs untouched, rely only on provided dependencies, and run lint/test/typecheck/build before finishing. Report any failures honestly.',
-    'Problem context:',
-    problemDescription
-  ].join('\n\n');
-
+  const problemPrompt = await readFile(path.join(__dirname, '../prompts/problems/regex-challenge.md'), 'utf8');
+  const sharedInstructions = await readFile(path.join(__dirname, '../prompts/shared/evaluation-instructions.md'), 'utf8');
+  
   await installDependencies(gradingDir);
 
   const profileFilter = process.env.EVAL_PROFILE;
@@ -201,10 +198,15 @@ async function main(): Promise<void> {
   const results: EvalRunResult[] = [];
 
   for (const profile of selectedProfiles) {
-    console.log(`\n=== Evaluating profile: ${profile.name} (${profile.kind}) ===`);
+    console.log(`\\n=== Evaluating profile: ${profile.name} (${profile.kind}) ===`);
     const startedAt = new Date().toISOString();
     const workspaceCopy = await copyWorkspace(workspaceSource);
     const commandResults: CommandResult[] = [];
+
+    // Write combined prompt to workspace
+    const prompt = [problemPrompt, problemDescription, sharedInstructions].join('\\n\\n');
+    await writeFile(path.join(workspaceCopy, 'prompt.md'), prompt, 'utf8');
+    const modelInstruction = 'Execute the instructions in ./prompt.md';
 
     const installResult = await runCommand('workspace:npm-install', 'npm', ['install'], {
       cwd: workspaceCopy,
@@ -226,10 +228,10 @@ async function main(): Promise<void> {
     }
 
     const agentCommand: CommandResult = profile.kind === 'llxprt'
-      ? await runCommand('llxprt', 'llxprt', ['--profile-load', profile.name, '--yolo', '--prompt', prompt], {
+      ? await runCommand('llxprt', 'llxprt', ['--profile-load', profile.name, '--yolo', '--prompt', modelInstruction], {
           cwd: workspaceCopy
         })
-      : await runCommand('codex', 'codex', ['exec', '--dangerously-bypass-approvals-and-sandbox', '--skip-git-repo-check', prompt], {
+      : await runCommand('codex', 'codex', ['exec', '--dangerously-bypass-approvals-and-sandbox', '--skip-git-repo-check', modelInstruction], {
           cwd: workspaceCopy
         });
     commandResults.push(agentCommand);
@@ -313,7 +315,7 @@ async function main(): Promise<void> {
 
   const summaryPath = path.join(runResultsDir, 'summary.json');
   await writeFile(summaryPath, JSON.stringify(results, null, 2), 'utf8');
-  console.log(`\nEvaluation complete. Summary written to ${path.relative(rootDir, summaryPath)}`);
+  console.log(`\\nEvaluation complete. Summary written to ${path.relative(rootDir, summaryPath)}`);
 }
 
 main().catch((error) => {
