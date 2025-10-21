@@ -1,0 +1,22 @@
+[
+  {
+    "taskId": "email-validation",
+    "passed": true
+  },
+  {
+    "taskId": "us-phone-validation",
+    "passed": true
+  },
+  {
+    "taskId": "argentina-phone-validation",
+    "passed": false
+  },
+  {
+    "taskId": "name-validation",
+    "passed": true
+  },
+  {
+    "taskId": "credit-card-validation",
+    "passed": true
+  }
+]
