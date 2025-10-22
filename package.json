@@ -4,12 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "eval:base64": "tsx evals/run-evals.ts --eval BASE64_FIX",
-    "eval:pagination": "tsx evals/run-evals.ts --eval PAGINATION", 
-    "eval:report": "tsx evals/run-evals.ts --eval REPORT_BUILDER",
-    "eval:form": "tsx evals/run-evals.ts --eval FORM_CAPTURE",
-    "eval:regex": "tsx evals/run-evals.ts --eval REGEX_CHALLENGE",
-    "eval:react": "tsx evals/run-evals.ts --eval REACT_EVALUATION",
+    "eval:base64": "tsx evals/run-evals.ts --eval base64-fix",
+    "eval:pagination": "tsx evals/run-evals.ts --eval pagination", 
+    "eval:report": "tsx evals/run-evals.ts --eval report-builder",
+    "eval:form": "tsx evals/run-evals.ts --eval form-capture",
+    "eval:regex": "tsx evals/run-evals.ts --eval regex-challenge",
+    "eval:react": "tsx evals/run-evals.ts --eval react-evaluation",
     "eval:all": "tsx evals/run-evals.ts --eval ALL"
   },
   "devDependencies": {
