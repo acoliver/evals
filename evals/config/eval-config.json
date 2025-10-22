@@ -12,7 +12,7 @@
       "grading": "${EVAL_ROOT}/grading/form-capture",
       "prompt": "form-capture.md",
       "buildSteps": ["workspace-install", "lint", "test:public", "typecheck", "build"],
-      "gradeSteps": ["workspace-install", "typecheck", "test:hidden"]
+      "gradeSteps": ["workspace-install", "workspace-install-subdir", "workspace-build-subdir", "typecheck", "test:hidden"]
     },
     "pagination": {
       "workspace": "${EVAL_ROOT}/problems/pagination/workspace",
@@ -40,7 +40,7 @@
       "grading": "${EVAL_ROOT}/grading/report-builder",
       "prompt": "report-builder.md",
       "buildSteps": ["workspace-install", "typecheck", "lint", "test:public", "build"],
-      "gradeSteps": ["workspace-install", "typecheck", "test:hidden"]
+      "gradeSteps": ["workspace-install", "workspace-install-subdir", "workspace-build-subdir", "typecheck", "test:hidden"]
     }
   }
 }
