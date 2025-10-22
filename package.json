@@ -4,17 +4,21 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "eval:base64": "tsx evals/runBase64Fix.ts",
-    "eval:pagination": "tsx evals/runPagination.ts",
-    "eval:report": "tsx evals/runReportBuilder.ts",
-    "eval:form": "tsx evals/runFormCapture.ts",
-    "eval:regex": "tsx evals/runRegexChallenge.ts",
-    "eval:react": "tsx evals/runReact.ts",
-    "eval:all": "npm run eval:base64 && npm run eval:pagination && npm run eval:report && npm run eval:form && npm run eval:regex && npm run eval:react"
+    "eval:base64": "tsx evals/run-evals.ts --eval BASE64_FIX",
+    "eval:pagination": "tsx evals/run-evals.ts --eval PAGINATION", 
+    "eval:report": "tsx evals/run-evals.ts --eval REPORT_BUILDER",
+    "eval:form": "tsx evals/run-evals.ts --eval FORM_CAPTURE",
+    "eval:regex": "tsx evals/run-evals.ts --eval REGEX_CHALLENGE",
+    "eval:react": "tsx evals/run-evals.ts --eval REACT_EVALUATION",
+    "eval:all": "tsx evals/run-evals.ts --eval ALL"
   },
   "devDependencies": {
     "@types/node": "^20.12.7",
     "tsx": "^4.10.2",
     "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "@types/uuid": "^10.0.0",
+    "uuid": "^13.0.0"
   }
 }

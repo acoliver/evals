@@ -1,15 +1,15 @@
 [
   {
     "taskId": "prefixed-words",
-    "passed": true
+    "passed": false
   },
   {
     "taskId": "embedded-token",
-    "passed": true
+    "passed": false
   },
   {
     "taskId": "strong-password",
-    "passed": true
+    "passed": false
   },
   {
     "taskId": "ipv6-detection",

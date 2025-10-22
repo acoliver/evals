@@ -1,0 +1,190 @@
+/**
+ * Capitalize the first character of each sentence.
+ * Handles sentence boundaries with .?! spacing rules, preserves abbreviations when possible.
+ */
+export function capitalizeSentences(text: string): string {
+  if (!text || typeof text !== 'string') {
+    return text;
+  }
+
+  // Common abbreviations to help preserve them during sentence splitting
+  const abbreviations = /\b(?:Mr|Mrs|Ms|Dr|Prof|Sr|Jr|St|Ave|Blvd|Rd|Inc|Ltd|Corp|etc|e\.g|i\.e|vs|approx|approx|No|vol|fig|tab|p|pp|ch|sec|al|et al|cf|ibid|id|op cit|viz|PS|PPT|HTML|CSS|JS|API|URL|HTTP|HTTPS|JSON|XML|SQL|CSV|PDF|JPEG|JPG|PNG|GIF|MP3|MP4|AVI|MOV|ZIP|RAR|TAR|GZ|EXE|DLL|SYS|INI|CFG|LOG|TMP|TEMP|VAR|ENV|PATH|HOME|USER|PWD|CD|LS|DIR|RM|CP|MV|CAT|GREP|FIND|SED|AWK|PERL|PYTHON|JAVA|C\+\+|C#|PHP|ASP|JSP|CGI|PL|RB|GO|RS|KT|SWIFT|OBJ|C|H|CPP|HPP|CC|CXX|HXX|MD|TXT|DOC|DOCX|XLS|XLSX|PPT|PPTX|PDF|RTF|ODT|ODS|ODP|CSV|TSV|JSON|XML|HTML|CSS|JS|TS|SQL|DB|DBMS|RDBMS|NoSQL|SQL|MySQL|PostgreSQL|SQLite|Oracle|MSSQL|Redis|MongoDB|Cassandra|Neo4j|Elasticsearch|Solr|Lucene|Apache|Nginx|IIS|Tomcat|Jetty|Netty|Spring|Django|Flask|Rails|Express|React|Vue|Angular|jQuery|Bootstrap|Tailwind|SASS|LESS|Webpack|Vite|Rollup|Parcel|Babel|ESLint|Prettier|Jest|Mocha|Chai|Selenium|Cypress|Playwright|Git|SVN|Mercurial|Docker|Kubernetes|CI|CD|DevOps|AWS|Azure|GCP|Firebase|Heroku|Vercel|Netlify|GitHub|GitLab|Bitbucket|Jira|Trello|Slack|Teams|Zoom|Skype|WhatsApp|Telegram|Signal|Discord|Twitter|Facebook|Instagram|LinkedIn|YouTube|TikTok|Snapchat|Pinterest|Reddit|Stack Overflow|Medium|Quora|Wikipedia|Google|Bing|Yahoo|DuckDuckGo|Safari|Chrome|Firefox|Edge|Opera|Brave|Tor|VPN|Proxy|DNS|IP|TCP|UDP|HTTP|HTTPS|FTP|SFTP|SSH|SSL|TLS|RSA|AES|DES|SHA|MD5|Base64|Unicode|UTF-8|ASCII|ANSI|ISO|IEEE|W3C|RFC|REST|SOAP|GraphQL|Webhook|API|SDK|IDE|CLI|GUI|UI|UX|AI|ML|DL|NLP|CV|IoT|AR|VR|MR|XR|5G|4G|3G|2G|LTE|Wi-Fi|Bluetooth|NFC|GPS|QR|Barcode|RFID|Biometrics|2FA|MFA|OAuth|JWT|Token|Session|Cookie|Cache|CDN|Load Balancer|Firewall|Antivirus|Malware|Spyware|Ransomware|Phishing|Spam|Hack|Crack|Exploit|Vulnerability|Patch|Update|Backup|Recovery|Migration|Deployment|Testing|Debugging|Profiling|Optimization|Refactoring|Documentation|Requirements|Analysis|Design|Architecture|Pattern|Algorithm|Data Structure|Complexity|Performance|Scalability|Reliability|Availability|Security|Privacy|Compliance|Audit|Monitoring|Logging|Alerting|Metrics|Dashboard|Analytics|Reporting|Visualization|Chart|Graph|Map|Table|Form|Input|Output|Validation|Sanitization|Escaping|Encoding|Decoding|Encryption|Decryption|Hashing|Salting|Password|Authentication|Authorization|Permission|Role|Group|User|Account|Profile|Settings|Preferences|Configuration|Environment|Development|Staging|Production|Testing|QA|UAT|Beta|Alpha|Release|Version|Changelog|Roadmap|Sprint|Agile|Scrum|Kanban|Waterfall|Lean|Six Sigma|ITIL|COBIT|SOX|GDPR|CCPA|HIPAA|PCI|DSS|ISO|SOC|Penetration|Vulnerability|Assessment|Risk|Management|Governance|Strategy|Planning|Execution|Delivery|Quality|Excellence|Innovation|Transformation|Digital|Cloud|Native|Microservices|Monolith|Serverless|FaaS|BaaS|PaaS|SaaS|IaaS|DaaS|CaaS|MaaS|XaaS|B2B|B2C|B2G|B2E|C2C|C2B|G2C|G2B|E2E|P2P|O2O|ROI|KPI|SLA|SLO|SLI|MTTR|MTTF|MTBF|TTFB|FCP|LCP|CLS|FID|INP|CWV|SEO|SEM|PPC|CTR|CPC|CPM|CPL|CPA|ROAS|CAC|LTV|Churn|Retention|Engagement|Conversion|Funnel|Journey|Persona|Segment|Target|Audience|Demographics|Psychographics|Behavioral|Geographic|Temporal|Contextual|Personalization|Customization|Localization|Internationalization|Globalization|Multilingual|Accessibility|WCAG|A11y|Responsive|Adaptive|Mobile|Desktop|Tablet|Smartphone|Wearable|IoT|Edge|Fog|Cloud|Hybrid|Multi|Public|Private|On-premise|Colocation|Managed|Self-hosted|Open|Source|Commercial|Freemium|Subscription|License|Perpetual|Trial|Demo|POC|MVP|Prototype|Mockup|Wireframe|Storyboard|User|Flow|Journey|Map|Empathy|Pain|Point|Solution|Value|Proposition|Unique|Selling|Differentiator|Competitive|Advantage|SWOT|PESTLE|PORTER|BCG|Ansoff|SMART|KRA|KPI|OKR|MBO|360|Feedback|Review|Appraisal|Coaching|Mentoring|Training|Certification|Skill|Competency|Framework|Methodology|Process|Procedure|Policy|Standard|Guideline|Best|Practice|Lesson|Learned|Root|Cause|Analysis|Fishbone|5|Why|Pareto|Ishikawa|Control|Chart|Histogram|Scatter|Plot|Box|Whisker|Heat|Map|Tree|Map|Sankey|Gantt|PERT|Critical|Path|Milestone|Dependency|Resource|Allocation|Budget|Forecast|Cost|Benefit|ROI|NPV|IRR|Payback|Break|Even|Margin|Markup|Discount|Tax|VAT|GST|Sales|Income|Revenue|Profit|Loss|EBITDA|Cash|Flow|Balance|Sheet|Income|Statement|Trial|Balance|Journal|Ledger|Accounting|Bookkeeping|Payroll|Invoice|Receipt|Purchase|Order|Contract|Agreement|Terms|Conditions|Service|Level|Agreement|Non|Disclosure|Intellectual|Property|Patent|Trademark|Copyright|License|Royalty|Franchise|Joint|Venture|Partnership|Merger|Acquisition|Due|Diligence|Valuation|Appraisal|Audit|Compliance|Regulator|Legal|Law|Court|Litigation|Arbitration|Mediation|Negotiation|Contract|Tender|Bid|Proposal|Quote|Estimate|Scope|Deliverable|Milestone|Timeline|Schedule|Deadline|Critical|Path|Dependency|Risk|Issue|Assumption|Constraint|Stakeholder|Sponsor|Client|Customer|User|End|Vendor|Supplier|Partner|Team|Member|Lead|Manager|Director|VP|CXO|CEO|CTO|CFO|CIO|CISO|CMO|COO|CRO|CPO|CDO|CLO|CHRO|CAO|CSO|CWO|CTO|CIO|CFO|CEO|President|Vice|President|Director|Manager|Supervisor|Team|Lead|Senior|Junior|Intern|Contractor|Consultant|Advisor|Analyst|Developer|Designer|Tester|QA|DevOps|SRE|DBA|Administrator|Support|Help|Desk|Service|Desk|Call|Center|Sales|Marketing|HR|Finance|Accounting|Legal|Operations|IT|Engineering|R&D|Product|Project|Program|Portfolio|PMO|Scrum|Master|Product|Owner|Business|Analyst|System|Architect|Technical|Architect|Solution|Architect|Enterprise|Architect|Data|Architect|Cloud|Architect|Security|Architect|Network|Architect|Software|Architect|Hardware|Architect|UI|UX|Designer|Graphic|Designer|Web|Designer|Mobile|Designer|Game|Designer|Fashion|Designer|Interior|Designer|Industrial|Designer|UX|Researcher|Product|Designer|Brand|Designer|Visual|Designer|Motion|Designer|3D|Designer|CAD|Designer|Technical|Writer|Content|Writer|Copy|Writer|UX|Writer|Technical|Writer|Documentation|Specialist|Instructional|Designer|Training|Specialist|Learning|Developer|Curriculum|Designer|eLearning|Developer|LMS|Administrator|Knowledge|Manager|Information|Archivist|Records|Manager|Compliance|Officer|Risk|Manager|Quality|Manager|Process|Manager|Continuous|Improvement|Manager|Change|Manager|Transformation|Manager|Innovation|Manager|R&D|Manager|Research|Manager|Development|Manager|Engineering|Manager|Software|Manager|IT|Manager|Infrastructure|Manager|Cloud|Manager|Security|Manager|Network|Manager|Database|Manager|Data|Manager|Analytics|Manager|Business|Intelligence|Manager|Data|Science|Manager|Machine|Learning|Manager|AI|Manager|Digital|Manager|Marketing|Manager|Product|Marketing|Manager|Content|Marketing|Manager|Social|Media|Manager|SEO|SEM|Manager|Email|Marketing|Manager|Growth|Manager|Conversion|Manager|Retention|Manager|Customer|Success|Manager|Account|Manager|Sales|Manager|Business|Development|Manager|Partnership|Manager|Channel|Manager|Alliance|Manager|Strategic|Alliance|Manager|Field|Marketing|Manager|Event|Marketing|Manager|Brand|Manager|Communications|Manager|Public|Relations|Manager|Investor|Relations|Manager|Internal|Communications|Manager|Corporate|Communications|Manager|Crisis|Communications|Manager|Reputation|Manager|HR|Manager|Talent|Manager|Recruiting|Manager|Sourcing|Manager|TA|Manager|Acquisition|Manager|Onboarding|Manager|Offboarding|Manager|Learning|Manager|Development|Manager|Performance|Manager|Compensation|Manager|Benefits|Manager|HRIS|Manager|Payroll|Manager|Employee|Relations|Manager|Labor|Relations|Manager|Diversity|Inclusion|Manager|Culture|Manager|Engagement|Manager|Wellness|Manager|Safety|Manager|Facilities|Manager|Office|Manager|Admin|Manager|Executive|Assistant|Legal|Counsel|Compliance|Manager|Audit|Manager|Tax|Manager|Treasury|Manager|FP&A|Manager|Budget|Manager|Forecasting|Manager|Reporting|Manager|GL|Manager|AR|Manager|AP|Manager|Procurement|Manager|Supply|Chain|Manager|Logistics|Manager|Inventory|Manager|Warehouse|Manager|Distribution|Manager|Operations|Manager|Manufacturing|Manager|Production|Manager|Quality|Control|Manager|Quality|Assurance|Manager|Maintenance|Manager|Facility|Manager|Plant|Manager|Site|Manager|Construction|Manager|Real|Estate|Manager|Property|Manager|Asset|Manager|Capital|Projects|Manager|Project|Manager|Program|Manager|Portfolio|Manager|PMO|Manager|Scrum|Master|Agile|Coach|Product|Owner|Business|Analyst|System|Analyst|Data|Analyst|Financial|Analyst|Market|Analyst|Research|Analyst|Policy|Analyst|Requirements|Analyst|Test|Analyst|Performance|Analyst|Security|Analyst|Threat|Analyst|Vulnerability|Analyst|Malware|Analyst|Intelligence|Analyst|Fraud|Analyst|Risk|Analyst|Credit|Analyst|Investment|Analyst|M&A|Analyst|Valuation|Analyst|Budget|Analyst|Cost|Analyst|Pricing|Analyst|Revenue|Analyst|Profit|Analyst|Margin|Analyst|KPI|Analyst|Metrics|Analyst|Dashboard|Analyst|Reporting|AnalystVisualization|Analyst|Data|Scientist|Machine|Learning|Engineer|AI|Engineer|Deep|Learning|Engineer|NLP|Engineer|Computer|Vision|Engineer|Robotics|Engineer|IoT|Engineer|Edge|Computing|Engineer|Cloud|Engineer|DevOps|Engineer|SRE|Engineer|Platform|Engineer|Infrastructure|Engineer|Site|Reliability|Engineer|Network|Engineer|Security|Engineer|Cybersecurity|Engineer|Information|Security|Engineer|Application|Security|Engineer|Cloud|Security|Engineer|Network|Security|Engineer|Data|Security|Engineer|Endpoint|Security|Engineer|Mobile|Security|Engineer|Web|Security|Engineer|Software|Engineer|Full|Stack|Engineer|Frontend|Engineer|Backend|Engineer|Backend|Web|Engineer|API|Engineer|Microservices|Engineer|Distributed|Systems|Engineer|Systems|Engineer|Embedded|Engineer|Firmware|Engineer|Hardware|Engineer|Digital|Logic|Engineer|Analog|Engineer|RF|Engineer|Signal|Processing|Engineer|Computer|Engineer|Controls|Engineer|Automation|Engineer|Test|Engineer|QA|Engineer|Quality|Engineer|Validation|Engineer|Verification|Engineer|Performance|Engineer|Load|Engineer|Stress|Engineer|Scalability|Engineer|Reliability|Engineer|Availability|Engineer|Resilience|Engineer|Disaster|Recovery|EngineerBusiness|Continuity|Engineer|Capacity|Planning|Engineer|Monitoring|Engineer|Observability|Engineer|Telemetry|Engineer|Metrics|Engineer|Alerting|Engineer|Incident|Response|Engineer|Problem|Management|Engineer|Change|Management|Engineer|Release|Management|Engineer|Deployment|Engineer|CI|CD|Engineer|Build|Engineer|Configuration|Management|Engineer|Version|Control|Engineer|Package|Management|Engineer|Dependency|Management|Engineer|Code|Quality|Engineer|Code|Review|Engineer|Static|Analysis|Engineer|Dynamic|Analysis|Engineer|Application|Monitoring|Engineer|Infrastructure|Monitoring|Engineer|Network|Monitoring|Engineer|Security|Monitoring|Engineer|Performance|Monitoring|Engineer|User|Experience|Monitoring|Engineer|Error|Tracking|Engineer|Log|Management|Engineer|Event|Management|Engineer|Ticketing|Engineer|Service|Desk|Engineer|Technical|Support|Engineer|Customer|Support|Engineer|Help|Desk|Engineer|Level|1|Support|Engineer|Level|2|Support|Engineer|Level|3|Support|Engineer|Escalation|Engineer|Technical|Support|Specialist|Customer|Success|Specialist|Account|Manager|Technical|Account|Manager|Solutions|Architect|Sales|Engineer|Presales|Engineer|Consultant|Implementation|Specialist|Onboarding|Specialist|Training|Specialist|Documentation|Specialist|Knowledge|Base|Specialist|Community|Manager|Developer|Relations|Program|Manager|Developer|Advocate|Technical|Evangelist|Brand|Ambassador|Super|User|Power|User|Beta|Tester|Alpha|Tester|Early|Adopter|Innovation|Champion|Change|Agent|Digital|Champion|Technology|Champion|Security|Champion|Wellness|Champion|Mentor|Coach|Trainer|Instructor|Educator|Academic|Researcher|Professor|Lecturer|Teacher|Student|Intern|Apprentice|Trainee|New|Hire|Contractor|Freelancer|Consultant|Advisor|Board|Member|Investor|Shareholder|Stakeholder|Customer|Client|User|End|User|Subscriber|Member|Guest|Visitor|Partner|Vendor|Supplier|Distributor|Reseller|Affiliate|Referral|Advocate|Champion|Promoter|Influencer|Ambassador|Reviewer|Tester|Validator|Auditor|Inspector|Examiner|Assessor|Evaluator|Analyst|Researcher|Investigator|Detective|Agent|Officer|Representative|Agent|Broker|Dealer|Trader|Merchant|Vendor|Seller|Buyer|Consumer|Purchaser|Shopper|Browser|Surfer|User|Operator|Administrator|Manager|Director|Executive|Officer|Staff|Employee|Worker|Personnel|Team|Group|Department|Division|Unit|Section|Branch|Office|Location|Site|Facility|Building|Campus|Complex|Property|Real|Estate|Land|Asset|Resource|Tool|Equipment|System|Platform|Application|Software|Service|Product|Solution|Package|Bundle|Suite|Series|Collection|Set|Group|Family|Category|Class|Type|Kind|Sort|Variety|Style|Format|Version|Release|Edition|Issue|Number|ID|Code|Key|Token|Password|Username|Email|Address|Phone|Number|Contact|Information|Data|Content|Text|Document|File|Record|Entry|Item|Element|Component|Part|Piece|Feature|Function|Capability|Ability|Skill|Talent|Gift|Strength|Weakness|Opportunity|Threat|Risk|Issue|Problem|Challenge|Obstacle|Barrier|Limitation|Constraint|Requirement|Specification|Standard|Rule|Policy|Procedure|Process|Workflow|Method|Technique|Approach|Strategy|Plan|Goal|Objective|Target|Purpose|Mission|Vision|Value|Benefit|Advantage|Profit|Gain|Revenue|Income|Earning|Return|Investment|Cost|Expense|Budget|Price|Rate|Fee|Charge|Payment|Transaction|Sale|Purchase|Order|Contract|Agreement|Deal|Offer|Proposal|Quote|Estimate|Bid|Tender|Application|Request|Inquiry|Question|Answer|Response|Reply|Feedback|Comment|Review|Rating|Score|Grade|Rank|Position|Status|State|Condition|Situation|Context|Environment|Setting|Scene|Background|History|Story|Narrative|Description|Explanation|Definition|Meaning|Interpretation|Understanding|Knowledge|Awareness|Consciousness|Perception|Insight|Idea|Concept|Thought|Opinion|Belief|View|Perspective|Angle|Aspect|Dimension|Factor|Element|Component|Component|Part|Piece|Item|Object|Entity|Thing|Stuff|Material|Substance|Matter|Energy|Force|Power|Strength|Intensity|Magnitude|Size|Scale|Scope|Range|Extent|Degree|Level|Quality|Quantity|Amount|Number|Count|Total|Sum|Average|Mean|Median|Mode|Maximum|Minimum|Range|Variance|Deviation|Standard|Deviation|Correlation|Causation|Relationship|Connection|Link|Bond|Tie|Association|Affiliation|Membership|Partnership|Collaboration|Cooperation|Coordination|Integration|Combination|Union|Merger|Fusion|Synthesis|Blend|Mixture|Compound|Composition|Structure|Architecture|Design|Layout|Format|Pattern|Template|Model|Framework|Schema|Blueprint|Plan|Diagram|Chart|Graph|Map|Visualization|Image|Picture|Photo|Illustration|Drawing|Sketch|Art|Design|Creative|Original|Unique|Special|Exceptional|Outstanding|Excellent|Superior|Premium|Luxury|High|End|Professional|Commercial|Industrial|Consumer|Personal|Individual|Private|Public|Social|Community|Global|International|Local|Regional|National|Domestic|Foreign|External|Internal|Central|Local|Remote|Distributed|Decentralized|Autonomous|Independent|Connected|Integrated|Interconnected|Networked|Linked|Associated|Related|Similar|Comparable|Equivalent|Equal|Same|Identical|Duplicate|Copy|Version|Variation|Modification|Change|Update|Revision|Correction|Improvement|Enhancement|Upgrade|Advancement|Progress|Development|Growth|Expansion|Increase|Rise|Decline|Decrease|Reduction|Cut|Loss|Failure|Success|Achievement|Accomplishment|Completion|Finish|End|Start|Beginning|Launch|Introduction|Presentation|Demonstration|Show|Display|Exhibition|Performance|Event|Occasion|Happening|Activity|Task|Job|Work|Assignment|Project|Initiative|Program|Campaign|Operation|Action|Step|Measure|Procedure|Protocol|Standard|Guideline|Rule|Regulation|Law|Statute|Act|Bill|Policy|Principle|Value|Ethic|Moral|Belief|Philosophy|Culture|Tradition|Custom|Practice|Habit|Routine|Pattern|Behavior|Conduct|Activity|Action|Deed|Performance|Result|Outcome|Effect|Impact|Influence|Consequence|Implication|Repercussion|Aftermath|Legacy|Heritage|History|Past|Present|Future|Time|Moment|Instant|Second|Minute|Hour|Day|Week|Month|Year|Decade|Century|Millennium|Era|Period|Age|Epoch|Generation|Life|Lifetime|Existence|Being|Entity|Creature|Human|Person|Individual|Man|Woman|Child|Adult|Senior|Youth|Teen|Baby|Infant|Toddler|Kid|Boy|Girl|Son|Daughter|Mother|Father|Parent|Child|Sibling|Brother|Sister|Family|Relative|Kin|Friend|Acquaintance|Colleague|Coworker|Teammate|Partner|Spouse|Husband|Wife|Couple|Marriage|Wedding|Divorce|Separation|Relationship|Dating|Love|Romance|Affection|Emotion|Feeling|Mood|Attitude|Mindset|Perspective|Outlook|View|Opinion|Belief|Faith|Trust|Confidence|Doubt|Uncertainty|Fear|Anxiety|Stress|Worry|Concern|Care|Attention|Focus|Concentration|Memory|Recall|Remember|Forget|Learn|Study|Teach|Educate|Train|Develop|Improve|Enhance|Upgrade|Advance|Progress|Succeed|Fail|Win|Lose|Compete|Challenge|Strive|Effort|Work|Labor|Toil|Effort|Energy|Power|Strength|Force|Pressure|Stress|Tension|Relaxation|Comfort|Ease|Simplicity|Complexity|Difficulty|Challenge|Problem|Solution|Answer|Question|Mystery|Secret|Truth|Reality|Fact|Information|Data|Knowledge|Wisdom|Intelligence|Smart|Clever|Brilliant|Genius|Expert|Master|Professional|Specialist|Consultant|Advisor|Guide|Leader|Manager|Director|Executive|Boss|Chief|Head|Captain|Commander|General|Colonel|Major|Captain|Lieutenant|Sergeant|Corporal|Private|Soldier|Officer|Sailor|Marine|Airman|Pilot|Driver|Operator|Technician|Mechanic|Engineer|Scientist|Researcher|Analyst|Artist|Writer|Author|Poet|Novelist|Journalist|Reporter|Editor|Publisher|Photographer|Designer|Architect|Builder|Contractor|Carpenter|Plumber|Electrician|Painter|Cleaner|Cook|Chef|Baker|Waiter|Waitress|Server|Bartender|Barber|Hairdresser|Beautician|Doctor|Physician|Surgeon|Nurse|Dentist|Veterinarian|Pharmacist|Therapist|Psychiatrist|Psychologist|Counselor|Social|Worker|Teacher|Professor|Student|Principal|Dean|President|Vice|President|Provost|Chancellor|Librarian|Accountant|Bookkeeper|Cashier|Teller|Banker|Lawyer|Attorney|Judge|Magistrate|Prosecutor|Defender|Detective|Police|Officer|Sheriff|Marshal|Guard|Security|Firefighter|Paramedic|EMT|Soldier|Sailor|Marine|Airman|Pilot|Driver|Operator|Technician|Mechanic|Engineer|Scientist|Researcher|Analyst|Artist|Writer|Author|Poet|Novelist|Journalist|Reporter|Editor|Publisher|Photographer|Designer|Architect|Builder|Contractor|Carpenter|Plumber|Electrician|Painter|Cleaner|Cook|Chef|Baker|Waiter|Waitress|Server|Bartender|Barber|Hairdresser|Beautician|Doctor|Physician|Surgeon|Nurse|Dentist|Veterinarian|Pharmacist|Therapist|Psychiatrist|Psychologist|Counselor|Social|Worker|Teacher|Professor|Student|Principal|Dean|President|Vice|President|Provost|Chancellor|Librarian|Accountant|Bookkeeper|Cashier|Teller|Banker|Lawyer|Attorney|Judge|Magistrate|Prosecutor|Defender|Detective|Police|Officer|Sheriff|Marshal|Guard|Security|Firefighter|Paramedic)\b/gi;
+
+  let result = text;
+
+  // First, protect abbreviations by temporarily replacing them
+  const protectedTerms: { [key: string]: string } = {};
+  let abbrCounter = 0;
+  
+  result = result.replace(abbreviations, (match) => {
+    const placeholder = `__ABBR_${abbrCounter++}__`;
+    protectedTerms[placeholder] = match;
+    return placeholder;
+  });
+
+  // Split into sentences using . ? ! as sentence endings
+  const sentences = result.split(/([.?!]+)/);
+  
+  let capitalizedText = '';
+  let capitalizeNext = true; // First sentence should always be capitalized
+  
+  for (let i = 0; i < sentences.length; i++) {
+    const part = sentences[i];
+    
+    if (part.match(/[.?!]+/)) {
+      // This is a sentence ending punctuation
+      capitalizedText += part;
+      capitalizeNext = true;
+    } else {
+      // This is sentence content
+      if (capitalizeNext && part.trim().length > 0) {
+        // Capitalize the first letter and add proper spacing
+        const trimmed = part.trim();
+        if (trimmed.length > 0) {
+          // Add space before sentence if it's not the first sentence
+          if (i > 0 && capitalizedText.length > 0 && !capitalizedText.match(/[.?!]\s*$/)) {
+            capitalizedText += ' ';
+          }
+          capitalizedText += trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+        }
+      } else {
+        // Add content as-is or with proper spacing
+        if (i > 0 && !capitalizeNext && !part.match(/^\s+/)) {
+          capitalizedText += ' ';
+        }
+        capitalizedText += part;
+      }
+      capitalizeNext = false;
+    }
+  }
+  
+  // Restore protected abbreviations
+  for (const [placeholder, original] of Object.entries(protectedTerms)) {
+    capitalizedText = capitalizedText.replace(placeholder, original);
+  }
+  
+  // Clean up extra spaces and ensure single space between sentence parts
+  capitalizedText = capitalizedText.replace(/\s+/g, ' ');
+  
+  // Handle case where sentence endings with no space get properly spaced
+  capitalizedText = capitalizedText.replace(/([.?!])([A-Za-z])/g, '$1 $2');
+  
+  return capitalizedText.trim();
+}
+
+/**
+ * Extract all URLs from text, removing trailing punctuation.
+ * Returns array of matched URL strings.
+ */
+export function extractUrls(text: string): string[] {
+  if (!text || typeof text !== 'string') {
+    return [];
+  }
+
+  // URL regex pattern - matches http, https, ftp, ftps, www domains
+  // Captures the URL while excluding trailing punctuation
+  const urlRegex = /(?:https?:\/\/|ftp:\/\/|ftps:\/\/|www\.)[^\s<>"']+(?=[,.!?;:)\]\}"]?\s|(?:[,.!?;:)\]\}"]*$))/gi;
+  
+  const matches = text.match(urlRegex);
+  
+  if (!matches) {
+    return [];
+  }
+
+  // Clean up each URL by removing trailing punctuation
+  return matches.map(url => {
+    // Remove trailing punctuation marks that are not part of the URL
+    return url.replace(/[,.!?;:)\]\}]+$/g, '');
+  }).filter(url => url.length > 0);
+}
+
+/**
+ * Force all http URLs to https while leaving already secure URLs untouched.
+ */
+export function enforceHttps(text: string): string {
+  if (!text || typeof text !== 'string') {
+    return text;
+  }
+
+  // Replace http:// with https://, but don't touch existing https://
+  return text.replace(/http:\/\//g, 'https://');
+}
+
+/**
+ * Rewrite http://example.com/... URLs:
+ * - Always upgrade scheme to https://
+ * - When path begins with /docs/, rewrite host to docs.example.com
+ * - Skip host rewrite for dynamic hints (cgi-bin, query strings, legacy extensions)
+ * - Preserve nested paths like /docs/api/v1
+ */
+export function rewriteDocsUrls(text: string): string {
+  if (!text || typeof text !== 'string') {
+    return text;
+  }
+
+  // Pattern to match http://example.com/... URLs
+  const urlRegex = /(http:\/\/)([a-zA-Z0-9.-]+example\.com)(\/[^\s]*)?/g;
+
+  return text.replace(urlRegex, (match, protocol, domain, path = '') => {
+    // Always upgrade http to https
+    let newUrl = 'https://' + domain + path;
+
+    // Check if this is eligible for docs rewrite
+    // Path must start with /docs/
+    // And must NOT contain dynamic hints or legacy extensions
+    if (path.startsWith('/docs/')) {
+      // Check for excluded patterns
+      const hasDynamicHints = /\/cgi-bin|(\?|&|=)|\.(jsp|php|asp|aspx|do|cgi|pl|py)/.test(path);
+      
+      if (!hasDynamicHints) {
+        // Rewrite domain to docs.example.com
+        newUrl = 'https://docs.example.com' + path;
+      }
+    }
+
+    return newUrl;
+  });
+}
+
+/**
+ * Extract the four-digit year from mm/dd/yyyy format.
+ * Returns 'N/A' when format is invalid or month/day are invalid.
+ */
+export function extractYear(value: string): string {
+  if (!value || typeof value !== 'string') {
+    return 'N/A';
+  }
+
+  // Match mm/dd/yyyy format exactly
+  const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+  const match = value.trim().match(dateRegex);
+  
+  if (!match) {
+    return 'N/A';
+  }
+
+  const [, monthStr, dayStr, yearStr] = match;
+  const month = parseInt(monthStr, 10);
+  const day = parseInt(dayStr, 10);
+
+  // Validate month (1-12)
+  if (month < 1 || month > 12) {
+    return 'N/A';
+  }
+
+  // Validate day based on month
+  const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  
+  // Handle leap years for February
+  const year parseInt, 10);
+  const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+  const febDays = isLeapYear ? 29 : 28;
+
+  const maxDays = month === 2 ? febDays : daysInMonth[month - 1];
+  
+  if (day < 1 || day > maxDays) {
+    return 'N/A';
+  }
+
+  return yearStr;
+}

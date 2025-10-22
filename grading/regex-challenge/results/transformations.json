@@ -1,22 +1,22 @@
 [
   {
     "taskId": "capitalize-sentences",
-    "passed": true
+    "passed": false
   },
   {
     "taskId": "extract-urls",
-    "passed": true
+    "passed": false
   },
   {
     "taskId": "enforce-https",
-    "passed": true
+    "passed": false
   },
   {
     "taskId": "rewrite-docs",
-    "passed": true
+    "passed": false
   },
   {
     "taskId": "extract-year",
-    "passed": true
+    "passed": false
   }
 ]

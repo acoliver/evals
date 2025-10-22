@@ -1,11 +1,11 @@
 [
   {
     "taskId": "email-validation",
-    "passed": true
+    "passed": false
   },
   {
     "taskId": "us-phone-validation",
-    "passed": true
+    "passed": false
   },
   {
     "taskId": "argentina-phone-validation",
@@ -13,10 +13,10 @@
   },
   {
     "taskId": "name-validation",
-    "passed": true
+    "passed": false
   },
   {
     "taskId": "credit-card-validation",
-    "passed": true
+    "passed": false
   }
 ]
