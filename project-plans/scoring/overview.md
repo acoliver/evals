@@ -30,6 +30,8 @@ Time Penalty = max(0.2, min(1.0, timeLimitMinutes / executionTimeMinutes))
 - **Over time limit**: Penalty scales inversely with execution time
 - **Maximum penalty**: 0.2x (80% reduction)
 - **Key principle**: Speed is never rewarded, only penalized when excessive
+- `executionTimeMinutes` comes exclusively from the agent CLI session  
+  (`cliResult.duration / 60_000`); build and grading time are ignored.
 
 ## Implementation Architecture
 
@@ -46,14 +48,15 @@ Time Penalty = max(0.2, min(1.0, timeLimitMinutes / executionTimeMinutes))
 5. CALL VybesScoringEngine.calculateScore()
    ├─ Read vybes config for task
    ├─ Calculate success percentage
-   │  ├─ For regex: read JSON results from tests  
-   │  └─ For others: simple pass/fail
+   │  ├─ For regex: read JSON results from the archived workspace  
+   │  └─ For others: simple pass/fail / grade step completion
+   ├─ Derive agent runtime from `cliResult.duration`
    ├─ Calculate time penalty based on complexity
    └─ Generate VybesResult with breakdown
    ↓
-6. Archive workspace with VybesScore included
+6. Append vybes block to archived `workspace/results.json`
    ↓
-7. ResultsManager.saveResults() writes JSON with vybesScore
+7. ResultsManager.saveResults() persists the combined JSON
 ```
 
 ### Configuration Strategy
@@ -90,7 +93,7 @@ Time Penalty = max(0.2, min(1.0, timeLimitMinutes / executionTimeMinutes))
 #### 2. New Components
 - **`VybesScoringEngine`**: Core scoring logic
 - **`VybesResult` interface**: Structured scoring output
-- **Enhanced result JSON**: HTML-ready data structure
+- **Enhanced result JSON**: Per-run `vybes` block stored alongside existing results (HTML formatting later)
 
 #### 3. Result Structure
 ```typescript
@@ -126,105 +129,64 @@ interface EvalResult {
 
 ## Implementation Phases
 
-### Phase 1: Core Infrastructure (Week 1)
-**Priority**: High
-**Estimated Effort**: 15-20 hours
+### Phase 1: Configuration & Instrumentation (Week 1)
+**Priority**: High • **Estimated Effort**: 15-20 hours
 
 #### Tasks
-1. **Extend Configuration System**
+1. **Extend configuration system**
    - Add vybes metadata to `eval-config.json`
-   - Update `EvaluationConfig` interface
-   - Add `getVybesConfigOrDefault()` to `EvaluationLoader`
+   - Update `EvaluationConfig`/`EvalResult` types to carry vybes options
+   - Expose `cliResult.duration` as the official agent runtime hook
 
-2. **Create Scoring Engine**
-   - Implement `VybesScoringEngine` class
-   - Implement core scoring calculations
-   - Add regex JSON result parsing logic
-
-3. **Update Interfaces**
-   - Extend `EvalResult` with `vybesScore?`
-   - Define `VybesResult` interface
-   - Update type definitions
+2. **Scoring interfaces**
+   - Define `VybesResult`
+   - Document required breakdown fields for regex and non-regex tasks
 
 #### Deliverables
-- Extended `eval-config.json` with vybes metadata for all tasks
-- `VybesScoringEngine` class with basic scoring functionality
-- Updated TypeScript interfaces
+- Updated configuration + TypeScript interfaces
+- Documented guidance on capturing CLI duration per run
 
 ### Phase 2: Runner Integration (Week 2)
-**Priority**: High  
-**Estimated Effort**: 20-25 hours
+**Priority**: High • **Estimated Effort**: 20-25 hours
 
 #### Tasks
-1. **Integrate Scoring Engine**
-   - Add `VybesScoringEngine` to `UnifiedRunner` constructor
-   - Call scoring engine in `runEvaluation()` method
-   - Handle scoring errors gracefully
+1. **Implement scoring engine**
+   - Build `VybesScoringEngine` around CLI runtime and success metrics
+   - Parse regex subtasks from archived workspace output
+   - Provide sensible defaults when data is missing
 
-2. **Update Results Management**
-   - Modify `ResultsManager.saveResults()` to include vybes data
-   - Ensure backward compatibility with existing result structure
-   - Add validation for scoring output
+2. **Wire into execution flow**
+   - Invoke the scorer inside `UnifiedRunner.runEvaluation`
+   - Append a `vybes` block to each run’s `workspace/results.json`
+   - Maintain backwards-compatible JSON structure for downstream tools
 
-3. **Regex Integration**
-   - Verify regex test JSON output format
-   - Implement detailed regex breakdown logic
-   - Add error handling for missing result files
+3. **Error handling**
+   - Gracefully skip scoring on configuration or data issues
+   - Emit structured warnings for reporting
 
 #### Deliverables
-- Fully integrated scoring in evaluation workflow
-- Enhanced result JSON with vybes scoring data
-- Comprehensive error handling
+- Scoring engine integrated with the evaluation pipeline
+- Per-run results augmented with vybes data
 
-### Phase 3: Output & Analytics (Week 3)
-**Priority**: Medium
-**Estimated Effort**: 10-15 hours
+### Phase 3: Validation & Tuning (Week 3)
+**Priority**: Medium • **Estimated Effort**: 10-15 hours
 
 #### Tasks
-1. **HTML-Ready Output Format**
-   - Design comprehensive result structure
-   - Add performance categories (efficiency, grade, etc.)
-   - Include detailed module breakdowns
+1. **Cross-task validation**
+   - Run the full suite to confirm scores across every evaluation type
+   - Spot-check complexity multipliers and time limits
 
-2. **Visual Components Prep**
-   - Add data structures for progress bars
-   - Include leaderboard data structures
-   - Add model comparison data formats
+2. **Edge-case coverage**
+   - Test missing config defaults, fast failures, timeouts, partial regex results
+   - Confirm scoring still produces output when grade steps fail
 
-3. **Historical Tracking**
-   - Implement scoring trend data
-   - Add performance metadata over time
-   - Create comparison baseline structures
+3. **Documentation & examples**
+   - Update framework docs with sample vybes output
+   - Provide example JSON snippets for consumers (HTML/reporting deferred)
 
 #### Deliverables
-- Complete HTML-ready JSON output format
-- Visualization-ready data structures
-- Historical comparison frameworks
-
-### Phase 4: Validation & Fine-tuning (Week 4)
-**Priority**: Medium
-**Estimated Effort**: 8-12 hours
-
-#### Tasks
-1. **Testing & Validation**
-   - Test scoring across all existing task types
-   - Validate time penalties and success calculations
-   - Edge case testing (missing configs, fast failures, etc.)
-
-2. **Performance Optimization**
-   - Ensure minimal impact on evaluation speed
-   - Optimize file reading for regex results
-   - Cache configuration loading
-
-3. **Documentation**
-   - Update evaluation framework documentation
-   - Create scoring system user guide
-   - Add troubleshooting guide
-
-#### Deliverables
-- Validated scoring system with comprehensive test coverage
-- Performance-optimized implementation
-- Complete documentation
+- Verified scoring outputs for all tasks
+- Updated documentation describing the new per-run `vybes` block
 
 ## Technical Considerations
 
@@ -269,7 +231,7 @@ interface EvalResult {
 ## Future Enhancements
 
 ### Short-term (Post-implementation)
-- **Dashboard Visualization**: React components for score display
+- **Dashboard / HTML reporting**: Build visualizations once scoring data is stable
 - **Model Ranking**: Leaderboard system by vybes earned
 - **Trend Analysis**: Performance tracking over time
 
@@ -297,4 +259,4 @@ interface EvalResult {
 
 The Vybes scoring system provides meaningful differentiation between model capabilities while aligning incentives with real-world development priorities. The implementation plan ensures minimal disruption to existing workflows while providing a solid foundation for advanced analytics and visualization.
 
-The four-phase approach allows for iterative development, testing, and refinement, ensuring a robust and maintainable scoring system that will scale with the growing evaluation framework.
+The three-phase approach prioritizes core scoring, safe integration, and validation now, while leaving dashboards and richer analytics as future enhancements.

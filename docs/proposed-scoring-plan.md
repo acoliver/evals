@@ -36,7 +36,10 @@ Time Penalty = max(0.2, min(1.0, timeLimitMinutes / executionTimeMinutes))
 - **Over time limit**: Penalty scales inversely with execution time
 - **Maximum penalty**: 0.2x (80% reduction)
 
-**Key principle**: Speed is never rewarded, only penalized when excessive.
+**Key principle**: Speed is never rewarded, only penalized when excessive.  
+`executionTimeMinutes` is measured directly from the agent’s CLI session  
+(`cliResult.duration / 60_000`). Install/build/grade steps are ignored so only
+model problem-solving time drives the penalty.
 
 ## Task Configuration
 
@@ -99,6 +102,11 @@ const passedSubtasks = results.filter(r => r.passed).length;
 const successPercentage = passedSubtasks / totalSubtasks;
 ```
 
+Every evaluation writes its Vybes summary into the archived run artifact  
+`outputs/<eval>-<timestamp>/<config>/workspace/results.json`. The scorer appends
+a `vybes` block there so each score stays tied to a specific model/session and
+never pollutes the repository.
+
 ## Score Examples
 
 ### Example 1: Perfect Base64 (Complexity 1)
@@ -148,25 +156,22 @@ const successPercentage = passedSubtasks / totalSubtasks;
 
 ## Implementation Steps
 
-### Phase 1: Configuration (Week 1)
-1. **Create config file**: `evals/config/vybes-config.json`
-2. **Update interfaces**: Extend `EvalResult` with vybes scoring
-3. **Add scoring engine**: Implement `VybesScoringEngine` class
+### Phase 1: Configuration & Instrumentation (Week 1)
+1. **Extend config**: Add vybes metadata to `eval-config.json`
+2. **Expose timing**: Ensure `cliResult.duration` is surfaced in `EvalResult`
+3. **Define interfaces**: Extend `EvalResult`/`EvaluationConfig` to carry vybes options
 
-### Phase 2: Integration (Week 2)  
-1. **Modify runner**: Calculate and include vybes scores in results
-2. **Update test runners**: Ensure JSON output from regex tests
-3. **Add validation**: Verify scoring works across all task types
+### Phase 2: Scoring Integration (Week 2)  
+1. **Scoring engine**: Implement `VybesScoringEngine` using CLI duration
+2. **Runner hookup**: Invoke the engine inside `UnifiedRunner.runEvaluation`
+3. **Results output**: Append a `vybes` block to each run’s archived `results.json`
+4. **Regex parsing**: Read per-run regex subtasks for partial credit, handle missing data gracefully
 
-### Phase 3: Analytics (Week 3)
-1. **Score dashboard**: Display vybes scores alongside pass/fail
-2. **Historical comparison**: Track vybes performance over time  
-3. **Model ranking**: Create model leaderboards by vybes earned
-
-### Phase 4: Fine-tuning (Week 4)
-1. **Complexity review**: Ensure task complexity ratings are accurate
-2. **Time verification**: Validate time limits are reasonable
-3. **Edge case handling**: Optimize for unusual execution patterns
+### Phase 3: Validation & Tuning (Week 3)
+1. **Cross-task testing**: Validate scoring on every evaluation type
+2. **Complexity sanity check**: Review multipliers and time limits
+3. **Edge cases**: Verify defaults for missing config, fast failures, timeouts
+4. **Docs & examples**: Update overview material with the new scoring output format
 
 ## Result Structure
 
@@ -211,6 +216,7 @@ The system easily accommodates:
 - **Hybrid scoring**: Combine vybes with other metrics
 - **Adaptive thresholds**: Adjust time limits based on real performance data
 - **Team scoring**: Aggregate vybes across team members or sessions
+- **Dashboard / HTML reporting**: Future visualization layer over per-run JSON
 
 ## Conclusion
 
