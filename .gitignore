@@ -5,3 +5,4 @@ evals/results/
 npm-debug.log*
 tmp/
 reports/
+outputs/

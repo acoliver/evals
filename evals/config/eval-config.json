@@ -1,0 +1,46 @@
+{
+  "evaluations": {
+    "base64-fix": {
+      "workspace": "${EVAL_ROOT}/problems/base64-fix/workspace",
+      "grading": "${EVAL_ROOT}/grading/base64-fix",
+      "prompt": "base64-fix.md",
+      "buildSteps": ["workspace-install", "typecheck", "lint", "test:public"],
+      "gradeSteps": ["lint", "typecheck", "test:hidden"]
+    },
+    "form-capture": {
+      "workspace": "${EVAL_ROOT}/problems/form-capture/workspace",
+      "grading": "${EVAL_ROOT}/grading/form-capture",
+      "prompt": "form-capture.md",
+      "buildSteps": ["workspace-install", "lint", "test:public", "typecheck", "build"],
+      "gradeSteps": ["workspace-install", "workspace-install-subdir", "workspace-build-subdir", "typecheck", "test:hidden"]
+    },
+    "pagination": {
+      "workspace": "${EVAL_ROOT}/problems/pagination/workspace",
+      "grading": "${EVAL_ROOT}/grading/pagination",
+      "prompt": "pagination.md",
+      "buildSteps": ["workspace-install", "typecheck", "lint", "test:public"],
+      "gradeSteps": ["lint", "typecheck", "test:hidden"]
+    },
+    "react-evaluation": {
+      "workspace": "${EVAL_ROOT}/problems/react-evaluation/workspace",
+      "grading": "${EVAL_ROOT}/grading/react-evaluation",
+      "prompt": "reactive-programming.md",
+      "buildSteps": ["workspace-install", "lint", "test:public", "typecheck", "build"],
+      "gradeSteps": ["workspace-install", "typecheck", "test:hidden"]
+    },
+    "regex-challenge": {
+      "workspace": "${EVAL_ROOT}/problems/regex-challenge/workspace",
+      "grading": "${EVAL_ROOT}/grading/regex-challenge",
+      "prompt": "regex-challenge.md",
+      "buildSteps": ["workspace-install", "lint", "test:public", "typecheck", "build"],
+      "gradeSteps": ["workspace-install", "typecheck", "test:hidden"]
+    },
+    "report-builder": {
+      "workspace": "${EVAL_ROOT}/problems/report-builder/workspace",
+      "grading": "${EVAL_ROOT}/grading/report-builder",
+      "prompt": "report-builder.md",
+      "buildSteps": ["workspace-install", "typecheck", "lint", "test:public", "build"],
+      "gradeSteps": ["workspace-install", "workspace-install-subdir", "workspace-build-subdir", "typecheck", "test:hidden"]
+    }
+  }
+}
