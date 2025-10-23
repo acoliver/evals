@@ -10,6 +10,18 @@ const workspaceRoot = path.resolve(gradingRoot, 'workspace');
 const distServer = path.join(workspaceRoot, 'dist', 'server.js');
 const dbPath = path.join(workspaceRoot, 'data', 'submissions.sqlite');
 const wasmDir = path.join(gradingRoot, 'node_modules', 'sql.js', 'dist');
+const resultsPath = path.join(workspaceRoot, 'results', 'form-capture.json');
+
+const ALL_TASKS = [
+  'form-fields-render',
+  'invalid-email-validation',
+  'submission-persists',
+  'thank-you-page',
+  'css-styling',
+  'package-integrity'
+] as const;
+
+const taskStatus = new Map<string, boolean>(ALL_TASKS.map((taskId) => [taskId, false]));
 
 let serverProcess: ReturnType<typeof spawn> | null = null;
 let port = 0;
@@ -51,6 +63,29 @@ afterAll(async () => {
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
   serverProcess = null;
+
+  if (fs.existsSync(resultsPath)) {
+    try {
+      const existing = JSON.parse(fs.readFileSync(resultsPath, 'utf8')) as Array<{
+        taskId: string;
+        passed: boolean;
+      }>;
+      for (const { taskId, passed } of existing) {
+        if (taskStatus.has(taskId) && passed) {
+          taskStatus.set(taskId, true);
+        }
+      }
+    } catch {
+      // ignore malformed existing file
+    }
+  }
+
+  fs.mkdirSync(path.dirname(resultsPath), { recursive: true });
+  const results = ALL_TASKS.map((taskId) => ({
+    taskId,
+    passed: taskStatus.get(taskId) === true
+  }));
+  fs.writeFileSync(resultsPath, JSON.stringify(results, null, 2), 'utf8');
 });
 
 describe('form capture hidden validations', () => {
@@ -74,6 +109,7 @@ describe('form capture hidden validations', () => {
       const input = $(`input[name="${name}"]`);
       expect(input.length).toBe(1);
     }
+    taskStatus.set('form-fields-render', true);
   });
 
   it('rejects invalid email and re-renders with errors', async () => {
@@ -98,9 +134,10 @@ describe('form capture hidden validations', () => {
 
     expect(res.status === 200 || res.status === 400).toBe(true);
     const html = await res.text();
-    const $ = loadHtml(html);
-    const errorText = $('.error-list').text().toLowerCase();
-    expect(errorText).toContain('email');
+   const $ = loadHtml(html);
+   const errorText = $('.error-list').text().toLowerCase();
+   expect(errorText).toContain('email');
+    taskStatus.set('invalid-email-validation', true);
   });
 
   it('accepts international postal codes and phones and stores submission', async () => {
@@ -159,6 +196,8 @@ describe('form capture hidden validations', () => {
     ).toBe(true);
     expect(lowered).toContain('identity');
     expect(lowered).toContain('stranger');
+    taskStatus.set('submission-persists', true);
+    taskStatus.set('thank-you-page', true);
   });
 
   it('has meaningful modern styling', () => {
@@ -167,5 +206,6 @@ describe('form capture hidden validations', () => {
     expect(css.length).toBeGreaterThan(120);
     expect(css).toMatch(/display:\s*(flex|grid)/i);
     expect(css.toLowerCase()).toContain('color-scheme');
+    taskStatus.set('css-styling', true);
   });
 });

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import request from 'supertest';
 import { Response } from 'cross-fetch';
@@ -7,6 +7,20 @@ import type { Database } from 'sql.js';
 import { createApp } from '@workspace/server/app';
 import { createDatabase } from '@workspace/server/db';
 import { InventoryView } from '@workspace/client/InventoryView';
+import path from 'node:path';
+import fs from 'node:fs';
+
+const workspaceRoot = path.resolve(__dirname, '..', '..', 'workspace');
+const resultsPath = path.join(workspaceRoot, 'results', 'pagination.json');
+const ALL_TASKS = [
+  'api-mid-page-request',
+  'api-final-page-handling',
+  'api-invalid-parameter-handling',
+  'client-navigation',
+  'client-alert'
+] as const;
+
+const taskStatus = new Map<string, boolean>(ALL_TASKS.map((taskId) => [taskId, false]));
 
 const BASE_URL = 'http://localhost';
 
@@ -81,6 +95,7 @@ describe('InventoryView pagination behaviour', () => {
 
     await waitFor(() => expect(screen.getByText(/Portable Charger/)).toBeInTheDocument());
     expect(nextButton).toBeDisabled();
+    taskStatus.set('client-navigation', true);
   });
 
   it('surfaces server validation errors to the user', async () => {
@@ -92,5 +107,31 @@ describe('InventoryView pagination behaviour', () => {
     fireEvent.click(prevButton);
 
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/page/i));
+    taskStatus.set('client-alert', true);
   });
+});
+
+afterAll(() => {
+  if (fs.existsSync(resultsPath)) {
+    try {
+      const existing = JSON.parse(fs.readFileSync(resultsPath, 'utf8')) as Array<{
+        taskId: string;
+        passed: boolean;
+      }>;
+      for (const { taskId, passed } of existing) {
+        if (taskStatus.has(taskId) && passed) {
+          taskStatus.set(taskId, true);
+        }
+      }
+    } catch {
+      // ignore malformed existing data
+    }
+  }
+
+  fs.mkdirSync(path.dirname(resultsPath), { recursive: true });
+  const results = ALL_TASKS.map((taskId) => ({
+    taskId,
+    passed: taskStatus.get(taskId) === true
+  }));
+  fs.writeFileSync(resultsPath, JSON.stringify(results, null, 2), 'utf8');
 });
