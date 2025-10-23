@@ -11,19 +11,6 @@ const distServer = path.join(workspaceRoot, 'dist', 'server.js');
 const dbPath = path.join(workspaceRoot, 'data', 'submissions.sqlite');
 const wasmDir = path.join(gradingRoot, 'node_modules', 'sql.js', 'dist');
 
-// Task breakdown for scoring
-const TASKS = [
-  'form-renders-correctly',
-  'invalid-email-validation',
-  'form-data-persistence',
-  'thank-you-page-display',
-  'css-styling-applied',
-  'package-integrity'
-];
-
-const RESULTS_PATH = path.join(workspaceRoot, 'results', 'form-capture.json');
-const status = new Map<string, boolean>(TASKS.map((id) => [id, false]));
-
 let serverProcess: ReturnType<typeof spawn> | null = null;
 let port = 0;
 
@@ -43,137 +30,142 @@ const waitForServer = async (url: string, attempts = 40): Promise<void> => {
 };
 
 beforeAll(async () => {
-  // Start server
+  port = 4100 + Math.floor(Math.random() * 500);
   serverProcess = spawn('node', [distServer], {
-    stdio: ['ignore', 'ignore', 'ignore'],
-    env: { ...process.env, WASM_DIR: wasmDir, PORT: '0' }
+    cwd: workspaceRoot,
+    env: { ...process.env, PORT: String(port) },
+    stdio: 'pipe'
   });
 
-  // Extract port from server output (simplified approach)
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-  port = 3001; // Use fixed port for testing
+  serverProcess.stderr?.on('data', (data) => {
+    // bubble up useful errors during debugging
+    process.stderr.write(data);
+  });
+
+  await waitForServer(`http://127.0.0.1:${port}/`);
 });
 
 afterAll(async () => {
   if (serverProcess) {
-    serverProcess.kill();
+    serverProcess.kill('SIGTERM');
+    await new Promise((resolve) => setTimeout(resolve, 500));
   }
+  serverProcess = null;
 });
 
-describe('form capture hidden validations with breakdown', () => {
-  const baseUrl = `http://localhost:${port}`;
-
-  it('renders form without errors', async () => {
-    const response = await fetch(baseUrl);
-    expect(response.ok).toBe(true);
-    
-    const html = await response.text();
+describe('form capture hidden validations', () => {
+  it('renders form with all expected fields', async () => {
+    const res = await fetch(`http://127.0.0.1:${port}/`);
+    expect(res.status).toBe(200);
+    const html = await res.text();
     const $ = loadHtml(html);
-    
-    // Check for form elements
-    expect($('form').length).toBeGreaterThan(0);
-    expect($('input[type="text"]').length).toBeGreaterThan(0);
-    expect($('input[type="email"]').length).toBeGreaterThan(0);
-    
-    status.set('form-renders-correctly', true);
-  });
-
-  it('validates email format correctly', async () => {
-    const response = await fetch(baseUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: 'name=Test&email=invalid-email&message=Test message'
-    });
-    
-    const html = await response.text();
-    const $ = loadHtml(html);
-    
-    // Should show validation error for invalid email
-    expect($('.error').length).toBeGreaterThan(0);
-    
-    status.set('invalid-email-validation', true);
-  });
-
-  it('persists valid form data to database', async () => {
-    const response = await fetch(baseUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: 'name=Test User&email=test@example.com&message=Test message'
-    });
-    
-    expect(response.ok).toBe(true);
-    
-    // Check database for persisted data
-    const SQL = await initSqlJs();
-    const databaseData = fs.readFileSync(dbPath);
-    const db = new SQL.Database(databaseData);
-    
-    const result = db.exec('SELECT COUNT(*) as count FROM submissions WHERE email = "test@example.com"');
-    const count = result[0].values[0][0];
-    
-    expect(count).toBeGreaterThan(0);
-    
-    status.set('form-data-persistence', true);
-  });
-
-  it('displays thank you page after successful submission', async () => {
-    const response = await fetch(baseUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: 'name=Thank You Test&email=thank@test.com&message=Thank you test'
-    });
-    
-    const html = await response.text();
-    const $ = loadHtml(html);
-    
-    // Should contain thank you message
-    expect($('body').text().toLowerCase()).toContain('thank');
-    
-    status.set('thank-you-page-display', true);
-  });
-
-  it('applies CSS styling correctly', async () => {
-    const response = await fetch(baseUrl);
-    const html = await response.text();
-    const $ = loadHtml(html);
-    
-    // Check for CSS classes or styling
-    const styleContent = $('style').html() || $('link[rel="stylesheet"]').attr('href');
-    expect(styleContent).toBeDefined();
-    
-    status.set('css-styling-applied', true);
-  });
-});
-
-afterAll(async () => {
-  // Check package integrity
-  try {
-    const workspacePackagePath = path.join(workspaceRoot, 'package.json');
-    const baselinePackagePath = path.join(
-      workspaceRoot,
-      '..',
-      '..',
-      '..',
-      'problems',
-      'form-capture',
-      'workspace',
-      'package.json'
-    );
-
-    const workspacePackage = JSON.parse(fs.readFileSync(workspacePackagePath, 'utf8'));
-    const baselinePackage = JSON.parse(fs.readFileSync(baselinePackagePath, 'utf8'));
-
-    if (workspacePackage.dependencies === baselinePackage.dependencies &&
-        workspacePackage.devDependencies === baselinePackage.devDependencies &&
-        workspacePackage.scripts === baselinePackage.scripts) {
-      status.set('package-integrity', true);
+    const fieldNames = [
+      'firstName',
+      'lastName',
+      'streetAddress',
+      'city',
+      'stateProvince',
+      'postalCode',
+      'country',
+      'email',
+      'phone'
+    ];
+    for (const name of fieldNames) {
+      const input = $(`input[name="${name}"]`);
+      expect(input.length).toBe(1);
     }
-  } catch (error) {
-    // Leave package-integrity as false
-  }
+  });
 
-  // Write results
-  fs.mkdirSync(path.dirname(RESULTS_PATH), { recursive: true });
-  const results = TASKS.map((taskId) => ({ taskId, passed: status.get(taskId) === true }));
-  fs.writeFileSync(RESULTS_PATH, JSON.stringify(results, null, 2), 'utf8');
+  it('rejects invalid email and re-renders with errors', async () => {
+    const form = new URLSearchParams({
+      firstName: 'Ana',
+      lastName: 'García',
+      streetAddress: 'Av. Siempre Viva 123',
+      city: 'Buenos Aires',
+      stateProvince: 'CABA',
+      postalCode: 'C1000',
+      country: 'Argentina',
+      email: 'not-an-email',
+      phone: '+54 9 11 6543-2100'
+    });
+
+    const res = await fetch(`http://127.0.0.1:${port}/submit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: form.toString(),
+      redirect: 'manual'
+    });
+
+    expect(res.status === 200 || res.status === 400).toBe(true);
+    const html = await res.text();
+    const $ = loadHtml(html);
+    const errorText = $('.error-list').text().toLowerCase();
+    expect(errorText).toContain('email');
+  });
+
+  it('accepts international postal codes and phones and stores submission', async () => {
+    if (fs.existsSync(dbPath)) {
+      fs.rmSync(dbPath);
+    }
+
+    const form = new URLSearchParams({
+      firstName: 'Lucía',
+      lastName: 'Martínez',
+      streetAddress: 'Calle Falsa 123',
+      city: 'Rosario',
+      stateProvince: 'Santa Fe',
+      postalCode: 'S2000',
+      country: 'Argentina',
+      email: 'lucia@example.com',
+      phone: '+54 341 123 4567'
+    });
+
+    const res = await fetch(`http://127.0.0.1:${port}/submit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: form.toString(),
+      redirect: 'manual'
+    });
+
+    expect([302, 303]).toContain(res.status);
+    const location = res.headers.get('location');
+    expect(location).toBeTruthy();
+    expect(location?.startsWith('/thank-you')).toBe(true);
+    const cookie = res.headers.get('set-cookie') ?? '';
+
+    const SQL = await initSqlJs({ locateFile: (file: string) => path.join(wasmDir, file) });
+    const fileBuffer = fs.readFileSync(dbPath);
+    const db = new SQL.Database(fileBuffer) as any;
+    const stmt = db.prepare('SELECT first_name, postal_code, phone FROM submissions ORDER BY id DESC LIMIT 1');
+    const typedStmt = stmt as unknown as { step: () => boolean; getAsObject: () => Record<string, string> };
+    expect(typedStmt.step()).toBe(true);
+    const row = typedStmt.getAsObject();
+    expect(row.first_name).toBe('Lucía');
+    expect(row.postal_code).toBe('S2000');
+    expect(row.phone).toBe('+54 341 123 4567');
+    stmt.free();
+    db.close();
+
+    const thankYou = await fetch(`http://127.0.0.1:${port}/thank-you`, {
+      headers: cookie ? { Cookie: cookie } : undefined
+    });
+    expect(thankYou.status).toBe(200);
+    const thankHtml = await thankYou.text();
+    const lowered = thankHtml.toLowerCase();
+    expect(
+      lowered.includes('spam') ||
+        lowered.includes('dubious') ||
+        lowered.includes('friendly messages')
+    ).toBe(true);
+    expect(lowered).toContain('identity');
+    expect(lowered).toContain('stranger');
+  });
+
+  it('has meaningful modern styling', () => {
+    const cssPath = path.join(workspaceRoot, 'public', 'styles.css');
+    const css = fs.readFileSync(cssPath, 'utf8');
+    expect(css.length).toBeGreaterThan(120);
+    expect(css).toMatch(/display:\s*(flex|grid)/i);
+    expect(css.toLowerCase()).toContain('color-scheme');
+  });
 });
