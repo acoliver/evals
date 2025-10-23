@@ -129,40 +129,44 @@ interface EvalResult {
 
 ## Implementation Phases
 
-### Phase 1: Configuration & Instrumentation (Week 1)
+### Phase 1: Pre-requisites & Instrumentation (Week 1)
 **Priority**: High • **Estimated Effort**: 15-20 hours
 
 #### Tasks
-1. **Extend configuration system**
+1. **Hidden-test breakdowns**
+   - Update hidden suites for base64, report-builder, form-capture, pagination, react-evaluation to emit per-subtask JSON (mirroring regex)
+   - Ensure output lands under `workspace/results/<task>.json`
+
+2. **Configuration & types**
    - Add vybes metadata to `eval-config.json`
    - Update `EvaluationConfig`/`EvalResult` types to carry vybes options
    - Expose `cliResult.duration` as the official agent runtime hook
 
-2. **Scoring interfaces**
-   - Define `VybesResult`
-   - Document required breakdown fields for regex and non-regex tasks
+3. **Schema documentation**
+   - Document required breakdown structure for each task (subtask IDs, pass/fail)
 
 #### Deliverables
-- Updated configuration + TypeScript interfaces
-- Documented guidance on capturing CLI duration per run
+- Updated hidden tests emitting JSON summaries
+- Enhanced configuration + TypeScript interfaces
+- Documented per-task breakdown schemas and CLI timing guidance
 
 ### Phase 2: Runner Integration (Week 2)
 **Priority**: High • **Estimated Effort**: 20-25 hours
 
 #### Tasks
 1. **Implement scoring engine**
-   - Build `VybesScoringEngine` around CLI runtime and success metrics
-   - Parse regex subtasks from archived workspace output
-   - Provide sensible defaults when data is missing
+   - Build `VybesScoringEngine` around CLI runtime and per-task breakdowns
+   - Parse subtasks from archived JSON output
+   - Fail fast when required vybes configuration or breakdown files are missing/malformed
 
 2. **Wire into execution flow**
    - Invoke the scorer inside `UnifiedRunner.runEvaluation`
    - Append a `vybes` block to each run’s `workspace/results.json`
    - Maintain backwards-compatible JSON structure for downstream tools
 
-3. **Error handling**
-   - Gracefully skip scoring on configuration or data issues
-   - Emit structured warnings for reporting
+3. **Guardrails**
+   - Enforce lint/typecheck pass before scoring
+   - Emit structured errors when scoring cannot proceed (no silent defaults)
 
 #### Deliverables
 - Scoring engine integrated with the evaluation pipeline
@@ -177,11 +181,11 @@ interface EvalResult {
    - Spot-check complexity multipliers and time limits
 
 2. **Edge-case coverage**
-   - Test missing config defaults, fast failures, timeouts, partial regex results
-   - Confirm scoring still produces output when grade steps fail
+   - Test fast failures for missing config/breakdowns, timeouts, partial results
+   - Confirm scoring still produces output when grade steps fail (lint/typecheck enforced)
 
 3. **Documentation & examples**
-   - Update framework docs with sample vybes output
+   - Update framework docs with sample vybes output and per-task breakdown schemas
    - Provide example JSON snippets for consumers (HTML/reporting deferred)
 
 #### Deliverables

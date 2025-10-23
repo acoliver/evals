@@ -156,22 +156,23 @@ never pollutes the repository.
 
 ## Implementation Steps
 
-### Phase 1: Configuration & Instrumentation (Week 1)
-1. **Extend config**: Add vybes metadata to `eval-config.json`
-2. **Expose timing**: Ensure `cliResult.duration` is surfaced in `EvalResult`
-3. **Define interfaces**: Extend `EvalResult`/`EvaluationConfig` to carry vybes options
+### Phase 1: Pre-requisites & Instrumentation (Week 1)
+1. **Emit hidden-test breakdowns**: Update every grading suite (base64, report-builder, form-capture, pagination, react-evaluation) to write per-subtask JSON alongside regex.
+2. **Extend config**: Add vybes metadata to `eval-config.json`.
+3. **Expose timing**: Ensure `cliResult.duration` is surfaced in `EvalResult`.
+4. **Define interfaces**: Extend `EvalResult`/`EvaluationConfig` to carry vybes options and document expected breakdown schemas.
 
 ### Phase 2: Scoring Integration (Week 2)  
 1. **Scoring engine**: Implement `VybesScoringEngine` using CLI duration
 2. **Runner hookup**: Invoke the engine inside `UnifiedRunner.runEvaluation`
 3. **Results output**: Append a `vybes` block to each run’s archived `results.json`
-4. **Regex parsing**: Read per-run regex subtasks for partial credit, handle missing data gracefully
+4. **Parse breakdowns**: Read per-run JSON summaries (regex + new task outputs) for partial credit. If any expected file is missing or malformed, fail scoring with a clear error.
 
 ### Phase 3: Validation & Tuning (Week 3)
 1. **Cross-task testing**: Validate scoring on every evaluation type
 2. **Complexity sanity check**: Review multipliers and time limits
-3. **Edge cases**: Verify defaults for missing config, fast failures, timeouts
-4. **Docs & examples**: Update overview material with the new scoring output format
+3. **Edge cases**: Verify fast failures for missing config/breakdowns, handle timeouts cleanly
+4. **Docs & examples**: Update overview material with the new scoring output format and per-task schemas
 
 ## Result Structure
 
