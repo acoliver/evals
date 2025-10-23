@@ -5,26 +5,22 @@
       "name": "LLxprt Code/Synthetic GLM 4.6, Temp 1",
       "description": "LLxprt running synthetic profile with GLM-4.6 model at temperature 1.0",
       "args": ["--profile-load", "synthetic", "--yolo"],
-      "timeout": 1800000
+      "timeout": 900000
     },
     "cerebrasqwen3-qwen3-coder-temp1": {
       "cli": "llxprt",
       "name": "Cerebras Qwen 3 480B, Temp 1",
       "description": "LLxprt running cerebrasqwen3 profile with Qwen3 Coder at temperature 1.0",
       "args": ["--profile-load", "cerebrasqwen3", "--yolo"],
-      "timeout": 1800000
+      "timeout": 900000
     },
     "codex-exec-gpt5-default": {
       "cli": "codex",
       "name": "Codex/GPT-5-Codex, Medium Reasoning, Default Settings",
       "description": "Codex with medium reasoning effort and full system access using existing arguments",
       "args": ["exec", "--dangerously-bypass-approvals-and-sandbox", "--skip-git-repo-check", "--config", "model_reasoning_effort=medium"],
-      "timeout": 600000
+      "timeout": 900000
     }
   },
-  "defaultConfigurations": [
-    "llxprt-synthetic-glm4.6-temp1",
-    "cerebrasqwen3-qwen3-coder-temp1", 
-    "codex-exec-gpt5-default"
-  ]
+  "defaultConfigurations": ["llxprt-synthetic-glm4.6-temp1", "cerebrasqwen3-qwen3-coder-temp1", "codex-exec-gpt5-default"]
 }
