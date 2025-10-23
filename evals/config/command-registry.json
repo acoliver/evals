@@ -1,0 +1,10 @@
+{
+  "workspace-install": {"command": "npm", "args": ["install"], "timeout": 300000},
+  "workspace-install-subdir": {"command": "npm", "args": ["--prefix", "workspace", "install"], "timeout": 300000},
+  "typecheck": {"command": "npm", "args": ["run", "typecheck"], "timeout": 60000},
+  "lint": {"command": "npm", "args": ["run", "lint"], "timeout": 120000},
+  "test:public": {"command": "npm", "args": ["run", "test:public"], "timeout": 180000},
+  "build": {"command": "npm", "args": ["run", "build"], "timeout": 120000},
+  "workspace-build-subdir": {"command": "npm", "args": ["--prefix", "workspace", "run", "build"], "timeout": 180000},
+  "test:hidden": {"command": "npm", "args": ["run", "test:hidden"], "timeout": 300000}
+}
