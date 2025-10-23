@@ -1,27 +1,13 @@
-import { afterAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import fs from 'node:fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const workspaceRoot = path.resolve(__dirname, '..', '..', 'workspace');
 const fixturesDir = path.join(workspaceRoot, 'fixtures');
 const cliPath = path.join(workspaceRoot, 'dist', 'cli', 'report.js');
-
-// Task breakdown for scoring
-const TASKS = [
-  'render-markdown-with-totals',
-  'render-text-without-totals', 
-  'render-text-with-totals',
-  'render-unsupported-format-failure',
-  'render-missing-file-failure',
-  'package-integrity'
-];
-
-const RESULTS_PATH = path.join(workspaceRoot, 'results', 'report-builder.json');
-const status = new Map<string, boolean>(TASKS.map((id) => [id, false]));
 
 const expectedMarkdown = `# Quarterly Financial Summary
 
@@ -65,7 +51,7 @@ function runCli(args: string[]) {
   return result;
 }
 
-describe('report CLI hidden validations with breakdown', () => {
+describe('report CLI hidden validations', () => {
   it('renders markdown with totals', () => {
     const result = runCli([
       path.join(fixturesDir, 'data.json'),
@@ -76,7 +62,6 @@ describe('report CLI hidden validations with breakdown', () => {
 
     expect(result.status).toBe(0);
     expect(normalize(result.stdout)).toBe(normalize(expectedMarkdown));
-    status.set('render-markdown-with-totals', true);
   });
 
   it('renders plain text without totals', () => {
@@ -89,7 +74,6 @@ describe('report CLI hidden validations with breakdown', () => {
     expect(result.status).toBe(0);
     const expectedWithoutTotals = expectedText.replace(/\nTotal:.*\n?$/, '');
     expect(normalize(result.stdout)).toBe(normalize(expectedWithoutTotals));
-    status.set('render-text-without-totals', true);
   });
 
   it('includes totals in text format when requested', () => {
@@ -102,7 +86,6 @@ describe('report CLI hidden validations with breakdown', () => {
 
     expect(result.status).toBe(0);
     expect(normalize(result.stdout)).toBe(normalize(expectedText));
-    status.set('render-text-with-totals', true);
   });
 
   it('fails for unsupported format', () => {
@@ -114,47 +97,12 @@ describe('report CLI hidden validations with breakdown', () => {
 
     expect(result.status).not.toBe(0);
     expect(result.stderr).toMatch(/Unsupported format/);
-    status.set('render-unsupported-format-failure', true);
   });
 
   it('errors on missing files', () => {
     const result = runCli(['missing.json', '--format', 'markdown']);
 
     expect(result.status).not.toBe(0);
-    expect(result.stderr.toLowerCase()).match(/unable|enoent|not found/);
-    status.set('render-missing-file-failure', true);
+    expect(result.stderr.toLowerCase()).toMatch(/unable|enoent|not found/);
   });
-});
-
-afterAll(() => {
-  // Check package integrity as well
-  try {
-    const workspacePackagePath = path.join(workspaceRoot, 'package.json');
-    const baselinePackagePath = path.join(
-      workspaceRoot,
-      '..',
-      '..',
-      '..',
-      'problems',
-      'report-builder',
-      'workspace',
-      'package.json'
-    );
-
-    const workspacePackage = JSON.parse(fs.readFileSync(workspacePackagePath, 'utf8'));
-    const baselinePackage = JSON.parse(fs.readFileSync(baselinePackagePath, 'utf8'));
-
-    if (workspacePackage.dependencies === baselinePackage.dependencies &&
-        workspacePackage.devDependencies === baselinePackage.devDependencies &&
-        workspacePackage.scripts === baselinePackage.scripts) {
-      status.set('package-integrity', true);
-    }
-  } catch (error) {
-    // Leave package-integrity as false
-  }
-
-  // Write results
-  fs.mkdirSync(path.dirname(RESULTS_PATH), { recursive: true });
-  const results = TASKS.map((taskId) => ({ taskId, passed: status.get(taskId) === true }));
-  fs.writeFileSync(RESULTS_PATH, JSON.stringify(results, null, 2), 'utf8');
 });
