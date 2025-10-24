@@ -91,8 +91,8 @@
 
     let currentDailyRows = [];
     let currentRunRows = [];
-    let dailySort = { field: 'totalVybes', desc: true };
-    let runSort = { field: 'finishedAtValue', desc: true };
+    const dailySort = { field: 'totalVybes', desc: true };
+    const runSort = { field: 'finishedAtValue', desc: true };
 
     async function safeFetch(path) {
       const response = await fetch(path);
@@ -151,7 +151,14 @@
       runsBody.innerHTML = currentRunRows.map((run) => {
         const scenario = EVAL_LABELS[run.evalName] ?? run.evalName;
         const finishedLabel = run.finishedAtValue ? dateFormatter.format(new Date(run.finishedAtValue)) : 'unknown';
-        const error = run.error ? `<span class="badge-fail">${run.error}</span>` : '–';
+        const notes = [];
+        if (run.error) {
+          notes.push(`<span class="badge-fail">${run.error}</span>`);
+        }
+        if (run.workspaceArchive) {
+          notes.push(`<small>${run.workspaceArchive}</small>`);
+        }
+        const noteCell = notes.length ? notes.join('<br/>') : '–';
         return `<tr>
           <td>${finishedLabel}</td>
           <td>${run.profileLabel}</td>
@@ -161,13 +168,13 @@
           <td data-field="timePenaltyMultiplier">${formatter.format(run.timePenaltyMultiplier)}</td>
           <td data-field="actualTimeMinutes">${formatter.format(run.actualTimeMinutes)}</td>
           <td data-field="subtasks">${run.subtasksPassed}/${run.subtasksTotal}</td>
-          <td>${error}</td>
+          <td>${noteCell}</td>
         </tr>`;
       }).join('');
     }
 
-    function sortRows(rows, sortState, field, numeric = true) {
-      const desc = sortState.field === field ? !sortState.desc : true;
+    function sortRows(rows, sortState, field, numeric = true, forceDesc) {
+      const desc = typeof forceDesc === 'boolean' ? forceDesc : sortState.field === field ? !sortState.desc : true;
       sortState.field = field;
       sortState.desc = desc;
       rows.sort((a, b) => {
@@ -218,7 +225,7 @@
         ]);
 
         currentDailyRows = createDailyRows(daily);
-        sortRows(currentDailyRows, dailySort, dailySort.field, dailySort.field !== 'profile');
+        sortRows(currentDailyRows, dailySort, dailySort.field, true, true);
         updateDailyTable();
 
         currentRunRows = runs.map((run) => {
@@ -238,7 +245,7 @@
             error: run.vybes.error ?? null
           };
         });
-        sortRows(currentRunRows, runSort, runSort.field, runSort.field !== 'evalName' && runSort.field !== 'configId');
+        sortRows(currentRunRows, runSort, runSort.field, true, true);
         updateRunTable();
 
         bindSortHandlers(dailyTable, currentDailyRows, dailySort, updateDailyTable, {
