@@ -1,0 +1,948 @@
+[
+  {
+    "evalName": "base64-fix",
+    "configId": "llxprt-synthetic-glm4.6-temp1",
+    "runId": "base64-fix-2025-10-24T14-07-16-589Z",
+    "date": "2025-10-24",
+    "finishedAt": "2025-10-24T14:09:01.171Z",
+    "vybes": {
+      "taskName": "base64-fix",
+      "configId": "llxprt-synthetic-glm4.6-temp1",
+      "complexityMultiplier": 1,
+      "timeLimitMinutes": 2,
+      "baseScore": 100,
+      "successPercentage": 1,
+      "timePenaltyMultiplier": 1,
+      "finalScore": 100,
+      "actualTimeMinutes": 1.654,
+      "description": "Base64 encoder/decoder utilities",
+      "category": "utilities",
+      "breakdown": {
+        "subtasksPassed": 18,
+        "subtasksTotal": 18,
+        "modulesCompleted": [
+          "base64"
+        ],
+        "modulesIncomplete": [],
+        "modules": {
+          "base64": {
+            "passed": 18,
+            "total": 18,
+            "passedTasks": [
+              "encode-0",
+              "encode-1",
+              "encode-2",
+              "encode-3",
+              "encode-4",
+              "encode-5",
+              "decode-0",
+              "decode-1",
+              "decode-2",
+              "decode-3",
+              "decode-4",
+              "decode-5",
+              "decode-without-padding",
+              "decode-rejects-invalid",
+              "cli-encode-success",
+              "cli-decode-success",
+              "cli-argument-error",
+              "cli-decode-error"
+            ],
+            "failedTasks": []
+          }
+        }
+      }
+    },
+    "workspaceArchive": "outputs/base64-fix-2025-10-24T14-07-16-589Z/llxprt-synthetic-glm4.6-temp1/workspace"
+  },
+  {
+    "evalName": "base64-fix",
+    "configId": "cerebrasqwen3-qwen3-coder-temp1",
+    "runId": "base64-fix-2025-10-24T14-09-01-595Z",
+    "date": "2025-10-24",
+    "finishedAt": "2025-10-24T14:09:40.571Z",
+    "vybes": {
+      "taskName": "base64-fix",
+      "configId": "cerebrasqwen3-qwen3-coder-temp1",
+      "complexityMultiplier": 1,
+      "timeLimitMinutes": 2,
+      "baseScore": 100,
+      "successPercentage": 1,
+      "timePenaltyMultiplier": 1,
+      "finalScore": 100,
+      "actualTimeMinutes": 0.566,
+      "description": "Base64 encoder/decoder utilities",
+      "category": "utilities",
+      "breakdown": {
+        "subtasksPassed": 18,
+        "subtasksTotal": 18,
+        "modulesCompleted": [
+          "base64"
+        ],
+        "modulesIncomplete": [],
+        "modules": {
+          "base64": {
+            "passed": 18,
+            "total": 18,
+            "passedTasks": [
+              "encode-0",
+              "encode-1",
+              "encode-2",
+              "encode-3",
+              "encode-4",
+              "encode-5",
+              "decode-0",
+              "decode-1",
+              "decode-2",
+              "decode-3",
+              "decode-4",
+              "decode-5",
+              "decode-without-padding",
+              "decode-rejects-invalid",
+              "cli-encode-success",
+              "cli-decode-success",
+              "cli-argument-error",
+              "cli-decode-error"
+            ],
+            "failedTasks": []
+          }
+        }
+      }
+    },
+    "workspaceArchive": "outputs/base64-fix-2025-10-24T14-09-01-595Z/cerebrasqwen3-qwen3-coder-temp1/workspace"
+  },
+  {
+    "evalName": "base64-fix",
+    "configId": "llxprt-synthetic-glm4.6-temp1",
+    "runId": "base64-fix-2025-10-24T14-08-28-192Z",
+    "date": "2025-10-24",
+    "finishedAt": "2025-10-24T14:10:02.593Z",
+    "vybes": {
+      "taskName": "base64-fix",
+      "configId": "llxprt-synthetic-glm4.6-temp1",
+      "complexityMultiplier": 1,
+      "timeLimitMinutes": 2,
+      "baseScore": 100,
+      "successPercentage": 1,
+      "timePenaltyMultiplier": 1,
+      "finalScore": 100,
+      "actualTimeMinutes": 1.442,
+      "description": "Base64 encoder/decoder utilities",
+      "category": "utilities",
+      "breakdown": {
+        "subtasksPassed": 18,
+        "subtasksTotal": 18,
+        "modulesCompleted": [
+          "base64"
+        ],
+        "modulesIncomplete": [],
+        "modules": {
+          "base64": {
+            "passed": 18,
+            "total": 18,
+            "passedTasks": [
+              "encode-0",
+              "encode-1",
+              "encode-2",
+              "encode-3",
+              "encode-4",
+              "encode-5",
+              "decode-0",
+              "decode-1",
+              "decode-2",
+              "decode-3",
+              "decode-4",
+              "decode-5",
+              "decode-without-padding",
+              "decode-rejects-invalid",
+              "cli-encode-success",
+              "cli-decode-success",
+              "cli-argument-error",
+              "cli-decode-error"
+            ],
+            "failedTasks": []
+          }
+        }
+      }
+    },
+    "workspaceArchive": "outputs/base64-fix-2025-10-24T14-08-28-192Z/llxprt-synthetic-glm4.6-temp1/workspace"
+  },
+  {
+    "evalName": "base64-fix",
+    "configId": "cerebrasqwen3-qwen3-coder-temp1",
+    "runId": "base64-fix-2025-10-24T14-10-02-934Z",
+    "date": "2025-10-24",
+    "finishedAt": "2025-10-24T14:10:53.869Z",
+    "vybes": {
+      "taskName": "base64-fix",
+      "configId": "cerebrasqwen3-qwen3-coder-temp1",
+      "complexityMultiplier": 1,
+      "timeLimitMinutes": 2,
+      "baseScore": 100,
+      "successPercentage": 1,
+      "timePenaltyMultiplier": 1,
+      "finalScore": 100,
+      "actualTimeMinutes": 0.761,
+      "description": "Base64 encoder/decoder utilities",
+      "category": "utilities",
+      "breakdown": {
+        "subtasksPassed": 18,
+        "subtasksTotal": 18,
+        "modulesCompleted": [
+          "base64"
+        ],
+        "modulesIncomplete": [],
+        "modules": {
+          "base64": {
+            "passed": 18,
+            "total": 18,
+            "passedTasks": [
+              "encode-0",
+              "encode-1",
+              "encode-2",
+              "encode-3",
+              "encode-4",
+              "encode-5",
+              "decode-0",
+              "decode-1",
+              "decode-2",
+              "decode-3",
+              "decode-4",
+              "decode-5",
+              "decode-without-padding",
+              "decode-rejects-invalid",
+              "cli-encode-success",
+              "cli-decode-success",
+              "cli-argument-error",
+              "cli-decode-error"
+            ],
+            "failedTasks": []
+          }
+        }
+      }
+    },
+    "workspaceArchive": "outputs/base64-fix-2025-10-24T14-10-02-934Z/cerebrasqwen3-qwen3-coder-temp1/workspace"
+  },
+  {
+    "evalName": "base64-fix",
+    "configId": "codex-exec-gpt5-default",
+    "runId": "base64-fix-2025-10-24T14-09-40-919Z",
+    "date": "2025-10-24",
+    "finishedAt": "2025-10-24T14:11:30.970Z",
+    "vybes": {
+      "taskName": "base64-fix",
+      "configId": "codex-exec-gpt5-default",
+      "complexityMultiplier": 1,
+      "timeLimitMinutes": 2,
+      "baseScore": 100,
+      "successPercentage": 1,
+      "timePenaltyMultiplier": 1,
+      "finalScore": 100,
+      "actualTimeMinutes": 1.753,
+      "description": "Base64 encoder/decoder utilities",
+      "category": "utilities",
+      "breakdown": {
+        "subtasksPassed": 18,
+        "subtasksTotal": 18,
+        "modulesCompleted": [
+          "base64"
+        ],
+        "modulesIncomplete": [],
+        "modules": {
+          "base64": {
+            "passed": 18,
+            "total": 18,
+            "passedTasks": [
+              "encode-0",
+              "encode-1",
+              "encode-2",
+              "encode-3",
+              "encode-4",
+              "encode-5",
+              "decode-0",
+              "decode-1",
+              "decode-2",
+              "decode-3",
+              "decode-4",
+              "decode-5",
+              "decode-without-padding",
+              "decode-rejects-invalid",
+              "cli-encode-success",
+              "cli-decode-success",
+              "cli-argument-error",
+              "cli-decode-error"
+            ],
+            "failedTasks": []
+          }
+        }
+      }
+    },
+    "workspaceArchive": "outputs/base64-fix-2025-10-24T14-09-40-919Z/codex-exec-gpt5-default/workspace"
+  },
+  {
+    "evalName": "base64-fix",
+    "configId": "codex-exec-gpt5-default",
+    "runId": "base64-fix-2025-10-24T14-10-54-502Z",
+    "date": "2025-10-24",
+    "finishedAt": "2025-10-24T14:13:43.486Z",
+    "vybes": {
+      "taskName": "base64-fix",
+      "configId": "codex-exec-gpt5-default",
+      "complexityMultiplier": 1,
+      "timeLimitMinutes": 2,
+      "baseScore": 100,
+      "successPercentage": 1,
+      "timePenaltyMultiplier": 0.7378,
+      "finalScore": 73.78,
+      "actualTimeMinutes": 2.711,
+      "description": "Base64 encoder/decoder utilities",
+      "category": "utilities",
+      "breakdown": {
+        "subtasksPassed": 18,
+        "subtasksTotal": 18,
+        "modulesCompleted": [
+          "base64"
+        ],
+        "modulesIncomplete": [],
+        "modules": {
+          "base64": {
+            "passed": 18,
+            "total": 18,
+            "passedTasks": [
+              "encode-0",
+              "encode-1",
+              "encode-2",
+              "encode-3",
+              "encode-4",
+              "encode-5",
+              "decode-0",
+              "decode-1",
+              "decode-2",
+              "decode-3",
+              "decode-4",
+              "decode-5",
+              "decode-without-padding",
+              "decode-rejects-invalid",
+              "cli-encode-success",
+              "cli-decode-success",
+              "cli-argument-error",
+              "cli-decode-error"
+            ],
+            "failedTasks": []
+          }
+        }
+      }
+    },
+    "workspaceArchive": "outputs/base64-fix-2025-10-24T14-10-54-502Z/codex-exec-gpt5-default/workspace"
+  },
+  {
+    "evalName": "form-capture",
+    "configId": "llxprt-synthetic-glm4.6-temp1",
+    "runId": "form-capture-2025-10-24T14-13-43-802Z",
+    "date": "2025-10-24",
+    "finishedAt": "2025-10-24T14:15:43.758Z",
+    "vybes": {
+      "taskName": "form-capture",
+      "configId": "llxprt-synthetic-glm4.6-temp1",
+      "complexityMultiplier": 5,
+      "timeLimitMinutes": 10,
+      "baseScore": 500,
+      "successPercentage": 0,
+      "timePenaltyMultiplier": 1,
+      "finalScore": 0,
+      "actualTimeMinutes": 1.648,
+      "description": "Full-stack contact form application",
+      "category": "full-stack",
+      "breakdown": {
+        "subtasksPassed": 1,
+        "subtasksTotal": 6,
+        "modulesCompleted": [],
+        "modulesIncomplete": [
+          "form-capture"
+        ],
+        "modules": {
+          "form-capture": {
+            "passed": 1,
+            "total": 6,
+            "passedTasks": [
+              "package-integrity"
+            ],
+            "failedTasks": [
+              "form-fields-render",
+              "invalid-email-validation",
+              "submission-persists",
+              "thank-you-page",
+              "css-styling"
+            ]
+          }
+        }
+      },
+      "error": "lint/typecheck failed"
+    },
+    "workspaceArchive": "outputs/form-capture-2025-10-24T14-13-43-802Z/llxprt-synthetic-glm4.6-temp1/workspace"
+  },
+  {
+    "evalName": "form-capture",
+    "configId": "cerebrasqwen3-qwen3-coder-temp1",
+    "runId": "form-capture-2025-10-24T14-15-44-261Z",
+    "date": "2025-10-24",
+    "finishedAt": "2025-10-24T14:16:39.221Z",
+    "vybes": {
+      "taskName": "form-capture",
+      "configId": "cerebrasqwen3-qwen3-coder-temp1",
+      "complexityMultiplier": 5,
+      "timeLimitMinutes": 10,
+      "baseScore": 500,
+      "successPercentage": 0,
+      "timePenaltyMultiplier": 1,
+      "finalScore": 0,
+      "actualTimeMinutes": 0.567,
+      "description": "Full-stack contact form application",
+      "category": "full-stack",
+      "breakdown": {
+        "subtasksPassed": 1,
+        "subtasksTotal": 6,
+        "modulesCompleted": [],
+        "modulesIncomplete": [
+          "form-capture"
+        ],
+        "modules": {
+          "form-capture": {
+            "passed": 1,
+            "total": 6,
+            "passedTasks": [
+              "package-integrity"
+            ],
+            "failedTasks": [
+              "form-fields-render",
+              "invalid-email-validation",
+              "submission-persists",
+              "thank-you-page",
+              "css-styling"
+            ]
+          }
+        }
+      },
+      "error": "lint/typecheck failed"
+    },
+    "workspaceArchive": "outputs/form-capture-2025-10-24T14-15-44-261Z/cerebrasqwen3-qwen3-coder-temp1/workspace"
+  },
+  {
+    "evalName": "form-capture",
+    "configId": "codex-exec-gpt5-default",
+    "runId": "form-capture-2025-10-24T14-16-39-725Z",
+    "date": "2025-10-24",
+    "finishedAt": "2025-10-24T14:22:44.998Z",
+    "vybes": {
+      "taskName": "form-capture",
+      "configId": "codex-exec-gpt5-default",
+      "complexityMultiplier": 5,
+      "timeLimitMinutes": 10,
+      "baseScore": 500,
+      "successPercentage": 1,
+      "timePenaltyMultiplier": 1,
+      "finalScore": 500,
+      "actualTimeMinutes": 5.913,
+      "description": "Full-stack contact form application",
+      "category": "full-stack",
+      "breakdown": {
+        "subtasksPassed": 6,
+        "subtasksTotal": 6,
+        "modulesCompleted": [
+          "form-capture"
+        ],
+        "modulesIncomplete": [],
+        "modules": {
+          "form-capture": {
+            "passed": 6,
+            "total": 6,
+            "passedTasks": [
+              "form-fields-render",
+              "invalid-email-validation",
+              "submission-persists",
+              "thank-you-page",
+              "css-styling",
+              "package-integrity"
+            ],
+            "failedTasks": []
+          }
+        }
+      }
+    },
+    "workspaceArchive": "outputs/form-capture-2025-10-24T14-16-39-725Z/codex-exec-gpt5-default/workspace"
+  },
+  {
+    "evalName": "pagination",
+    "configId": "llxprt-synthetic-glm4.6-temp1",
+    "runId": "pagination-2025-10-24T14-22-45-525Z",
+    "date": "2025-10-24",
+    "finishedAt": "2025-10-24T14:24:14.990Z",
+    "vybes": {
+      "taskName": "pagination",
+      "configId": "llxprt-synthetic-glm4.6-temp1",
+      "complexityMultiplier": 5,
+      "timeLimitMinutes": 10,
+      "baseScore": 500,
+      "successPercentage": 0,
+      "timePenaltyMultiplier": 1,
+      "finalScore": 0,
+      "actualTimeMinutes": 1.352,
+      "description": "Server and client pagination repair",
+      "category": "full-stack",
+      "breakdown": {
+        "subtasksPassed": 0,
+        "subtasksTotal": 5,
+        "modulesCompleted": [],
+        "modulesIncomplete": [
+          "pagination"
+        ],
+        "modules": {
+          "pagination": {
+            "passed": 0,
+            "total": 5,
+            "passedTasks": [],
+            "failedTasks": [
+              "api-mid-page-request",
+              "api-final-page-handling",
+              "api-invalid-parameter-handling",
+              "client-navigation",
+              "client-alert"
+            ]
+          }
+        }
+      },
+      "error": "lint/typecheck failed"
+    },
+    "workspaceArchive": "outputs/pagination-2025-10-24T14-22-45-525Z/llxprt-synthetic-glm4.6-temp1/workspace"
+  },
+  {
+    "evalName": "pagination",
+    "configId": "cerebrasqwen3-qwen3-coder-temp1",
+    "runId": "pagination-2025-10-24T14-24-15-459Z",
+    "date": "2025-10-24",
+    "finishedAt": "2025-10-24T14:25:11.661Z",
+    "vybes": {
+      "taskName": "pagination",
+      "configId": "cerebrasqwen3-qwen3-coder-temp1",
+      "complexityMultiplier": 5,
+      "timeLimitMinutes": 10,
+      "baseScore": 500,
+      "successPercentage": 0.6,
+      "timePenaltyMultiplier": 1,
+      "finalScore": 300,
+      "actualTimeMinutes": 0.835,
+      "description": "Server and client pagination repair",
+      "category": "full-stack",
+      "breakdown": {
+        "subtasksPassed": 3,
+        "subtasksTotal": 5,
+        "modulesCompleted": [],
+        "modulesIncomplete": [
+          "pagination"
+        ],
+        "modules": {
+          "pagination": {
+            "passed": 3,
+            "total": 5,
+            "passedTasks": [
+              "api-mid-page-request",
+              "api-final-page-handling",
+              "api-invalid-parameter-handling"
+            ],
+            "failedTasks": [
+              "client-navigation",
+              "client-alert"
+            ]
+          }
+        }
+      }
+    },
+    "workspaceArchive": "outputs/pagination-2025-10-24T14-24-15-459Z/cerebrasqwen3-qwen3-coder-temp1/workspace"
+  },
+  {
+    "evalName": "pagination",
+    "configId": "codex-exec-gpt5-default",
+    "runId": "pagination-2025-10-24T14-25-12-154Z",
+    "date": "2025-10-24",
+    "finishedAt": "2025-10-24T14:29:33.528Z",
+    "vybes": {
+      "taskName": "pagination",
+      "configId": "codex-exec-gpt5-default",
+      "complexityMultiplier": 5,
+      "timeLimitMinutes": 10,
+      "baseScore": 500,
+      "successPercentage": 0.6,
+      "timePenaltyMultiplier": 1,
+      "finalScore": 300,
+      "actualTimeMinutes": 4.246,
+      "description": "Server and client pagination repair",
+      "category": "full-stack",
+      "breakdown": {
+        "subtasksPassed": 3,
+        "subtasksTotal": 5,
+        "modulesCompleted": [],
+        "modulesIncomplete": [
+          "pagination"
+        ],
+        "modules": {
+          "pagination": {
+            "passed": 3,
+            "total": 5,
+            "passedTasks": [
+              "api-mid-page-request",
+              "api-final-page-handling",
+              "api-invalid-parameter-handling"
+            ],
+            "failedTasks": [
+              "client-navigation",
+              "client-alert"
+            ]
+          }
+        }
+      }
+    },
+    "workspaceArchive": "outputs/pagination-2025-10-24T14-25-12-154Z/codex-exec-gpt5-default/workspace"
+  },
+  {
+    "evalName": "react-evaluation",
+    "configId": "llxprt-synthetic-glm4.6-temp1",
+    "runId": "react-evaluation-2025-10-24T14-29-34-021Z",
+    "date": "2025-10-24",
+    "finishedAt": "2025-10-24T14:30:53.969Z",
+    "vybes": {
+      "taskName": "react-evaluation",
+      "configId": "llxprt-synthetic-glm4.6-temp1",
+      "complexityMultiplier": 5,
+      "timeLimitMinutes": 10,
+      "baseScore": 500,
+      "successPercentage": 0.6667,
+      "timePenaltyMultiplier": 1,
+      "finalScore": 333.33,
+      "actualTimeMinutes": 1.177,
+      "description": "Reactive programming primitives",
+      "category": "foundations",
+      "breakdown": {
+        "subtasksPassed": 2,
+        "subtasksTotal": 3,
+        "modulesCompleted": [],
+        "modulesIncomplete": [
+          "react-evaluation"
+        ],
+        "modules": {
+          "react-evaluation": {
+            "passed": 2,
+            "total": 3,
+            "passedTasks": [
+              "advanced-dependency-chain",
+              "callback-cleanup"
+            ],
+            "failedTasks": [
+              "nested-computed"
+            ]
+          }
+        }
+      }
+    },
+    "workspaceArchive": "outputs/react-evaluation-2025-10-24T14-29-34-021Z/llxprt-synthetic-glm4.6-temp1/workspace"
+  },
+  {
+    "evalName": "react-evaluation",
+    "configId": "cerebrasqwen3-qwen3-coder-temp1",
+    "runId": "react-evaluation-2025-10-24T14-30-54-267Z",
+    "date": "2025-10-24",
+    "finishedAt": "2025-10-24T14:34:10.045Z",
+    "vybes": {
+      "taskName": "react-evaluation",
+      "configId": "cerebrasqwen3-qwen3-coder-temp1",
+      "complexityMultiplier": 5,
+      "timeLimitMinutes": 10,
+      "baseScore": 500,
+      "successPercentage": 0.6667,
+      "timePenaltyMultiplier": 1,
+      "finalScore": 333.33,
+      "actualTimeMinutes": 3.125,
+      "description": "Reactive programming primitives",
+      "category": "foundations",
+      "breakdown": {
+        "subtasksPassed": 2,
+        "subtasksTotal": 3,
+        "modulesCompleted": [],
+        "modulesIncomplete": [
+          "react-evaluation"
+        ],
+        "modules": {
+          "react-evaluation": {
+            "passed": 2,
+            "total": 3,
+            "passedTasks": [
+              "advanced-dependency-chain",
+              "nested-computed"
+            ],
+            "failedTasks": [
+              "callback-cleanup"
+            ]
+          }
+        }
+      }
+    },
+    "workspaceArchive": "outputs/react-evaluation-2025-10-24T14-30-54-267Z/cerebrasqwen3-qwen3-coder-temp1/workspace"
+  },
+  {
+    "evalName": "react-evaluation",
+    "configId": "codex-exec-gpt5-default",
+    "runId": "react-evaluation-2025-10-24T14-34-10-374Z",
+    "date": "2025-10-24",
+    "finishedAt": "2025-10-24T14:43:28.834Z",
+    "vybes": {
+      "taskName": "react-evaluation",
+      "configId": "codex-exec-gpt5-default",
+      "complexityMultiplier": 5,
+      "timeLimitMinutes": 10,
+      "baseScore": 500,
+      "successPercentage": 1,
+      "timePenaltyMultiplier": 1,
+      "finalScore": 500,
+      "actualTimeMinutes": 9.184,
+      "description": "Reactive programming primitives",
+      "category": "foundations",
+      "breakdown": {
+        "subtasksPassed": 3,
+        "subtasksTotal": 3,
+        "modulesCompleted": [
+          "react-evaluation"
+        ],
+        "modulesIncomplete": [],
+        "modules": {
+          "react-evaluation": {
+            "passed": 3,
+            "total": 3,
+            "passedTasks": [
+              "advanced-dependency-chain",
+              "nested-computed",
+              "callback-cleanup"
+            ],
+            "failedTasks": []
+          }
+        }
+      }
+    },
+    "workspaceArchive": "outputs/react-evaluation-2025-10-24T14-34-10-374Z/codex-exec-gpt5-default/workspace"
+  },
+  {
+    "evalName": "regex-challenge",
+    "configId": "llxprt-synthetic-glm4.6-temp1",
+    "runId": "regex-challenge-2025-10-24T14-43-29-166Z",
+    "date": "2025-10-24",
+    "finishedAt": "2025-10-24T14:46:44.175Z",
+    "vybes": {
+      "taskName": "regex-challenge",
+      "configId": "llxprt-synthetic-glm4.6-temp1",
+      "complexityMultiplier": 3,
+      "timeLimitMinutes": 6,
+      "baseScore": 300,
+      "successPercentage": 0,
+      "timePenaltyMultiplier": 1,
+      "finalScore": 0,
+      "actualTimeMinutes": 3.164,
+      "description": "Regex validation and transformation toolkit",
+      "category": "utilities",
+      "breakdown": {
+        "subtasksPassed": 0,
+        "subtasksTotal": 0,
+        "modulesCompleted": [],
+        "modulesIncomplete": [],
+        "modules": {}
+      }
+    },
+    "workspaceArchive": "outputs/regex-challenge-2025-10-24T14-43-29-166Z/llxprt-synthetic-glm4.6-temp1/workspace"
+  },
+  {
+    "evalName": "regex-challenge",
+    "configId": "cerebrasqwen3-qwen3-coder-temp1",
+    "runId": "regex-challenge-2025-10-24T14-46-44-497Z",
+    "date": "2025-10-24",
+    "finishedAt": "2025-10-24T14:48:30.593Z",
+    "vybes": {
+      "taskName": "regex-challenge",
+      "configId": "cerebrasqwen3-qwen3-coder-temp1",
+      "complexityMultiplier": 3,
+      "timeLimitMinutes": 6,
+      "baseScore": 300,
+      "successPercentage": 0,
+      "timePenaltyMultiplier": 1,
+      "finalScore": 0,
+      "actualTimeMinutes": 1.679,
+      "description": "Regex validation and transformation toolkit",
+      "category": "utilities",
+      "breakdown": {
+        "subtasksPassed": 0,
+        "subtasksTotal": 0,
+        "modulesCompleted": [],
+        "modulesIncomplete": [],
+        "modules": {}
+      }
+    },
+    "workspaceArchive": "outputs/regex-challenge-2025-10-24T14-46-44-497Z/cerebrasqwen3-qwen3-coder-temp1/workspace"
+  },
+  {
+    "evalName": "regex-challenge",
+    "configId": "codex-exec-gpt5-default",
+    "runId": "regex-challenge-2025-10-24T14-48-30-886Z",
+    "date": "2025-10-24",
+    "finishedAt": "2025-10-24T14:59:13.942Z",
+    "vybes": {
+      "taskName": "regex-challenge",
+      "configId": "codex-exec-gpt5-default",
+      "complexityMultiplier": 3,
+      "timeLimitMinutes": 6,
+      "baseScore": 300,
+      "successPercentage": 0,
+      "timePenaltyMultiplier": 0.5644,
+      "finalScore": 0,
+      "actualTimeMinutes": 10.631,
+      "description": "Regex validation and transformation toolkit",
+      "category": "utilities",
+      "breakdown": {
+        "subtasksPassed": 0,
+        "subtasksTotal": 0,
+        "modulesCompleted": [],
+        "modulesIncomplete": [],
+        "modules": {}
+      }
+    },
+    "workspaceArchive": "outputs/regex-challenge-2025-10-24T14-48-30-886Z/codex-exec-gpt5-default/workspace"
+  },
+  {
+    "evalName": "report-builder",
+    "configId": "llxprt-synthetic-glm4.6-temp1",
+    "runId": "report-builder-2025-10-24T14-59-14-234Z",
+    "date": "2025-10-24",
+    "finishedAt": "2025-10-24T15:01:51.590Z",
+    "vybes": {
+      "taskName": "report-builder",
+      "configId": "llxprt-synthetic-glm4.6-temp1",
+      "complexityMultiplier": 4,
+      "timeLimitMinutes": 8,
+      "baseScore": 400,
+      "successPercentage": 1,
+      "timePenaltyMultiplier": 1,
+      "finalScore": 400,
+      "actualTimeMinutes": 2.499,
+      "description": "Spreadsheet to HTML report builder",
+      "category": "integrations",
+      "breakdown": {
+        "subtasksPassed": 6,
+        "subtasksTotal": 6,
+        "modulesCompleted": [
+          "report-builder"
+        ],
+        "modulesIncomplete": [],
+        "modules": {
+          "report-builder": {
+            "passed": 6,
+            "total": 6,
+            "passedTasks": [
+              "render-markdown-with-totals",
+              "render-text-without-totals",
+              "render-text-with-totals",
+              "render-unsupported-format-failure",
+              "render-missing-file-failure",
+              "package-integrity"
+            ],
+            "failedTasks": []
+          }
+        }
+      }
+    },
+    "workspaceArchive": "outputs/report-builder-2025-10-24T14-59-14-234Z/llxprt-synthetic-glm4.6-temp1/workspace"
+  },
+  {
+    "evalName": "report-builder",
+    "configId": "cerebrasqwen3-qwen3-coder-temp1",
+    "runId": "report-builder-2025-10-24T15-01-51-896Z",
+    "date": "2025-10-24",
+    "finishedAt": "2025-10-24T15:02:25.655Z",
+    "vybes": {
+      "taskName": "report-builder",
+      "configId": "cerebrasqwen3-qwen3-coder-temp1",
+      "complexityMultiplier": 4,
+      "timeLimitMinutes": 8,
+      "baseScore": 400,
+      "successPercentage": 1,
+      "timePenaltyMultiplier": 1,
+      "finalScore": 400,
+      "actualTimeMinutes": 0.44,
+      "description": "Spreadsheet to HTML report builder",
+      "category": "integrations",
+      "breakdown": {
+        "subtasksPassed": 6,
+        "subtasksTotal": 6,
+        "modulesCompleted": [
+          "report-builder"
+        ],
+        "modulesIncomplete": [],
+        "modules": {
+          "report-builder": {
+            "passed": 6,
+            "total": 6,
+            "passedTasks": [
+              "render-markdown-with-totals",
+              "render-text-without-totals",
+              "render-text-with-totals",
+              "render-unsupported-format-failure",
+              "render-missing-file-failure",
+              "package-integrity"
+            ],
+            "failedTasks": []
+          }
+        }
+      }
+    },
+    "workspaceArchive": "outputs/report-builder-2025-10-24T15-01-51-896Z/cerebrasqwen3-qwen3-coder-temp1/workspace"
+  },
+  {
+    "evalName": "report-builder",
+    "configId": "codex-exec-gpt5-default",
+    "runId": "report-builder-2025-10-24T15-02-26-037Z",
+    "date": "2025-10-24",
+    "finishedAt": "2025-10-24T15:03:02.775Z",
+    "vybes": {
+      "taskName": "report-builder",
+      "configId": "codex-exec-gpt5-default",
+      "complexityMultiplier": 4,
+      "timeLimitMinutes": 8,
+      "baseScore": 400,
+      "successPercentage": 0.1667,
+      "timePenaltyMultiplier": 1,
+      "finalScore": 66.67,
+      "actualTimeMinutes": 0.454,
+      "description": "Spreadsheet to HTML report builder",
+      "category": "integrations",
+      "breakdown": {
+        "subtasksPassed": 1,
+        "subtasksTotal": 6,
+        "modulesCompleted": [],
+        "modulesIncomplete": [
+          "report-builder"
+        ],
+        "modules": {
+          "report-builder": {
+            "passed": 1,
+            "total": 6,
+            "passedTasks": [
+              "package-integrity"
+            ],
+            "failedTasks": [
+              "render-markdown-with-totals",
+              "render-text-without-totals",
+              "render-text-with-totals",
+              "render-unsupported-format-failure",
+              "render-missing-file-failure"
+            ]
+          }
+        }
+      }
+    },
+    "workspaceArchive": "outputs/report-builder-2025-10-24T15-02-26-037Z/codex-exec-gpt5-default/workspace"
+  }
+]

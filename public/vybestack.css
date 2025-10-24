@@ -286,8 +286,7 @@ th.sortable.desc::after {
   content: '\\2193';
 }
 
-.numeric,
-th.numeric {
+.numeric {
   text-align: right;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;

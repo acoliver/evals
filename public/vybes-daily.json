@@ -1,0 +1,58 @@
+[
+  {
+    "date": "2025-10-24",
+    "profiles": {
+      "llxprt-synthetic-glm4.6-temp1": {
+        "runs": 7,
+        "totalVybes": 933.33,
+        "avgVybes": 133.33,
+        "avgSuccess": 0.5238,
+        "avgPenalty": 1,
+        "bestRun": {
+          "eval": "report-builder",
+          "score": 400,
+          "runId": "report-builder-2025-10-24T14-59-14-234Z"
+        },
+        "worstRun": {
+          "eval": "regex-challenge",
+          "score": 0,
+          "runId": "regex-challenge-2025-10-24T14-43-29-166Z"
+        }
+      },
+      "cerebrasqwen3-qwen3-coder-temp1": {
+        "runs": 7,
+        "totalVybes": 1233.33,
+        "avgVybes": 176.19,
+        "avgSuccess": 0.6095,
+        "avgPenalty": 1,
+        "bestRun": {
+          "eval": "report-builder",
+          "score": 400,
+          "runId": "report-builder-2025-10-24T15-01-51-896Z"
+        },
+        "worstRun": {
+          "eval": "regex-challenge",
+          "score": 0,
+          "runId": "regex-challenge-2025-10-24T14-46-44-497Z"
+        }
+      },
+      "codex-exec-gpt5-default": {
+        "runs": 7,
+        "totalVybes": 1540.45,
+        "avgVybes": 220.06,
+        "avgSuccess": 0.681,
+        "avgPenalty": 0.9003,
+        "bestRun": {
+          "eval": "form-capture",
+          "score": 500,
+          "runId": "form-capture-2025-10-24T14-16-39-725Z"
+        },
+        "worstRun": {
+          "eval": "regex-challenge",
+          "score": 0,
+          "runId": "regex-challenge-2025-10-24T14-48-30-886Z"
+        }
+      }
+    }
+  }
+]
