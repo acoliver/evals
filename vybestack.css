@@ -31,17 +31,9 @@ h1 {
   letter-spacing: -0.5px;
 }
 
-h2 {
-  font-size: 1.75rem;
-  font-weight: 600;
-  margin-top: 3rem;
-  color: #6a9955;
-}
-
-h3 {
-  font-size: 1.25rem;
-  font-weight: 500;
-  margin-top: 3rem;
+h2,
+h3,
+h4 {
   color: #6a9955;
 }
 
@@ -185,10 +177,6 @@ footer {
   color: #6a9955;
 }
 
-.card strong {
-  color: #6a9955;
-}
-
 .card .metrics {
   display: flex;
   flex-wrap: wrap;
@@ -204,28 +192,6 @@ footer {
 .metric span {
   font-size: 1.4rem;
   font-weight: 600;
-}
-
-.run-card {
-  border-left: 4px solid #6a9955;
-  padding-left: 1.25rem;
-}
-
-.run-card header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.run-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.5rem;
-  font-size: 0.95rem;
-}
-
-.run-meta span {
-  opacity: 0.85;
 }
 
 .badge-fail {
@@ -248,8 +214,54 @@ footer {
   font-weight: 600;
 }
 
-.link-row a:hover {
-  color: #ff0000;
+.table-wrapper {
+  margin-top: 1.5rem;
+  overflow-x: auto;
+  border: 1px solid #6a9955;
+  border-radius: 12px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #000;
+  color: #6a9955;
+}
+
+thead {
+  background: rgba(106, 153, 85, 0.15);
+}
+
+th,
+td {
+  border-bottom: 1px solid rgba(106, 153, 85, 0.2);
+  text-align: left;
+  padding: 0.75rem 1rem;
+  font-size: 0.98rem;
+}
+
+tbody tr:hover {
+  background: rgba(106, 153, 85, 0.1);
+}
+
+th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+th.sortable::after {
+  content: '\\2195';
+  font-size: 0.8rem;
+  margin-left: 0.4rem;
+  opacity: 0.65;
+}
+
+th.sortable.asc::after {
+  content: '\\2191';
+}
+
+th.sortable.desc::after {
+  content: '\\2193';
 }
   .cli-box {
     position: static;
