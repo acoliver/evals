@@ -1,5 +1,18 @@
 /* vybestack.css */
 
+*, *::before, *::after {
+  box-sizing: border-box;
+  color: #6a9955 !important;
+}
+
+a {
+  color: #6a9955;
+}
+
+a:hover {
+  color: #ff0000;
+}
+
 body {
   margin: 0;
   padding: 4rem 2rem;
@@ -16,8 +29,7 @@ body {
 
 .container {
   position: relative;        
-  max-width: 1200px;
-  width: 100%;
+  width: min(95vw, 3200px);
   margin: 0 auto;
   padding: 2rem;
 }
@@ -223,9 +235,18 @@ footer {
 
 table {
   width: 100%;
+  min-width: min(1500px, 95vw);
   border-collapse: collapse;
   background: #000;
-  color: #6a9955;
+  color: #6a9955 !important;
+}
+
+table,
+thead,
+tbody,
+th,
+td {
+  color: #6a9955 !important;
 }
 
 thead {
@@ -263,6 +284,33 @@ th.sortable.asc::after {
 
 th.sortable.desc::after {
   content: '\\2193';
+}
+
+.numeric,
+th.numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  min-width: clamp(7rem, 6vw, 14rem);
+}
+
+.notes-col {
+  min-width: clamp(15rem, 18vw, 32rem);
+  word-break: break-all;
+  white-space: normal;
+}
+
+@media (max-width: 900px) {
+  body {
+    padding: 2rem 1rem;
+  }
+  .container {
+    padding: 1.25rem;
+    width: 100%;
+  }
+  table {
+    min-width: 640px;
+  }
 }
   .cli-box {
     position: static;

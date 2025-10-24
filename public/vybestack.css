@@ -1,10 +1,23 @@
 /* vybestack.css */
 
+*, *::before, *::after {
+  box-sizing: border-box;
+  color: #6a9955 !important;
+}
+
+a {
+  color: #6a9955;
+}
+
+a:hover {
+  color: #ff0000;
+}
+
 body {
   margin: 0;
   padding: 4rem 2rem;
   background-color: #000;
-  color: #ffffff;
+  color: #6a9955;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   line-height: 1.7;
   display: flex;
@@ -16,8 +29,7 @@ body {
 
 .container {
   position: relative;        
-  max-width: 640px;
-  width: 100%;
+  width: min(95vw, 3200px);
   margin: 0 auto;
   padding: 2rem;
 }
@@ -31,17 +43,9 @@ h1 {
   letter-spacing: -0.5px;
 }
 
-h2 {
-  font-size: 1.75rem;
-  font-weight: 600;
-  margin-top: 3rem;
-  color: #6a9955;
-}
-
-h3 {
-  font-size: 1.25rem;
-  font-weight: 500;
-  margin-top: 3rem;
+h2,
+h3,
+h4 {
   color: #6a9955;
 }
 
@@ -139,7 +143,7 @@ footer {
   position: absolute;
   top: 0;
   right: -360px;           
-  background: #111;
+  background: #000;
   border: 1px solid rgba(106,153,85,.2);
   padding: 1.5rem;
   font: 1.1rem/1.6 "Courier New", monospace;
@@ -157,7 +161,156 @@ footer {
   }
 }
 
-@media (max-width: 768px) {
+.grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 900px) {
+  .grid.two-column {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.card {
+  border: 1px solid #6a9955;
+  background: #000;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 16px 40px -28px rgba(106, 153, 85, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.card h3,
+.card h4 {
+  margin: 0;
+  color: #6a9955;
+}
+
+.card .metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.95rem;
+}
+
+.metric span {
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.badge-fail {
+  color: #ff0000;
+  font-weight: 600;
+}
+
+.timestamp {
+  font-size: 0.9rem;
+  opacity: 0.75;
+}
+
+.link-row {
+  margin-top: 0.75rem;
+}
+
+.link-row a {
+  color: #6a9955;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.table-wrapper {
+  margin-top: 1.5rem;
+  overflow-x: auto;
+  border: 1px solid #6a9955;
+  border-radius: 12px;
+}
+
+table {
+  width: 100%;
+  min-width: min(1500px, 95vw);
+  border-collapse: collapse;
+  background: #000;
+  color: #6a9955 !important;
+}
+
+table,
+thead,
+tbody,
+th,
+td {
+  color: #6a9955 !important;
+}
+
+thead {
+  background: rgba(106, 153, 85, 0.15);
+}
+
+th,
+td {
+  border-bottom: 1px solid rgba(106, 153, 85, 0.2);
+  text-align: left;
+  padding: 0.85rem 1rem;
+  font-size: 0.98rem;
+  color: #6a9955;
+}
+
+tbody tr:hover {
+  background: rgba(106, 153, 85, 0.1);
+}
+
+th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+th.sortable::after {
+  content: '\\2195';
+  font-size: 0.8rem;
+  margin-left: 0.4rem;
+  opacity: 0.65;
+}
+
+th.sortable.asc::after {
+  content: '\\2191';
+}
+
+th.sortable.desc::after {
+  content: '\\2193';
+}
+
+.numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  min-width: clamp(7rem, 6vw, 14rem);
+}
+
+.notes-col {
+  min-width: clamp(15rem, 18vw, 32rem);
+  word-break: break-all;
+  white-space: normal;
+}
+
+@media (max-width: 900px) {
+  body {
+    padding: 2rem 1rem;
+  }
+  .container {
+    padding: 1.25rem;
+    width: 100%;
+  }
+  table {
+    min-width: 640px;
+  }
+}
   .cli-box {
     position: static;
     margin: 2rem 0 0;
@@ -201,4 +354,3 @@ a:hover {
   position: relative;
     background-image: url('/assets/blog-bg.gif');
 }
-

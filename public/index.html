@@ -22,11 +22,11 @@
           <thead>
             <tr>
               <th class="sortable" data-field="profileLabel">Profile</th>
-              <th class="sortable sorted desc" data-field="totalVybes">Total Vybes</th>
-              <th class="sortable" data-field="runs">Runs</th>
-              <th class="sortable" data-field="avgVybes">Avg Vybes</th>
-              <th class="sortable" data-field="avgSuccess">Avg Success</th>
-              <th class="sortable" data-field="avgPenalty">Avg Penalty</th>
+              <th class="sortable sorted desc numeric" data-field="totalVybes">Total Vybes</th>
+              <th class="sortable numeric" data-field="runs">Runs</th>
+              <th class="sortable numeric" data-field="avgVybes">Avg Vybes</th>
+              <th class="sortable numeric" data-field="avgSuccess">Avg Success</th>
+              <th class="sortable numeric" data-field="avgPenalty">Avg Penalty</th>
               <th>Best Run</th>
               <th>Worst Run</th>
             </tr>
@@ -45,11 +45,11 @@
               <th class="sortable" data-field="finishedAtValue">Finished</th>
               <th class="sortable" data-field="profileLabel">Profile</th>
               <th class="sortable" data-field="evalName">Scenario</th>
-              <th class="sortable" data-field="finalScore">Vybes</th>
-              <th class="sortable" data-field="successPercentage">Success</th>
-              <th class="sortable" data-field="timePenaltyMultiplier">Penalty</th>
-              <th class="sortable" data-field="actualTimeMinutes">Minutes</th>
-              <th class="sortable" data-field="subtasks">Subtasks</th>
+              <th class="sortable numeric" data-field="finalScore">Vybes</th>
+              <th class="sortable numeric" data-field="successPercentage">Success</th>
+              <th class="sortable numeric" data-field="timePenaltyMultiplier">Penalty</th>
+              <th class="sortable numeric" data-field="actualTimeMinutes">Minutes</th>
+              <th class="sortable numeric" data-field="subtasks">Subtasks</th>
               <th>Notes</th>
             </tr>
           </thead>
@@ -136,11 +136,11 @@
             : '–';
         return `<tr>
           <td>${row.profileLabel}<br/><small>${row.date}</small></td>
-          <td data-field="totalVybes">${formatter.format(row.totalVybes)}</td>
-          <td data-field="runs">${row.runs}</td>
-          <td data-field="avgVybes">${formatter.format(row.avgVybes)}</td>
-          <td data-field="avgSuccess">${percentFormatter.format(row.avgSuccess)}</td>
-          <td data-field="avgPenalty">${formatter.format(row.avgPenalty)}</td>
+          <td class="numeric" data-field="totalVybes">${formatter.format(row.totalVybes)}</td>
+          <td class="numeric" data-field="runs">${row.runs}</td>
+          <td class="numeric" data-field="avgVybes">${formatter.format(row.avgVybes)}</td>
+          <td class="numeric" data-field="avgSuccess">${percentFormatter.format(row.avgSuccess)}</td>
+          <td class="numeric" data-field="avgPenalty">${formatter.format(row.avgPenalty)}</td>
           <td>${best}</td>
           <td>${worst}</td>
         </tr>`;
@@ -163,12 +163,12 @@
           <td>${finishedLabel}</td>
           <td>${run.profileLabel}</td>
           <td data-field="evalName">${scenario}</td>
-          <td data-field="finalScore">${formatter.format(run.finalScore)}</td>
-          <td data-field="successPercentage">${percentFormatter.format(run.successPercentage)}</td>
-          <td data-field="timePenaltyMultiplier">${formatter.format(run.timePenaltyMultiplier)}</td>
-          <td data-field="actualTimeMinutes">${formatter.format(run.actualTimeMinutes)}</td>
-          <td data-field="subtasks">${run.subtasksPassed}/${run.subtasksTotal}</td>
-          <td>${noteCell}</td>
+          <td class="numeric" data-field="finalScore">${formatter.format(run.finalScore)}</td>
+          <td class="numeric" data-field="successPercentage">${percentFormatter.format(run.successPercentage)}</td>
+          <td class="numeric" data-field="timePenaltyMultiplier">${formatter.format(run.timePenaltyMultiplier)}</td>
+          <td class="numeric" data-field="actualTimeMinutes">${formatter.format(run.actualTimeMinutes)}</td>
+          <td class="numeric" data-field="subtasks">${run.subtasksPassed}/${run.subtasksTotal}</td>
+          <td class="notes-col">${noteCell}</td>
         </tr>`;
       }).join('');
     }
