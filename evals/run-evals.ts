@@ -8,6 +8,7 @@ import { resolve, join, basename } from 'path';
 import { spawnSync } from 'child_process';
 import { v4 as uuidv4 } from 'uuid';
 import { execSync } from 'child_process';
+import { VybesScoringEngine, VybesResult, VybesTaskConfig } from './vybes';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -32,6 +33,7 @@ interface EvaluationConfig {
   prompt: string;
   buildSteps: string[];
   gradeSteps: string[];
+  vybes?: VybesTaskConfig;
 }
 
 interface CLIConfig {
@@ -170,6 +172,7 @@ interface EvalResult {
   success: boolean;
   totalDuration: number;
   archivePath: string;
+  vybesScore?: VybesResult;
 }
 
 class EvaluationLoader {
@@ -332,7 +335,26 @@ class ResultsManager {
     const resultsPath = result.archivePath;
     const resultsFile = join(resultsPath, 'results.json');
     
-    const results = {
+    const results: {
+      evalName: string;
+      configId: string;
+      startedAt: string;
+      finishedAt: string;
+      status: string;
+      totalDuration: number;
+      commands: Array<{
+        name: string;
+        command: string;
+        cwd: string;
+        exitCode: number;
+        stdout: string;
+        stderr: string;
+        duration: number;
+        success: boolean;
+      }>;
+      workspaceArchive: string;
+      vybes?: VybesResult;
+    } = {
       evalName,
       configId,
       startedAt: new Date().toISOString(),
@@ -349,8 +371,12 @@ class ResultsManager {
         duration: cmd.duration,
         success: cmd.exitCode === 0
       })),
-      workspaceArchive: join(result.archivePath, 'workspace')
+      workspaceArchive: result.archivePath
     };
+
+    if (result.vybesScore) {
+      results.vybes = result.vybesScore;
+    }
 
     await writeFile(resultsFile, JSON.stringify(results, null, 2), 'utf8');
     console.log(`  → Results saved to ${resultsFile}`);
@@ -364,12 +390,14 @@ class UnifiedRunner {
   private evalLoader: EvaluationLoader;
   private workspaceManager: WorkspaceManager;
   private resultsManager: ResultsManager;
+  private vybesEngine: VybesScoringEngine;
 
   constructor() {
     this.configManager = new ConfigurationManager();
     this.evalLoader = new EvaluationLoader();
     this.workspaceManager = new WorkspaceManager();
     this.resultsManager = new ResultsManager();
+    this.vybesEngine = new VybesScoringEngine();
   }
 
   async runEvaluation(evalName: string, configId: string): Promise<EvalResult> {
@@ -446,6 +474,27 @@ class UnifiedRunner {
         console.log(`  → Copied grading results to ${gradingResultsDestination}`);
       }
 
+      let vybesScore: VybesResult | undefined;
+      try {
+        vybesScore = this.vybesEngine.calculate({
+          evalName,
+          configId,
+          providedConfig: evalConfig.vybes,
+          archivePath: finalArchivePath,
+          cliResult,
+          buildResults,
+          gradeResults,
+          overallSuccess: success
+        });
+        if (vybesScore) {
+          const scorePercent = (vybesScore.successPercentage * 100).toFixed(1);
+          console.log(`  → Vybes score: ${vybesScore.finalScore.toFixed(2)} (${scorePercent}% success, penalty ${vybesScore.timePenaltyMultiplier.toFixed(2)})`);
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.warn(`  [WARN] Failed to calculate vybes score: ${message}`);
+      }
+
       await this.resultsManager.saveResults(evalName, configId, {
         evalName,
         configId,
@@ -456,7 +505,8 @@ class UnifiedRunner {
         gradeResults,
         success,
         totalDuration,
-        archivePath: finalArchivePath
+        archivePath: finalArchivePath,
+        vybesScore
       });
 
       return {
@@ -469,7 +519,8 @@ class UnifiedRunner {
         gradeResults,
         success,
         totalDuration,
-        archivePath: finalArchivePath
+        archivePath: finalArchivePath,
+        vybesScore
       };
 
     } finally {
