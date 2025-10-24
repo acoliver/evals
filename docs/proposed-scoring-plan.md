@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines a new scoring system called "Vybes" for the LLxprt Evaluation framework. The system rewards completeness over speed while applying complexity-adjusted time penalties for excessive slowness.
+This document outlines the Vybes scoring system for the LLxprt evaluation framework. The system rewards completeness over speed while applying complexity-adjusted time penalties for excessive slowness. The plan now reflects the implementation that ships with `evals/run-evals.ts`, the JSON aggregator in `scripts/build-vybes.js`, and the static “Vybes Scoreboard” published from the `public/` directory.
 
 ## Core Scoring Formula
 
@@ -154,10 +154,26 @@ never pollutes the repository.
 - Harder problems properly rewarded
 - Time penalties prevent endless execution
 
-## Implementation Steps
+## Implementation Status
 
-### Phase 1: Pre-requisites & Instrumentation (Week 1)
-1. **Emit hidden-test breakdowns**: Update every grading suite (base64, report-builder, form-capture, pagination, react-evaluation) to write per-subtask JSON alongside regex.
+| Component | Status | Notes |
+|-----------|--------|-------|
+| CLI scoring (`run-evals.ts`) | ✅ | Vybes metadata loaded from `evals/config/eval-config.json`, scoring written to every `workspace/results.json`. |
+| Hidden-test breakdowns | ✅ | All evaluations emit `workspace/results/<task>.json` for partial credit (base64, pagination, form, report-builder, react, regex). |
+| Aggregator | ✅ | `npm run build:vybes` scans `outputs/…` and generates `public/vybes-runs.json` + `public/vybes-daily.json`. |
+| Greenscreen dashboard | ✅ | `public/index.html` + `vybestack.css` render sortable tables for daily summary and per-run log. |
+| Automation | ⏳ | Can be added later via GitHub Actions or cron once remote agents are available. |
+
+Run `npm run build:vybes` (or `public/run-local.sh`) whenever new evaluations finish to refresh the JSON and HTML outputs.
+
+## Remaining Enhancements
+
+1. **Nightly automation** (optional)  
+   Add a scheduled workflow that runs evaluations, invokes `npm run build:vybes`, and publishes the `public/` folder to GitHub Pages or S3.
+2. **Alerting**  
+   Emit notifications when daily vybes fall below a threshold or when lint/typecheck failures spike.
+3. **Historical trends**  
+   Extend `scripts/build-vybes.js` to keep rolling averages or compute week‑over‑week diffs for the dashboard.
 2. **Extend config**: Add vybes metadata to `eval-config.json`.
 3. **Expose timing**: Ensure `cliResult.duration` is surfaced in `EvalResult`.
 4. **Define interfaces**: Extend `EvalResult`/`EvaluationConfig` to carry vybes options and document expected breakdown schemas.
