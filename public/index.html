@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vybes Scoreboard</title>
+  <link rel="stylesheet" href="vybestack.css" />
+</head>
+<body>
+  <main class="container">
+    <header class="top-bar">
+      <div>
+        <h1>Vybes Scoreboard</h1>
+        <p class="cta-lead">Daily LLxprt evaluation scores in glorious greenscreen.</p>
+      </div>
+    </header>
+
+    <section>
+      <h2>Daily Overview</h2>
+      <div id="daily-summary" class="grid two-column"></div>
+    </section>
+
+    <section>
+      <h2>Run Log</h2>
+      <div id="run-log" class="grid"></div>
+    </section>
+
+    <footer>
+      Updated <span id="updated-at">never</span>. Serve this directory (e.g. <code>npx serve public</code>) for live data.
+    </footer>
+  </main>
+
+  <script type="module">
+    const PROFILE_LABELS = {
+      'llxprt-synthetic-glm4.6-temp1': 'Synthetic GLM 4.6',
+      'cerebrasqwen3-qwen3-coder-temp1': 'Qwen3 Coder',
+      'codex-exec-gpt5-default': 'Codex GPT-5'
+    };
+
+    const EVAL_LABELS = {
+      'base64-fix': 'Base64 Toolkit Fix',
+      'form-capture': 'Friendly Form Capture',
+      'pagination': 'Pagination Service Repair',
+      'react-evaluation': 'Reactive Programming Primitives',
+      'regex-challenge': 'Regex Challenge Toolkit',
+      'report-builder': 'Report Builder Repair'
+    };
+
+    const formatter = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 });
+    const percentFormatter = new Intl.NumberFormat(undefined, { style: 'percent', maximumFractionDigits: 1 });
+    const dateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+
+    const dailyTarget = document.getElementById('daily-summary');
+    const runsTarget = document.getElementById('run-log');
+    const updatedAtEl = document.getElementById('updated-at');
+
+    async function safeFetch(path) {
+      const response = await fetch(path);
+      if (!response.ok) {
+        throw new Error(`Failed to load ${path}: ${response.status}`);
+      }
+      return response.json();
+    }
+
+    function renderDaily(daily) {
+      dailyTarget.innerHTML = '';
+      daily.forEach((entry) => {
+        const dayLabel = entry.date === 'unknown' ? 'Unknown Date' : entry.date;
+        const profiles = Object.entries(entry.profiles);
+        profiles.sort((a, b) => b[1].totalVybes - a[1].totalVybes);
+
+        const section = document.createElement('article');
+        section.className = 'card';
+        const header = document.createElement('div');
+        header.innerHTML = `<h3>${dayLabel}</h3>`;
+        section.appendChild(header);
+
+        profiles.forEach(([configId, stats]) => {
+          const block = document.createElement('div');
+          block.className = 'metrics';
+
+          const title = document.createElement('h4');
+          title.textContent = PROFILE_LABELS[configId] ?? configId;
+          section.appendChild(title);
+
+          const score = document.createElement('div');
+          score.className = 'metric';
+          score.innerHTML = `<span>${formatter.format(stats.totalVybes)} vybes</span><small>${stats.runs} run(s)</small>`;
+
+          const average = document.createElement('div');
+          average.className = 'metric';
+          average.innerHTML = `<span>${formatter.format(stats.avgVybes)}</span><small>avg vybes</small>`;
+
+          const success = document.createElement('div');
+          success.className = 'metric';
+          success.innerHTML = `<span>${percentFormatter.format(stats.avgSuccess)}</span><small>avg success</small>`;
+
+          const penalty = document.createElement('div');
+          penalty.className = 'metric';
+          penalty.innerHTML = `<span>${formatter.format(stats.avgPenalty)}</span><small>avg penalty</small>`;
+
+          block.append(score, average, success, penalty);
+          section.appendChild(block);
+
+          if (stats.bestRun) {
+            const best = document.createElement('p');
+            best.innerHTML = `<strong>Best:</strong> ${EVAL_LABELS[stats.bestRun.eval] ?? stats.bestRun.eval} (${formatter.format(stats.bestRun.score)} vybes)`;
+            section.appendChild(best);
+          }
+
+          if (stats.worstRun && stats.worstRun.runId !== stats.bestRun?.runId) {
+            const worst = document.createElement('p');
+            worst.innerHTML = `<strong>Worst:</strong> ${EVAL_LABELS[stats.worstRun.eval] ?? stats.worstRun.eval} (${formatter.format(stats.worstRun.score)} vybes)`;
+            section.appendChild(worst);
+          }
+        });
+
+        dailyTarget.appendChild(section);
+      });
+    }
+
+    function renderRuns(runs) {
+      runsTarget.innerHTML = '';
+      const sorted = [...runs].sort((a, b) => {
+        const aTime = a.finishedAt ? Date.parse(a.finishedAt) : 0;
+        const bTime = b.finishedAt ? Date.parse(b.finishedAt) : 0;
+        return bTime - aTime;
+      });
+
+      sorted.forEach((run) => {
+        const card = document.createElement('article');
+        card.className = 'card run-card';
+
+        const header = document.createElement('header');
+        header.innerHTML = `
+          <h3>${EVAL_LABELS[run.evalName] ?? run.evalName}</h3>
+          <div class="run-meta">
+            <span>${PROFILE_LABELS[run.configId] ?? run.configId}</span>
+            <span>${run.runId}</span>
+            <span class="timestamp">${run.finishedAt ? dateFormatter.format(new Date(run.finishedAt)) : 'unknown'}</span>
+          </div>
+        `;
+
+        const metrics = document.createElement('div');
+        metrics.className = 'metrics';
+        metrics.innerHTML = `
+          <div class="metric"><span>${formatter.format(run.vybes.finalScore)}</span><small>vybes</small></div>
+          <div class="metric"><span>${percentFormatter.format(run.vybes.successPercentage ?? 0)}</span><small>success</small></div>
+          <div class="metric"><span>${formatter.format(run.vybes.timePenaltyMultiplier ?? 0)}</span><small>penalty</small></div>
+          <div class="metric"><span>${formatter.format(run.vybes.actualTimeMinutes ?? 0)}</span><small>minutes</small></div>
+          <div class="metric"><span>${run.vybes.breakdown?.subtasksPassed ?? 0}/${run.vybes.breakdown?.subtasksTotal ?? 0}</span><small>subtasks</small></div>
+        `;
+
+        card.append(header, metrics);
+
+        if (run.vybes.error) {
+          const warning = document.createElement('p');
+          warning.className = 'badge-fail';
+          warning.textContent = `Note: ${run.vybes.error}`;
+          card.appendChild(warning);
+        }
+
+        if (run.workspaceArchive) {
+          const linkRow = document.createElement('div');
+          linkRow.className = 'link-row';
+          const resultsLink = document.createElement('a');
+          resultsLink.href = `../${run.workspaceArchive}/results.json`;
+          resultsLink.target = '_blank';
+          resultsLink.rel = 'noopener noreferrer';
+          resultsLink.textContent = 'View raw results';
+          linkRow.appendChild(resultsLink);
+          card.appendChild(linkRow);
+        }
+
+        runsTarget.appendChild(card);
+      });
+    }
+
+    async function bootstrap() {
+      try {
+        const [daily, runs] = await Promise.all([
+          safeFetch('vybes-daily.json'),
+          safeFetch('vybes-runs.json')
+        ]);
+
+        renderDaily(daily);
+        renderRuns(runs);
+
+        const lastRun = runs[runs.length - 1];
+        if (lastRun?.finishedAt) {
+          updatedAtEl.textContent = dateFormatter.format(new Date(lastRun.finishedAt));
+        } else {
+          updatedAtEl.textContent = 'unknown';
+        }
+      } catch (error) {
+        dailyTarget.innerHTML = `<p class="badge-fail">${error.message}. Serve the site via HTTP to enable fetch().</p>`;
+        runsTarget.innerHTML = '';
+        console.error(error);
+      }
+    }
+
+    bootstrap();
+  </script>
+</body>
+</html>

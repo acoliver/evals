@@ -4,7 +4,7 @@ body {
   margin: 0;
   padding: 4rem 2rem;
   background-color: #000;
-  color: #6a9955;
+  color: #ffffff;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   line-height: 1.7;
   display: flex;
@@ -139,7 +139,7 @@ footer {
   position: absolute;
   top: 0;
   right: -360px;           
-  background: #000;
+  background: #111;
   border: 1px solid rgba(106,153,85,.2);
   padding: 1.5rem;
   font: 1.1rem/1.6 "Courier New", monospace;
@@ -157,100 +157,7 @@ footer {
   }
 }
 
-.grid {
-  display: grid;
-  gap: 1.5rem;
-}
-
-@media (min-width: 900px) {
-  .grid.two-column {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-.card {
-  border: 1px solid #6a9955;
-  background: #000;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 16px 40px -28px rgba(106, 153, 85, 0.4);
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.card h3,
-.card h4 {
-  margin: 0;
-  color: #6a9955;
-}
-
-.card strong {
-  color: #6a9955;
-}
-
-.card .metrics {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem 1.25rem;
-}
-
-.metric {
-  display: flex;
-  flex-direction: column;
-  font-size: 0.95rem;
-}
-
-.metric span {
-  font-size: 1.4rem;
-  font-weight: 600;
-}
-
-.run-card {
-  border-left: 4px solid #6a9955;
-  padding-left: 1.25rem;
-}
-
-.run-card header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.run-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.5rem;
-  font-size: 0.95rem;
-}
-
-.run-meta span {
-  opacity: 0.85;
-}
-
-.badge-fail {
-  color: #ff0000;
-  font-weight: 600;
-}
-
-.timestamp {
-  font-size: 0.9rem;
-  opacity: 0.75;
-}
-
-.link-row {
-  margin-top: 0.75rem;
-}
-
-.link-row a {
-  color: #6a9955;
-  text-decoration: underline;
-  font-weight: 600;
-}
-
-.link-row a:hover {
-  color: #ff0000;
-}
+@media (max-width: 768px) {
   .cli-box {
     position: static;
     margin: 2rem 0 0;
@@ -294,3 +201,4 @@ a:hover {
   position: relative;
     background-image: url('/assets/blog-bg.gif');
 }
+

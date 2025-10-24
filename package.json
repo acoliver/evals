@@ -10,7 +10,8 @@
     "eval:form": "tsx evals/run-evals.ts --eval form-capture",
     "eval:regex": "tsx evals/run-evals.ts --eval regex-challenge",
     "eval:react": "tsx evals/run-evals.ts --eval react-evaluation",
-    "eval:all": "tsx evals/run-evals.ts --eval ALL"
+    "eval:all": "tsx evals/run-evals.ts --eval ALL",
+    "build:vybes": "node scripts/build-vybes.js"
   },
   "devDependencies": {
     "@types/node": "^20.12.7",
