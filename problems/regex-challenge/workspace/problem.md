@@ -6,7 +6,7 @@ Implement the utility functions in `src/validators.ts`, `src/transformations.ts`
 
 ### Validators (`src/validators.ts`)
 1. `isValidEmail(value)` – Accept typical addresses such as `name+tag@example.co.uk`. Reject double dots, trailing dots, domains with underscores, and other obviously invalid forms.
-2. `isValidUSPhone(value, options?)` – Support `(123) 456-7890`, `123-456-7890`, `1234567890`, optional `+1` prefix. Disallow impossible area codes (leading 0/1) and too short inputs.
+2. `isValidUSPhone(value, options?)` – Support `(212) 555-7890`, `212-555-7890`, `2125557890`, optional `+1` prefix. Disallow impossible area codes (leading 0/1) and too short inputs.
 3. `isValidArgentinePhone(value)` – Handle landlines and mobiles such as `+54 9 11 1234 5678`, `011 1234 5678`, `+54 341 123 4567`, `0341 4234567`.
    - Optional country code `+54`.
    - Optional trunk prefix `0` immediately before the area code.

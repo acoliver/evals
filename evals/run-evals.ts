@@ -438,6 +438,14 @@ class UnifiedRunner {
 
       // Archive workspace and save results
       const finalArchivePath = await this.workspaceManager.archiveWorkspace(workspace, archivePath);
+
+      const gradingResultsSource = join(evalConfig.grading, 'workspace', 'results');
+      if (existsSync(gradingResultsSource)) {
+        const gradingResultsDestination = join(finalArchivePath, 'results');
+        await cp(gradingResultsSource, gradingResultsDestination, { recursive: true });
+        console.log(`  → Copied grading results to ${gradingResultsDestination}`);
+      }
+
       await this.resultsManager.saveResults(evalName, configId, {
         evalName,
         configId,

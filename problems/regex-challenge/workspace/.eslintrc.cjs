@@ -13,8 +13,6 @@ module.exports = {
   rules: {
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-    'no-useless-escape': ['error', { 
-      allowEscapes: /[\^\(\)\[\]\{\}\*\+\?\.\|\\\/]/ 
-    }]
+    'no-useless-escape': 'off'
   }
 };
