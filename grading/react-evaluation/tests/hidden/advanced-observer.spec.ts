@@ -1,4 +1,6 @@
-import { describe, it, expect } from 'vitest'
+import { afterAll, describe, it, expect } from 'vitest'
+import fs from 'node:fs'
+import path from 'node:path'
 
 // Dynamic import that works after workspace is copied during grading
 const getModule = async () => {
@@ -10,6 +12,16 @@ const getModule = async () => {
     return await import('../../../../problems/react-evaluation/workspace/src/index.ts')
   }
 }
+
+const workspaceRoot = path.resolve(__dirname, '..', '..', 'workspace')
+const resultsPath = path.join(workspaceRoot, 'results', 'react-evaluation.json')
+const ALL_TASKS = [
+  'advanced-dependency-chain',
+  'nested-computed',
+  'callback-cleanup'
+] as const
+
+const taskStatus = new Map<string, boolean>(ALL_TASKS.map((taskId) => [taskId, false]))
 
 describe('Advanced Observer Patterns', () => {
   it('handles complex dependency chains', async () => {
@@ -23,6 +35,7 @@ describe('Advanced Observer Patterns', () => {
     
     setInput1(10)
     expect(computed()).toBe(12)
+    taskStatus.set('advanced-dependency-chain', true)
   })
 
   it('handles nested computed values', async () => {
@@ -35,5 +48,31 @@ describe('Advanced Observer Patterns', () => {
     expect(quadrupled()).toBe(20)
     setBase(10)
     expect(quadrupled()).toBe(40)
+    taskStatus.set('nested-computed', true)
   })
+})
+
+afterAll(() => {
+  if (fs.existsSync(resultsPath)) {
+    try {
+      const existing = JSON.parse(fs.readFileSync(resultsPath, 'utf8')) as Array<{
+        taskId: string
+        passed: boolean
+      }>
+      for (const { taskId, passed } of existing) {
+        if (taskStatus.has(taskId) && passed) {
+          taskStatus.set(taskId, true)
+        }
+      }
+    } catch {
+      // ignore malformed existing file
+    }
+  }
+
+  fs.mkdirSync(path.dirname(resultsPath), { recursive: true })
+  const results = ALL_TASKS.map((taskId) => ({
+    taskId,
+    passed: taskStatus.get(taskId) === true
+  }))
+  fs.writeFileSync(resultsPath, JSON.stringify(results, null, 2), 'utf8')
 })

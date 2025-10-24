@@ -1,13 +1,26 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import fs from 'node:fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const workspaceRoot = path.resolve(__dirname, '..', '..', 'workspace');
 const fixturesDir = path.join(workspaceRoot, 'fixtures');
 const cliPath = path.join(workspaceRoot, 'dist', 'cli', 'report.js');
+const RESULTS_PATH = path.join(workspaceRoot, 'results', 'report-builder.json');
+
+const ALL_TASKS = [
+  'render-markdown-with-totals',
+  'render-text-without-totals',
+  'render-text-with-totals',
+  'render-unsupported-format-failure',
+  'render-missing-file-failure',
+  'package-integrity'
+] as const;
+
+const taskStatus = new Map<string, boolean>(ALL_TASKS.map((taskId) => [taskId, false]));
 
 const expectedMarkdown = `# Quarterly Financial Summary
 
@@ -62,6 +75,7 @@ describe('report CLI hidden validations', () => {
 
     expect(result.status).toBe(0);
     expect(normalize(result.stdout)).toBe(normalize(expectedMarkdown));
+    taskStatus.set('render-markdown-with-totals', true);
   });
 
   it('renders plain text without totals', () => {
@@ -74,6 +88,7 @@ describe('report CLI hidden validations', () => {
     expect(result.status).toBe(0);
     const expectedWithoutTotals = expectedText.replace(/\nTotal:.*\n?$/, '');
     expect(normalize(result.stdout)).toBe(normalize(expectedWithoutTotals));
+    taskStatus.set('render-text-without-totals', true);
   });
 
   it('includes totals in text format when requested', () => {
@@ -86,6 +101,7 @@ describe('report CLI hidden validations', () => {
 
     expect(result.status).toBe(0);
     expect(normalize(result.stdout)).toBe(normalize(expectedText));
+    taskStatus.set('render-text-with-totals', true);
   });
 
   it('fails for unsupported format', () => {
@@ -97,6 +113,7 @@ describe('report CLI hidden validations', () => {
 
     expect(result.status).not.toBe(0);
     expect(result.stderr).toMatch(/Unsupported format/);
+    taskStatus.set('render-unsupported-format-failure', true);
   });
 
   it('errors on missing files', () => {
@@ -104,5 +121,31 @@ describe('report CLI hidden validations', () => {
 
     expect(result.status).not.toBe(0);
     expect(result.stderr.toLowerCase()).toMatch(/unable|enoent|not found/);
+    taskStatus.set('render-missing-file-failure', true);
   });
+});
+
+afterAll(() => {
+  if (fs.existsSync(RESULTS_PATH)) {
+    try {
+      const existing = JSON.parse(fs.readFileSync(RESULTS_PATH, 'utf8')) as Array<{
+        taskId: string;
+        passed: boolean;
+      }>;
+      for (const { taskId, passed } of existing) {
+        if (taskStatus.has(taskId) && passed) {
+          taskStatus.set(taskId, true);
+        }
+      }
+    } catch {
+      // ignore malformed existing file – we'll overwrite below
+    }
+  }
+
+  fs.mkdirSync(path.dirname(RESULTS_PATH), { recursive: true });
+  const results = ALL_TASKS.map((taskId) => ({
+    taskId,
+    passed: taskStatus.get(taskId) === true
+  }));
+  fs.writeFileSync(RESULTS_PATH, JSON.stringify(results, null, 2), 'utf8');
 });

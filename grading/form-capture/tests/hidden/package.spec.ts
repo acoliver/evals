@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,6 +17,18 @@ const baselinePackagePath = path.resolve(
   'package.json'
 );
 
+const RESULTS_PATH = path.join(workspaceRoot, 'results', 'form-capture.json');
+const ALL_TASKS = [
+  'form-fields-render',
+  'invalid-email-validation',
+  'submission-persists',
+  'thank-you-page',
+  'css-styling',
+  'package-integrity'
+] as const;
+
+let packageIntegrityPassed = false;
+
 const readJson = (filePath: string): unknown => {
   const raw = fs.readFileSync(filePath, 'utf8');
   return JSON.parse(raw);
@@ -30,5 +42,35 @@ describe('workspace package.json integrity', () => {
     expect(workspacePackage.dependencies).toEqual(baselinePackage.dependencies);
     expect(workspacePackage.devDependencies).toEqual(baselinePackage.devDependencies);
     expect(workspacePackage.scripts).toEqual(baselinePackage.scripts);
+    packageIntegrityPassed = true;
   });
+});
+
+afterAll(() => {
+  const statusMap = new Map<string, boolean>(ALL_TASKS.map((taskId) => [taskId, false]));
+
+  if (fs.existsSync(RESULTS_PATH)) {
+    try {
+      const existing = JSON.parse(fs.readFileSync(RESULTS_PATH, 'utf8')) as Array<{
+        taskId: string;
+        passed: boolean;
+      }>;
+      for (const { taskId, passed } of existing) {
+        if (statusMap.has(taskId)) {
+          statusMap.set(taskId, passed);
+        }
+      }
+    } catch {
+      // ignore malformed existing file
+    }
+  }
+
+  statusMap.set('package-integrity', packageIntegrityPassed);
+
+  fs.mkdirSync(path.dirname(RESULTS_PATH), { recursive: true });
+  const results = ALL_TASKS.map((taskId) => ({
+    taskId,
+    passed: statusMap.get(taskId) === true
+  }));
+  fs.writeFileSync(RESULTS_PATH, JSON.stringify(results, null, 2), 'utf8');
 });

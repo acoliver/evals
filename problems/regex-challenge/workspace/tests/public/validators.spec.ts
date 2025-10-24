@@ -12,7 +12,7 @@ describe('validators (public smoke)', () => {
   });
 
   it('accepts a standard US phone number', () => {
-    expect(isValidUSPhone('123-456-7890')).toBe(true);
+    expect(isValidUSPhone('212-555-7890')).toBe(true);
   });
 
   it('accepts a common Argentine phone format', () => {
