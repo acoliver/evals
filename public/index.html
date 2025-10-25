@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vybes Scoreboard</title>
+  <title>VybeScore Dashboard</title>
   <link rel="stylesheet" href="vybestack.css" />
 </head>
 <body>
   <main class="container">
     <header class="top-bar">
       <div>
-        <h1>Vybes Scoreboard</h1>
-        <p class="cta-lead">Daily LLxprt evaluation scores in glorious greenscreen.</p>
+        <h1>VybeScore Dashboard</h1>
+        <p class="cta-lead">Daily Model Performance</p>
       </div>
     </header>
 
@@ -37,29 +37,31 @@
     </section>
 
     <section>
-      <h2>Run Log</h2>
+      <h2>Daily Run Summary</h2>
       <div class="table-wrapper">
-        <table id="run-table">
+        <table id="day-table">
           <thead>
             <tr>
-              <th class="sortable" data-field="finishedAtValue">Finished</th>
-              <th class="sortable" data-field="profileLabel">Profile</th>
-              <th class="sortable" data-field="evalName">Scenario</th>
-              <th class="sortable numeric" data-field="finalScore">Vybes</th>
-              <th class="sortable numeric" data-field="successPercentage">Success</th>
-              <th class="sortable numeric" data-field="timePenaltyMultiplier">Penalty</th>
-              <th class="sortable numeric" data-field="actualTimeMinutes">Minutes</th>
-              <th class="sortable numeric" data-field="subtasks">Subtasks</th>
-              <th>Notes</th>
+              <th class="sortable sorted desc" data-field="sortValue">Date</th>
+              <th class="sortable numeric" data-field="totalRuns">Runs</th>
+              <th class="sortable numeric" data-field="totalMinutes">Minutes</th>
+              <th class="sortable numeric" data-field="avgVybes">Avg Vybes</th>
+              <th class="sortable" data-field="profilesLabel">Profiles</th>
+              <th class="sortable" data-field="versionsLabel">Repo Versions</th>
             </tr>
           </thead>
-          <tbody id="run-log"></tbody>
+          <tbody id="daily-run-summary"></tbody>
         </table>
       </div>
     </section>
 
+    <section>
+      <h2>Run Log</h2>
+      <div id="run-log" class="run-log"></div>
+    </section>
+
     <footer>
-      Updated <span id="updated-at">never</span>. Serve this directory (e.g. <code>npx serve public</code>) for live data.
+      Updated <span id="updated-at">never</span>.
     </footer>
   </main>
 
@@ -82,17 +84,21 @@
     const formatter = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 });
     const percentFormatter = new Intl.NumberFormat(undefined, { style: 'percent', maximumFractionDigits: 1 });
     const dateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+    const dayFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'long' });
 
     const dailyBody = document.getElementById('daily-summary');
-    const runsBody = document.getElementById('run-log');
+    const daySummaryBody = document.getElementById('daily-run-summary');
+    const runLogContainer = document.getElementById('run-log');
     const dailyTable = document.getElementById('daily-table');
-    const runTable = document.getElementById('run-table');
+    const daySummaryTable = document.getElementById('day-table');
     const updatedAtEl = document.getElementById('updated-at');
 
     let currentDailyRows = [];
+    let currentDaySummaryRows = [];
     let currentRunRows = [];
+    let currentRunGroups = [];
     const dailySort = { field: 'totalVybes', desc: true };
-    const runSort = { field: 'finishedAtValue', desc: true };
+    const daySort = { field: 'sortValue', desc: true };
 
     async function safeFetch(path) {
       const response = await fetch(path);
@@ -118,11 +124,41 @@
             avgPenalty: stats.avgPenalty,
             bestRun: stats.bestRun,
             worstRun: stats.worstRun,
-            profileLabel: PROFILE_LABELS[configId] ?? configId
+            profileLabel: PROFILE_LABELS[configId] ?? configId,
+            repoVersions: stats.repoVersions ?? []
           });
         });
       });
       return rows;
+    }
+
+    function createDaySummaryRows(daily) {
+      return daily.map((entry) => {
+        const summary = entry.summary ?? {};
+        const rawDate = entry.date ?? 'unknown';
+        const profiles = (summary.profiles ?? []).map((configId) => PROFILE_LABELS[configId] ?? configId);
+        const versions = summary.repoVersions ?? [];
+        const label =
+          rawDate === 'unknown' ? 'Unknown Date' : dayFormatter.format(new Date(`${rawDate}T00:00:00Z`));
+        return {
+          rawDate,
+          dateLabel: label,
+          totalRuns: summary.totalRuns ?? 0,
+          totalMinutes: summary.totalMinutes ?? 0,
+          avgVybes: summary.avgVybes ?? 0,
+          profilesLabel: profiles.join(', ') || '–',
+          repoVersions: versions,
+          versionsLabel: versions.join(', ') || 'unknown',
+          sortValue: rawDate !== 'unknown' ? Date.parse(`${rawDate}T00:00:00Z`) : 0
+        };
+      });
+    }
+
+    function formatVersionTags(versions) {
+      if (!versions || versions.length === 0) {
+        return '<span class="version-pill muted">unknown</span>';
+      }
+      return versions.map((version) => `<span class="version-pill">${version}</span>`).join('');
     }
 
     function updateDailyTable() {
@@ -135,7 +171,13 @@
             ? `${EVAL_LABELS[row.worstRun.eval] ?? row.worstRun.eval} (${formatter.format(row.worstRun.score)})`
             : '–';
         return `<tr>
-          <td>${row.profileLabel}<br/><small>${row.date}</small></td>
+          <td>
+            <div class="cell-heading">
+              <span>${row.profileLabel}</span>
+              <div class="version-tag-group">${formatVersionTags(row.repoVersions)}</div>
+            </div>
+            <small>${row.date}</small>
+          </td>
           <td class="numeric" data-field="totalVybes">${formatter.format(row.totalVybes)}</td>
           <td class="numeric" data-field="runs">${row.runs}</td>
           <td class="numeric" data-field="avgVybes">${formatter.format(row.avgVybes)}</td>
@@ -147,30 +189,173 @@
       }).join('');
     }
 
-    function updateRunTable() {
-      runsBody.innerHTML = currentRunRows.map((run) => {
-        const scenario = EVAL_LABELS[run.evalName] ?? run.evalName;
-        const finishedLabel = run.finishedAtValue ? dateFormatter.format(new Date(run.finishedAtValue)) : 'unknown';
-        const notes = [];
-        if (run.error) {
-          notes.push(`<span class="badge-fail">${run.error}</span>`);
+    function updateDaySummaryTable() {
+      daySummaryBody.innerHTML = currentDaySummaryRows
+        .map((row) => {
+          const anchor = getDayAnchor(row.rawDate);
+          return `<tr data-anchor="${anchor}" tabindex="0">
+            <td>${row.dateLabel}</td>
+            <td class="numeric" data-field="totalRuns">${row.totalRuns}</td>
+            <td class="numeric" data-field="totalMinutes">${formatter.format(row.totalMinutes)}</td>
+            <td class="numeric" data-field="avgVybes">${formatter.format(row.avgVybes)}</td>
+            <td>${row.profilesLabel}</td>
+            <td><div class="version-tag-group">${formatVersionTags(row.repoVersions)}</div></td>
+          </tr>`;
+        })
+        .join('');
+      attachDaySummaryHandlers();
+    }
+
+    function attachDaySummaryHandlers() {
+      const rows = Array.from(daySummaryBody.querySelectorAll('tr[data-anchor]'));
+      rows.forEach((row) => {
+        const target = row.dataset.anchor;
+        const triggerScroll = () => scrollToRunDay(target);
+        row.addEventListener('click', triggerScroll);
+        row.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            triggerScroll();
+          }
+        });
+      });
+    }
+
+    function getDayAnchor(rawDate) {
+      return `run-day-${rawDate && rawDate !== 'unknown' ? rawDate : 'unknown'}`;
+    }
+
+    function scrollToRunDay(anchorId) {
+      if (!anchorId) return;
+      const section = document.getElementById(anchorId);
+      if (!section) return;
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      section.classList.add('run-day-highlight');
+      setTimeout(() => section.classList.remove('run-day-highlight'), 1200);
+    }
+
+    function groupRuns(runs) {
+      const map = new Map();
+      runs.forEach((run) => {
+        const key = run.date ?? 'unknown';
+        if (!map.has(key)) {
+          map.set(key, []);
         }
-        if (run.workspaceArchive) {
-          notes.push(`<small>${run.workspaceArchive}</small>`);
-        }
-        const noteCell = notes.length ? notes.join('<br/>') : '–';
-        return `<tr>
-          <td>${finishedLabel}</td>
-          <td>${run.profileLabel}</td>
-          <td data-field="evalName">${scenario}</td>
-          <td class="numeric" data-field="finalScore">${formatter.format(run.finalScore)}</td>
-          <td class="numeric" data-field="successPercentage">${percentFormatter.format(run.successPercentage)}</td>
-          <td class="numeric" data-field="timePenaltyMultiplier">${formatter.format(run.timePenaltyMultiplier)}</td>
-          <td class="numeric" data-field="actualTimeMinutes">${formatter.format(run.actualTimeMinutes)}</td>
-          <td class="numeric" data-field="subtasks">${run.subtasksPassed}/${run.subtasksTotal}</td>
-          <td class="notes-col">${noteCell}</td>
-        </tr>`;
-      }).join('');
+        map.get(key).push(run);
+      });
+      return Array.from(map.entries())
+        .map(([date, list]) => ({
+          date,
+          runs: list.sort((a, b) => b.finishedAtValue - a.finishedAtValue)
+        }))
+        .sort((a, b) => {
+          if (a.date === b.date) return 0;
+          if (a.date === 'unknown') return 1;
+          if (b.date === 'unknown') return -1;
+          return a.date > b.date ? -1 : 1;
+        });
+    }
+
+    function renderRunLog() {
+      runLogContainer.innerHTML = currentRunGroups
+        .map((group) => {
+          const anchorId = getDayAnchor(group.date);
+          const firstTimestamp = group.runs[0]?.finishedAtValue ?? null;
+          const label =
+            group.date === 'unknown'
+              ? 'Unknown Date'
+              : dayFormatter.format(firstTimestamp ? new Date(firstTimestamp) : new Date(`${group.date}T00:00:00Z`));
+          const totalMinutes = group.runs.reduce((sum, run) => sum + (run.actualTimeMinutes ?? 0), 0);
+          const profiles = [...new Set(group.runs.map((run) => run.profileLabel))].join(', ');
+          const versions = [...new Set(group.runs.map((run) => run.repoVersion).filter(Boolean))];
+          return `<section class="run-day" id="${anchorId}">
+            <div class="run-day-head">
+              <div>
+                <h3>${label}</h3>
+                <small>${group.runs.length} run${group.runs.length === 1 ? '' : 's'} · ${formatter.format(totalMinutes)} total minutes</small>
+              </div>
+              <div class="run-day-meta">
+                <span>${profiles}</span>
+                <div class="version-tag-group">${formatVersionTags(versions)}</div>
+              </div>
+            </div>
+            <div class="run-accordion">
+              ${group.runs.map(renderRunCard).join('')}
+            </div>
+          </section>`;
+        })
+        .join('');
+    }
+
+    function formatBytes(bytes) {
+      if (!bytes || bytes <= 0) return '';
+      const units = ['B', 'KB', 'MB', 'GB'];
+      let index = 0;
+      let value = bytes;
+      while (value >= 1024 && index < units.length - 1) {
+        value /= 1024;
+        index++;
+      }
+      return `${value.toFixed(1)} ${units[index]}`;
+    }
+
+    function renderRunCard(run) {
+      const scenario = EVAL_LABELS[run.evalName] ?? run.evalName;
+      const finishedLabel = run.finishedAtValue ? dateFormatter.format(new Date(run.finishedAtValue)) : 'unknown';
+      const modules = Object.entries(run.vybes.breakdown?.modules ?? {});
+      const moduleSummary = modules.length
+        ? modules
+            .map(([name, stats]) => `<span>${name}: ${stats.passed}/${stats.total}</span>`)
+            .join('')
+        : '<span>Modules unavailable</span>';
+      const sizeLabel = run.workspaceZip?.size ? formatBytes(run.workspaceZip.size) : '';
+      const artifactLink = run.workspaceZip?.path
+        ? `<a href="${run.workspaceZip.path}" download>workspace.zip${sizeLabel ? ` (${sizeLabel})` : ''}</a>`
+        : '';
+      const notes = run.error ? `<div class="run-notes badge-fail">${run.error}</div>` : '';
+      return `<details class="run-card">
+        <summary>
+          <div class="run-summary-main">
+            <span class="run-profile">${run.profileLabel}</span>
+            <span class="run-scenario">${scenario}</span>
+          </div>
+          <div class="run-summary-meta">
+            <span class="run-score">${formatter.format(run.finalScore)} vybes</span>
+            <span>${percentFormatter.format(run.successPercentage)}</span>
+            <span>${formatter.format(run.actualTimeMinutes)} min</span>
+            <span class="version-pill">${run.repoVersion ?? 'unknown'}</span>
+          </div>
+        </summary>
+        <div class="run-details">
+          <div class="run-meta">
+            <div>
+              <strong>Finished</strong>
+              <span>${finishedLabel}</span>
+            </div>
+            <div>
+              <strong>Subtasks</strong>
+              <span>${run.subtasksPassed}/${run.subtasksTotal}</span>
+            </div>
+            <div>
+              <strong>Penalty</strong>
+              <span>${formatter.format(run.timePenaltyMultiplier)}</span>
+            </div>
+            <div>
+              <strong>Success</strong>
+              <span>${percentFormatter.format(run.successPercentage)}</span>
+            </div>
+          </div>
+          <div class="run-links">
+            ${artifactLink || ''}
+            ${run.workspaceArchive ? `<small>${run.workspaceArchive}</small>` : ''}
+          </div>
+          <div class="run-modules">
+            <strong>Modules</strong>
+            <div class="module-grid">${moduleSummary}</div>
+          </div>
+          ${notes}
+        </div>
+      </details>`;
     }
 
     function sortRows(rows, sortState, field, numeric = true, forceDesc) {
@@ -228,6 +413,10 @@
         sortRows(currentDailyRows, dailySort, dailySort.field, true, true);
         updateDailyTable();
 
+        currentDaySummaryRows = createDaySummaryRows(daily);
+        sortRows(currentDaySummaryRows, daySort, daySort.field, true, true);
+        updateDaySummaryTable();
+
         currentRunRows = runs.map((run) => {
           const subtasksPassed = run.vybes.breakdown?.subtasksPassed ?? 0;
           const subtasksTotal = run.vybes.breakdown?.subtasksTotal ?? 0;
@@ -240,13 +429,14 @@
             actualTimeMinutes: run.vybes.actualTimeMinutes ?? 0,
             subtasksPassed,
             subtasksTotal,
-            subtasks: subtasksTotal ? subtasksPassed / subtasksTotal : 0,
             finishedAtValue: run.finishedAt ? Date.parse(run.finishedAt) : 0,
-            error: run.vybes.error ?? null
+            error: run.vybes.error ?? null,
+            repoVersion: run.repoVersion ?? run.vybes.repoVersion ?? 'unknown'
           };
         });
-        sortRows(currentRunRows, runSort, runSort.field, true, true);
-        updateRunTable();
+        currentRunRows.sort((a, b) => b.finishedAtValue - a.finishedAtValue);
+        currentRunGroups = groupRuns(currentRunRows);
+        renderRunLog();
 
         bindSortHandlers(dailyTable, currentDailyRows, dailySort, updateDailyTable, {
           profileLabel: { numeric: false },
@@ -257,26 +447,22 @@
           avgPenalty: { numeric: true }
         });
 
-        bindSortHandlers(runTable, currentRunRows, runSort, updateRunTable, {
-          finishedAtValue: { numeric: true },
-          profileLabel: { numeric: false },
-          evalName: { numeric: false },
-          finalScore: { numeric: true },
-          successPercentage: { numeric: true },
-          timePenaltyMultiplier: { numeric: true },
-          actualTimeMinutes: { numeric: true },
-          subtasks: { numeric: false }
+        bindSortHandlers(daySummaryTable, currentDaySummaryRows, daySort, updateDaySummaryTable, {
+          sortValue: { numeric: true },
+          totalRuns: { numeric: true },
+          totalMinutes: { numeric: true },
+          avgVybes: { numeric: true },
+          profilesLabel: { numeric: false },
+          versionsLabel: { numeric: false }
         });
 
-        const lastRun = runs[runs.length - 1];
-        if (lastRun?.finishedAt) {
-          updatedAtEl.textContent = dateFormatter.format(new Date(lastRun.finishedAt));
-        } else {
-          updatedAtEl.textContent = 'unknown';
-        }
+        const latest = currentRunRows.find((row) => row.finishedAtValue);
+        updatedAtEl.textContent = latest ? dateFormatter.format(new Date(latest.finishedAtValue)) : 'unknown';
       } catch (error) {
-        dailyTarget.innerHTML = `<p class="badge-fail">${error.message}. Serve the site via HTTP to enable fetch().</p>`;
-        runsTarget.innerHTML = '';
+        const message = `${error.message}. Serve this directory over HTTP to enable fetch().`;
+        dailyBody.innerHTML = `<tr><td colspan="8">${message}</td></tr>`;
+        daySummaryBody.innerHTML = `<tr><td colspan="6">${message}</td></tr>`;
+        runLogContainer.innerHTML = `<p class="badge-fail">${message}</p>`;
         console.error(error);
       }
     }

@@ -173,6 +173,7 @@ interface EvalResult {
   totalDuration: number;
   archivePath: string;
   vybesScore?: VybesResult;
+  repoVersion?: string;
 }
 
 class EvaluationLoader {
@@ -353,6 +354,7 @@ class ResultsManager {
         success: boolean;
       }>;
       workspaceArchive: string;
+      repoVersion?: string;
       vybes?: VybesResult;
     } = {
       evalName,
@@ -371,7 +373,8 @@ class ResultsManager {
         duration: cmd.duration,
         success: cmd.exitCode === 0
       })),
-      workspaceArchive: result.archivePath
+      workspaceArchive: result.archivePath,
+      repoVersion: result.repoVersion
     };
 
     if (result.vybesScore) {
@@ -391,6 +394,7 @@ class UnifiedRunner {
   private workspaceManager: WorkspaceManager;
   private resultsManager: ResultsManager;
   private vybesEngine: VybesScoringEngine;
+  private repoRoot: string;
 
   constructor() {
     this.configManager = new ConfigurationManager();
@@ -398,6 +402,7 @@ class UnifiedRunner {
     this.workspaceManager = new WorkspaceManager();
     this.resultsManager = new ResultsManager();
     this.vybesEngine = new VybesScoringEngine();
+    this.repoRoot = resolve(__dirname, '..');
   }
 
   async runEvaluation(evalName: string, configId: string): Promise<EvalResult> {
@@ -405,6 +410,7 @@ class UnifiedRunner {
     
     const start = Date.now();
     const evalConfig = this.evalLoader.getEvaluation(evalName);
+    const repoVersion = this.getRepoVersion();
 
     // Create archive directory for this run
     const archivePath = this.resultsManager.createRunDirectory(evalName, configId);
@@ -487,6 +493,7 @@ class UnifiedRunner {
           overallSuccess: success
         });
         if (vybesScore) {
+          vybesScore.repoVersion = repoVersion;
           const scorePercent = (vybesScore.successPercentage * 100).toFixed(1);
           console.log(`  → Vybes score: ${vybesScore.finalScore.toFixed(2)} (${scorePercent}% success, penalty ${vybesScore.timePenaltyMultiplier.toFixed(2)})`);
         }
@@ -506,7 +513,8 @@ class UnifiedRunner {
         success,
         totalDuration,
         archivePath: finalArchivePath,
-        vybesScore
+        vybesScore,
+        repoVersion
       });
 
       return {
@@ -520,7 +528,8 @@ class UnifiedRunner {
         success,
         totalDuration,
         archivePath: finalArchivePath,
-        vybesScore
+        vybesScore,
+        repoVersion
       };
 
     } finally {
@@ -557,6 +566,27 @@ class UnifiedRunner {
     }
     
     return results;
+  }
+
+  private getRepoVersion(): string {
+    const options = { cwd: this.repoRoot, stdio: 'pipe', encoding: 'utf8' as BufferEncoding };
+    try {
+      const described = execSync('git describe --tags --dirty', options).trim();
+      if (described) {
+        return described;
+      }
+    } catch {
+      // ignore and fall through
+    }
+    try {
+      const branch = execSync('git rev-parse --abbrev-ref HEAD', options).trim();
+      const shortHash = execSync('git rev-parse --short HEAD', options).trim();
+      const branchLabel = branch && branch !== 'HEAD' ? branch : 'main';
+      return `${branchLabel || 'main'}@${shortHash}`;
+    } catch {
+      // ignore
+    }
+    return 'unknown';
   }
 }
 

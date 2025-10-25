@@ -1,6 +1,19 @@
 [
   {
     "date": "2025-10-24",
+    "summary": {
+      "totalRuns": 21,
+      "totalMinutes": 55.8,
+      "avgVybes": 176.53,
+      "profiles": [
+        "llxprt-synthetic-glm4.6-temp1",
+        "cerebrasqwen3-qwen3-coder-temp1",
+        "codex-exec-gpt5-default"
+      ],
+      "repoVersions": [
+        "unknown"
+      ]
+    },
     "profiles": {
       "llxprt-synthetic-glm4.6-temp1": {
         "runs": 7,
@@ -17,7 +30,10 @@
           "eval": "regex-challenge",
           "score": 0,
           "runId": "regex-challenge-2025-10-24T14-43-29-166Z"
-        }
+        },
+        "repoVersions": [
+          "unknown"
+        ]
       },
       "cerebrasqwen3-qwen3-coder-temp1": {
         "runs": 7,
@@ -34,7 +50,10 @@
           "eval": "regex-challenge",
           "score": 0,
           "runId": "regex-challenge-2025-10-24T14-46-44-497Z"
-        }
+        },
+        "repoVersions": [
+          "unknown"
+        ]
       },
       "codex-exec-gpt5-default": {
         "runs": 7,
@@ -51,7 +70,10 @@
           "eval": "regex-challenge",
           "score": 0,
           "runId": "regex-challenge-2025-10-24T14-48-30-886Z"
-        }
+        },
+        "repoVersions": [
+          "unknown"
+        ]
       }
     }
   }

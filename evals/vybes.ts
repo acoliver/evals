@@ -43,6 +43,7 @@ export interface VybesResult {
   category?: string;
   breakdown?: VybesBreakdown;
   error?: string;
+  repoVersion?: string;
 }
 
 export interface VybesScoringContext {
@@ -292,4 +293,3 @@ export class VybesScoringEngine {
     };
   }
 }
-
