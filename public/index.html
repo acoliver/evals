@@ -93,6 +93,9 @@
     const daySummaryTable = document.getElementById('day-table');
     const updatedAtEl = document.getElementById('updated-at');
 
+    const dailyEntriesByDate = new Map();
+    let latestDayKey = null;
+    let activeDayKey = null;
     let currentDailyRows = [];
     let currentDaySummaryRows = [];
     let currentRunRows = [];
@@ -108,9 +111,36 @@
       return response.json();
     }
 
-    function createDailyRows(daily) {
+    function buildDailyRowMarkup(row) {
+      const best = row.bestRun
+        ? `${EVAL_LABELS[row.bestRun.eval] ?? row.bestRun.eval} (${formatter.format(row.bestRun.score)})`
+        : '–';
+      const worst =
+        row.worstRun && row.worstRun.runId !== row.bestRun?.runId
+          ? `${EVAL_LABELS[row.worstRun.eval] ?? row.worstRun.eval} (${formatter.format(row.worstRun.score)})`
+          : '–';
+      return `<tr>
+        <td>
+          <div class="cell-heading">
+            <span>${row.profileLabel}</span>
+            <div class="version-tag-group">${formatVersionTags(row.repoVersions)}</div>
+          </div>
+          <small>${row.date}</small>
+        </td>
+        <td class="numeric" data-field="totalVybes">${formatter.format(row.totalVybes)}</td>
+        <td class="numeric" data-field="runs">${row.runs}</td>
+        <td class="numeric" data-field="avgVybes">${formatter.format(row.avgVybes)}</td>
+        <td class="numeric" data-field="avgSuccess">${percentFormatter.format(row.avgSuccess)}</td>
+        <td class="numeric" data-field="avgPenalty">${formatter.format(row.avgPenalty)}</td>
+        <td>${best}</td>
+        <td>${worst}</td>
+      </tr>`;
+    }
+
+    function createDailyRows(entries = []) {
       const rows = [];
-      daily.forEach((entry) => {
+      entries.forEach((entry) => {
+        if (!entry) return;
         const dayLabel = entry.date === 'unknown' ? 'Unknown Date' : entry.date;
         const profiles = Object.entries(entry.profiles);
         profiles.forEach(([configId, stats]) => {
@@ -161,39 +191,47 @@
       return versions.map((version) => `<span class="version-pill">${version}</span>`).join('');
     }
 
+    function parseDateValue(dateKey) {
+      if (!dateKey || dateKey === 'unknown') {
+        return null;
+      }
+      const value = Date.parse(`${dateKey}T00:00:00Z`);
+      return Number.isFinite(value) ? value : null;
+    }
+
+    function findLatestDayKey(entries) {
+      let latest = null;
+      let latestValue = -Infinity;
+      entries.forEach((entry) => {
+        if (!entry) return;
+        const candidate = parseDateValue(entry.date);
+        if (candidate !== null && candidate > latestValue) {
+          latestValue = candidate;
+          latest = entry.date;
+        }
+      });
+      if (latest) {
+        return latest;
+      }
+      return entries[entries.length - 1]?.date ?? 'unknown';
+    }
+
     function updateDailyTable() {
-      dailyBody.innerHTML = currentDailyRows.map((row) => {
-        const best = row.bestRun
-          ? `${EVAL_LABELS[row.bestRun.eval] ?? row.bestRun.eval} (${formatter.format(row.bestRun.score)})`
-          : '–';
-        const worst =
-          row.worstRun && row.worstRun.runId !== row.bestRun?.runId
-            ? `${EVAL_LABELS[row.worstRun.eval] ?? row.worstRun.eval} (${formatter.format(row.worstRun.score)})`
-            : '–';
-        return `<tr>
-          <td>
-            <div class="cell-heading">
-              <span>${row.profileLabel}</span>
-              <div class="version-tag-group">${formatVersionTags(row.repoVersions)}</div>
-            </div>
-            <small>${row.date}</small>
-          </td>
-          <td class="numeric" data-field="totalVybes">${formatter.format(row.totalVybes)}</td>
-          <td class="numeric" data-field="runs">${row.runs}</td>
-          <td class="numeric" data-field="avgVybes">${formatter.format(row.avgVybes)}</td>
-          <td class="numeric" data-field="avgSuccess">${percentFormatter.format(row.avgSuccess)}</td>
-          <td class="numeric" data-field="avgPenalty">${formatter.format(row.avgPenalty)}</td>
-          <td>${best}</td>
-          <td>${worst}</td>
-        </tr>`;
-      }).join('');
+      if (!currentDailyRows.length) {
+        dailyBody.innerHTML = '<tr><td colspan="8">No runs recorded for today yet.</td></tr>';
+        return;
+      }
+      dailyBody.innerHTML = currentDailyRows.map(buildDailyRowMarkup).join('');
     }
 
     function updateDaySummaryTable() {
       daySummaryBody.innerHTML = currentDaySummaryRows
         .map((row) => {
           const anchor = getDayAnchor(row.rawDate);
-          return `<tr data-anchor="${anchor}" tabindex="0">
+          const isSelected = row.rawDate === activeDayKey;
+          return `<tr data-anchor="${anchor}" data-date="${row.rawDate}" tabindex="0" class="${
+            isSelected ? 'selected-day' : ''
+          }">
             <td>${row.dateLabel}</td>
             <td class="numeric" data-field="totalRuns">${row.totalRuns}</td>
             <td class="numeric" data-field="totalMinutes">${formatter.format(row.totalMinutes)}</td>
@@ -204,6 +242,7 @@
         })
         .join('');
       attachDaySummaryHandlers();
+      highlightSelectedDay();
     }
 
     function attachDaySummaryHandlers() {
@@ -211,14 +250,72 @@
       rows.forEach((row) => {
         const target = row.dataset.anchor;
         const triggerScroll = () => scrollToRunDay(target);
-        row.addEventListener('click', triggerScroll);
+        row.addEventListener('click', () => {
+          setActiveDay(row.dataset.date);
+          triggerScroll();
+        });
         row.addEventListener('keydown', (event) => {
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
+            setActiveDay(row.dataset.date);
             triggerScroll();
           }
         });
       });
+    }
+
+    function setActiveDay(dateKey) {
+      if (!dateKey) return;
+      activeDayKey = dateKey;
+      highlightSelectedDay();
+      renderRunLog();
+    }
+
+    function highlightSelectedDay() {
+      const rows = Array.from(daySummaryBody.querySelectorAll('tr[data-date]'));
+      rows.forEach((row) => {
+        if (row.dataset.date === activeDayKey) {
+          row.classList.add('selected-day');
+        } else {
+          row.classList.remove('selected-day');
+        }
+      });
+    }
+
+    function renderDaySummary(entry) {
+      if (!entry) {
+        return '';
+      }
+      const rows = createDailyRows([entry]);
+      if (!rows.length) {
+        return '';
+      }
+      const label =
+        entry.date === 'unknown'
+          ? 'Unknown Date'
+          : dayFormatter.format(new Date(`${entry.date}T00:00:00Z`));
+      return `<div class="run-day-summary">
+        <div class="run-day-summary-head">Daily Overview for ${label}</div>
+        <div class="table-wrapper compact">
+          <table>
+            <thead>
+              <tr>
+                <th>Profile</th>
+                <th class="numeric">Total Vybes</th>
+                <th class="numeric">Runs</th>
+                <th class="numeric">Avg Vybes</th>
+                <th class="numeric">Avg Success</th>
+                <th class="numeric">Avg Penalty</th>
+                <th>Best Run</th>
+                <th>Worst Run</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map(buildDailyRowMarkup).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
     }
 
     function getDayAnchor(rawDate) {
@@ -268,7 +365,10 @@
           const totalMinutes = group.runs.reduce((sum, run) => sum + (run.actualTimeMinutes ?? 0), 0);
           const profiles = [...new Set(group.runs.map((run) => run.profileLabel))].join(', ');
           const versions = [...new Set(group.runs.map((run) => run.repoVersion).filter(Boolean))];
-          return `<section class="run-day" id="${anchorId}">
+          const summaryEntry = dailyEntriesByDate.get(group.date);
+          const isActiveDay = group.date === activeDayKey;
+          const summaryBlock = isActiveDay ? renderDaySummary(summaryEntry) : '';
+          return `<section class="run-day${isActiveDay ? ' active-day' : ''}" id="${anchorId}">
             <div class="run-day-head">
               <div>
                 <h3>${label}</h3>
@@ -279,6 +379,7 @@
                 <div class="version-tag-group">${formatVersionTags(versions)}</div>
               </div>
             </div>
+            ${summaryBlock}
             <div class="run-accordion">
               ${group.runs.map(renderRunCard).join('')}
             </div>
@@ -409,7 +510,23 @@
           safeFetch('vybes-runs.json')
         ]);
 
-        currentDailyRows = createDailyRows(daily);
+        dailyEntriesByDate.clear();
+        daily.forEach((entry) => {
+          const key = entry.date ?? 'unknown';
+          dailyEntriesByDate.set(key, entry);
+        });
+
+        latestDayKey = daily.length ? findLatestDayKey(daily) : null;
+        activeDayKey = latestDayKey ?? (daily[daily.length - 1]?.date ?? 'unknown');
+
+        const heroEntries = [];
+        if (latestDayKey && dailyEntriesByDate.has(latestDayKey)) {
+          heroEntries.push(dailyEntriesByDate.get(latestDayKey));
+        } else if (daily.length) {
+          heroEntries.push(daily[daily.length - 1]);
+        }
+
+        currentDailyRows = createDailyRows(heroEntries);
         sortRows(currentDailyRows, dailySort, dailySort.field, true, true);
         updateDailyTable();
 

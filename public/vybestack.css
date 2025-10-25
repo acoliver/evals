@@ -260,6 +260,14 @@ footer {
   border-radius: 12px;
 }
 
+.table-wrapper.compact {
+  margin-top: 1rem;
+}
+
+.table-wrapper.compact table {
+  min-width: 100%;
+}
+
 table {
   width: 100%;
   min-width: min(1500px, 95vw);
@@ -291,6 +299,15 @@ td {
 
 tbody tr:hover {
   background: rgba(106, 153, 85, 0.1);
+}
+
+tbody tr.selected-day,
+#day-table tr.selected-day {
+  background: rgba(102, 255, 102, 0.08);
+}
+
+#day-table tr.selected-day td {
+  border-color: rgba(102, 255, 102, 0.35);
 }
 
 tbody tr[data-anchor] {
@@ -346,6 +363,11 @@ th.numeric {
   box-shadow: 0 12px 32px -24px rgba(106, 153, 85, 0.8);
 }
 
+.run-day.active-day {
+  border-color: rgba(102, 255, 102, 0.6);
+  box-shadow: 0 0 0 1px rgba(102, 255, 102, 0.25), 0 12px 32px -24px rgba(106, 153, 85, 0.8);
+}
+
 .run-day-head {
   display: flex;
   justify-content: space-between;
@@ -370,6 +392,19 @@ th.numeric {
 
 .run-day-meta span {
   font-size: 0.95rem;
+}
+
+.run-day-summary {
+  margin: 1rem 0;
+}
+
+.run-day-summary-head {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
 }
 
 .run-day-highlight {
