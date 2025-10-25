@@ -5,6 +5,7 @@
     "runId": "base64-fix-2025-10-24T14-07-16-589Z",
     "date": "2025-10-24",
     "finishedAt": "2025-10-24T14:09:01.171Z",
+    "repoVersion": "unknown",
     "vybes": {
       "taskName": "base64-fix",
       "configId": "llxprt-synthetic-glm4.6-temp1",
@@ -53,7 +54,11 @@
         }
       }
     },
-    "workspaceArchive": "outputs/base64-fix-2025-10-24T14-07-16-589Z/llxprt-synthetic-glm4.6-temp1/workspace"
+    "workspaceArchive": "outputs/base64-fix-2025-10-24T14-07-16-589Z/llxprt-synthetic-glm4.6-temp1/workspace",
+    "workspaceZip": {
+      "path": "runs/base64-fix-2025-10-24T14-07-16-589Z/llxprt-synthetic-glm4.6-temp1/workspace.zip",
+      "size": 42659
+    }
   },
   {
     "evalName": "base64-fix",
@@ -61,6 +66,7 @@
     "runId": "base64-fix-2025-10-24T14-09-01-595Z",
     "date": "2025-10-24",
     "finishedAt": "2025-10-24T14:09:40.571Z",
+    "repoVersion": "unknown",
     "vybes": {
       "taskName": "base64-fix",
       "configId": "cerebrasqwen3-qwen3-coder-temp1",
@@ -109,7 +115,11 @@
         }
       }
     },
-    "workspaceArchive": "outputs/base64-fix-2025-10-24T14-09-01-595Z/cerebrasqwen3-qwen3-coder-temp1/workspace"
+    "workspaceArchive": "outputs/base64-fix-2025-10-24T14-09-01-595Z/cerebrasqwen3-qwen3-coder-temp1/workspace",
+    "workspaceZip": {
+      "path": "runs/base64-fix-2025-10-24T14-09-01-595Z/cerebrasqwen3-qwen3-coder-temp1/workspace.zip",
+      "size": 42453
+    }
   },
   {
     "evalName": "base64-fix",
@@ -117,6 +127,7 @@
     "runId": "base64-fix-2025-10-24T14-08-28-192Z",
     "date": "2025-10-24",
     "finishedAt": "2025-10-24T14:10:02.593Z",
+    "repoVersion": "unknown",
     "vybes": {
       "taskName": "base64-fix",
       "configId": "llxprt-synthetic-glm4.6-temp1",
@@ -165,7 +176,11 @@
         }
       }
     },
-    "workspaceArchive": "outputs/base64-fix-2025-10-24T14-08-28-192Z/llxprt-synthetic-glm4.6-temp1/workspace"
+    "workspaceArchive": "outputs/base64-fix-2025-10-24T14-08-28-192Z/llxprt-synthetic-glm4.6-temp1/workspace",
+    "workspaceZip": {
+      "path": "runs/base64-fix-2025-10-24T14-08-28-192Z/llxprt-synthetic-glm4.6-temp1/workspace.zip",
+      "size": 40282
+    }
   },
   {
     "evalName": "base64-fix",
@@ -173,6 +188,7 @@
     "runId": "base64-fix-2025-10-24T14-10-02-934Z",
     "date": "2025-10-24",
     "finishedAt": "2025-10-24T14:10:53.869Z",
+    "repoVersion": "unknown",
     "vybes": {
       "taskName": "base64-fix",
       "configId": "cerebrasqwen3-qwen3-coder-temp1",
@@ -221,7 +237,11 @@
         }
       }
     },
-    "workspaceArchive": "outputs/base64-fix-2025-10-24T14-10-02-934Z/cerebrasqwen3-qwen3-coder-temp1/workspace"
+    "workspaceArchive": "outputs/base64-fix-2025-10-24T14-10-02-934Z/cerebrasqwen3-qwen3-coder-temp1/workspace",
+    "workspaceZip": {
+      "path": "runs/base64-fix-2025-10-24T14-10-02-934Z/cerebrasqwen3-qwen3-coder-temp1/workspace.zip",
+      "size": 42425
+    }
   },
   {
     "evalName": "base64-fix",
@@ -229,6 +249,7 @@
     "runId": "base64-fix-2025-10-24T14-09-40-919Z",
     "date": "2025-10-24",
     "finishedAt": "2025-10-24T14:11:30.970Z",
+    "repoVersion": "unknown",
     "vybes": {
       "taskName": "base64-fix",
       "configId": "codex-exec-gpt5-default",
@@ -277,7 +298,11 @@
         }
       }
     },
-    "workspaceArchive": "outputs/base64-fix-2025-10-24T14-09-40-919Z/codex-exec-gpt5-default/workspace"
+    "workspaceArchive": "outputs/base64-fix-2025-10-24T14-09-40-919Z/codex-exec-gpt5-default/workspace",
+    "workspaceZip": {
+      "path": "runs/base64-fix-2025-10-24T14-09-40-919Z/codex-exec-gpt5-default/workspace.zip",
+      "size": 46518
+    }
   },
   {
     "evalName": "base64-fix",
@@ -285,6 +310,7 @@
     "runId": "base64-fix-2025-10-24T14-10-54-502Z",
     "date": "2025-10-24",
     "finishedAt": "2025-10-24T14:13:43.486Z",
+    "repoVersion": "unknown",
     "vybes": {
       "taskName": "base64-fix",
       "configId": "codex-exec-gpt5-default",
@@ -333,7 +359,11 @@
         }
       }
     },
-    "workspaceArchive": "outputs/base64-fix-2025-10-24T14-10-54-502Z/codex-exec-gpt5-default/workspace"
+    "workspaceArchive": "outputs/base64-fix-2025-10-24T14-10-54-502Z/codex-exec-gpt5-default/workspace",
+    "workspaceZip": {
+      "path": "runs/base64-fix-2025-10-24T14-10-54-502Z/codex-exec-gpt5-default/workspace.zip",
+      "size": 47833
+    }
   },
   {
     "evalName": "form-capture",
@@ -341,6 +371,7 @@
     "runId": "form-capture-2025-10-24T14-13-43-802Z",
     "date": "2025-10-24",
     "finishedAt": "2025-10-24T14:15:43.758Z",
+    "repoVersion": "unknown",
     "vybes": {
       "taskName": "form-capture",
       "configId": "llxprt-synthetic-glm4.6-temp1",
@@ -379,7 +410,11 @@
       },
       "error": "lint/typecheck failed"
     },
-    "workspaceArchive": "outputs/form-capture-2025-10-24T14-13-43-802Z/llxprt-synthetic-glm4.6-temp1/workspace"
+    "workspaceArchive": "outputs/form-capture-2025-10-24T14-13-43-802Z/llxprt-synthetic-glm4.6-temp1/workspace",
+    "workspaceZip": {
+      "path": "runs/form-capture-2025-10-24T14-13-43-802Z/llxprt-synthetic-glm4.6-temp1/workspace.zip",
+      "size": 66375
+    }
   },
   {
     "evalName": "form-capture",
@@ -387,6 +422,7 @@
     "runId": "form-capture-2025-10-24T14-15-44-261Z",
     "date": "2025-10-24",
     "finishedAt": "2025-10-24T14:16:39.221Z",
+    "repoVersion": "unknown",
     "vybes": {
       "taskName": "form-capture",
       "configId": "cerebrasqwen3-qwen3-coder-temp1",
@@ -425,7 +461,11 @@
       },
       "error": "lint/typecheck failed"
     },
-    "workspaceArchive": "outputs/form-capture-2025-10-24T14-15-44-261Z/cerebrasqwen3-qwen3-coder-temp1/workspace"
+    "workspaceArchive": "outputs/form-capture-2025-10-24T14-15-44-261Z/cerebrasqwen3-qwen3-coder-temp1/workspace",
+    "workspaceZip": {
+      "path": "runs/form-capture-2025-10-24T14-15-44-261Z/cerebrasqwen3-qwen3-coder-temp1/workspace.zip",
+      "size": 64942
+    }
   },
   {
     "evalName": "form-capture",
@@ -433,6 +473,7 @@
     "runId": "form-capture-2025-10-24T14-16-39-725Z",
     "date": "2025-10-24",
     "finishedAt": "2025-10-24T14:22:44.998Z",
+    "repoVersion": "unknown",
     "vybes": {
       "taskName": "form-capture",
       "configId": "codex-exec-gpt5-default",
@@ -469,7 +510,11 @@
         }
       }
     },
-    "workspaceArchive": "outputs/form-capture-2025-10-24T14-16-39-725Z/codex-exec-gpt5-default/workspace"
+    "workspaceArchive": "outputs/form-capture-2025-10-24T14-16-39-725Z/codex-exec-gpt5-default/workspace",
+    "workspaceZip": {
+      "path": "runs/form-capture-2025-10-24T14-16-39-725Z/codex-exec-gpt5-default/workspace.zip",
+      "size": 84582
+    }
   },
   {
     "evalName": "pagination",
@@ -477,6 +522,7 @@
     "runId": "pagination-2025-10-24T14-22-45-525Z",
     "date": "2025-10-24",
     "finishedAt": "2025-10-24T14:24:14.990Z",
+    "repoVersion": "unknown",
     "vybes": {
       "taskName": "pagination",
       "configId": "llxprt-synthetic-glm4.6-temp1",
@@ -513,7 +559,11 @@
       },
       "error": "lint/typecheck failed"
     },
-    "workspaceArchive": "outputs/pagination-2025-10-24T14-22-45-525Z/llxprt-synthetic-glm4.6-temp1/workspace"
+    "workspaceArchive": "outputs/pagination-2025-10-24T14-22-45-525Z/llxprt-synthetic-glm4.6-temp1/workspace",
+    "workspaceZip": {
+      "path": "runs/pagination-2025-10-24T14-22-45-525Z/llxprt-synthetic-glm4.6-temp1/workspace.zip",
+      "size": 60746
+    }
   },
   {
     "evalName": "pagination",
@@ -521,6 +571,7 @@
     "runId": "pagination-2025-10-24T14-24-15-459Z",
     "date": "2025-10-24",
     "finishedAt": "2025-10-24T14:25:11.661Z",
+    "repoVersion": "unknown",
     "vybes": {
       "taskName": "pagination",
       "configId": "cerebrasqwen3-qwen3-coder-temp1",
@@ -557,7 +608,11 @@
         }
       }
     },
-    "workspaceArchive": "outputs/pagination-2025-10-24T14-24-15-459Z/cerebrasqwen3-qwen3-coder-temp1/workspace"
+    "workspaceArchive": "outputs/pagination-2025-10-24T14-24-15-459Z/cerebrasqwen3-qwen3-coder-temp1/workspace",
+    "workspaceZip": {
+      "path": "runs/pagination-2025-10-24T14-24-15-459Z/cerebrasqwen3-qwen3-coder-temp1/workspace.zip",
+      "size": 60488
+    }
   },
   {
     "evalName": "pagination",
@@ -565,6 +620,7 @@
     "runId": "pagination-2025-10-24T14-25-12-154Z",
     "date": "2025-10-24",
     "finishedAt": "2025-10-24T14:29:33.528Z",
+    "repoVersion": "unknown",
     "vybes": {
       "taskName": "pagination",
       "configId": "codex-exec-gpt5-default",
@@ -601,7 +657,11 @@
         }
       }
     },
-    "workspaceArchive": "outputs/pagination-2025-10-24T14-25-12-154Z/codex-exec-gpt5-default/workspace"
+    "workspaceArchive": "outputs/pagination-2025-10-24T14-25-12-154Z/codex-exec-gpt5-default/workspace",
+    "workspaceZip": {
+      "path": "runs/pagination-2025-10-24T14-25-12-154Z/codex-exec-gpt5-default/workspace.zip",
+      "size": 74286
+    }
   },
   {
     "evalName": "react-evaluation",
@@ -609,6 +669,7 @@
     "runId": "react-evaluation-2025-10-24T14-29-34-021Z",
     "date": "2025-10-24",
     "finishedAt": "2025-10-24T14:30:53.969Z",
+    "repoVersion": "unknown",
     "vybes": {
       "taskName": "react-evaluation",
       "configId": "llxprt-synthetic-glm4.6-temp1",
@@ -643,7 +704,11 @@
         }
       }
     },
-    "workspaceArchive": "outputs/react-evaluation-2025-10-24T14-29-34-021Z/llxprt-synthetic-glm4.6-temp1/workspace"
+    "workspaceArchive": "outputs/react-evaluation-2025-10-24T14-29-34-021Z/llxprt-synthetic-glm4.6-temp1/workspace",
+    "workspaceZip": {
+      "path": "runs/react-evaluation-2025-10-24T14-29-34-021Z/llxprt-synthetic-glm4.6-temp1/workspace.zip",
+      "size": 42064
+    }
   },
   {
     "evalName": "react-evaluation",
@@ -651,6 +716,7 @@
     "runId": "react-evaluation-2025-10-24T14-30-54-267Z",
     "date": "2025-10-24",
     "finishedAt": "2025-10-24T14:34:10.045Z",
+    "repoVersion": "unknown",
     "vybes": {
       "taskName": "react-evaluation",
       "configId": "cerebrasqwen3-qwen3-coder-temp1",
@@ -685,7 +751,11 @@
         }
       }
     },
-    "workspaceArchive": "outputs/react-evaluation-2025-10-24T14-30-54-267Z/cerebrasqwen3-qwen3-coder-temp1/workspace"
+    "workspaceArchive": "outputs/react-evaluation-2025-10-24T14-30-54-267Z/cerebrasqwen3-qwen3-coder-temp1/workspace",
+    "workspaceZip": {
+      "path": "runs/react-evaluation-2025-10-24T14-30-54-267Z/cerebrasqwen3-qwen3-coder-temp1/workspace.zip",
+      "size": 43520
+    }
   },
   {
     "evalName": "react-evaluation",
@@ -693,6 +763,7 @@
     "runId": "react-evaluation-2025-10-24T14-34-10-374Z",
     "date": "2025-10-24",
     "finishedAt": "2025-10-24T14:43:28.834Z",
+    "repoVersion": "unknown",
     "vybes": {
       "taskName": "react-evaluation",
       "configId": "codex-exec-gpt5-default",
@@ -726,7 +797,11 @@
         }
       }
     },
-    "workspaceArchive": "outputs/react-evaluation-2025-10-24T14-34-10-374Z/codex-exec-gpt5-default/workspace"
+    "workspaceArchive": "outputs/react-evaluation-2025-10-24T14-34-10-374Z/codex-exec-gpt5-default/workspace",
+    "workspaceZip": {
+      "path": "runs/react-evaluation-2025-10-24T14-34-10-374Z/codex-exec-gpt5-default/workspace.zip",
+      "size": 54502
+    }
   },
   {
     "evalName": "regex-challenge",
@@ -734,6 +809,7 @@
     "runId": "regex-challenge-2025-10-24T14-43-29-166Z",
     "date": "2025-10-24",
     "finishedAt": "2025-10-24T14:46:44.175Z",
+    "repoVersion": "unknown",
     "vybes": {
       "taskName": "regex-challenge",
       "configId": "llxprt-synthetic-glm4.6-temp1",
@@ -754,7 +830,11 @@
         "modules": {}
       }
     },
-    "workspaceArchive": "outputs/regex-challenge-2025-10-24T14-43-29-166Z/llxprt-synthetic-glm4.6-temp1/workspace"
+    "workspaceArchive": "outputs/regex-challenge-2025-10-24T14-43-29-166Z/llxprt-synthetic-glm4.6-temp1/workspace",
+    "workspaceZip": {
+      "path": "runs/regex-challenge-2025-10-24T14-43-29-166Z/llxprt-synthetic-glm4.6-temp1/workspace.zip",
+      "size": 58941
+    }
   },
   {
     "evalName": "regex-challenge",
@@ -762,6 +842,7 @@
     "runId": "regex-challenge-2025-10-24T14-46-44-497Z",
     "date": "2025-10-24",
     "finishedAt": "2025-10-24T14:48:30.593Z",
+    "repoVersion": "unknown",
     "vybes": {
       "taskName": "regex-challenge",
       "configId": "cerebrasqwen3-qwen3-coder-temp1",
@@ -782,7 +863,11 @@
         "modules": {}
       }
     },
-    "workspaceArchive": "outputs/regex-challenge-2025-10-24T14-46-44-497Z/cerebrasqwen3-qwen3-coder-temp1/workspace"
+    "workspaceArchive": "outputs/regex-challenge-2025-10-24T14-46-44-497Z/cerebrasqwen3-qwen3-coder-temp1/workspace",
+    "workspaceZip": {
+      "path": "runs/regex-challenge-2025-10-24T14-46-44-497Z/cerebrasqwen3-qwen3-coder-temp1/workspace.zip",
+      "size": 57104
+    }
   },
   {
     "evalName": "regex-challenge",
@@ -790,6 +875,7 @@
     "runId": "regex-challenge-2025-10-24T14-48-30-886Z",
     "date": "2025-10-24",
     "finishedAt": "2025-10-24T14:59:13.942Z",
+    "repoVersion": "unknown",
     "vybes": {
       "taskName": "regex-challenge",
       "configId": "codex-exec-gpt5-default",
@@ -810,7 +896,11 @@
         "modules": {}
       }
     },
-    "workspaceArchive": "outputs/regex-challenge-2025-10-24T14-48-30-886Z/codex-exec-gpt5-default/workspace"
+    "workspaceArchive": "outputs/regex-challenge-2025-10-24T14-48-30-886Z/codex-exec-gpt5-default/workspace",
+    "workspaceZip": {
+      "path": "runs/regex-challenge-2025-10-24T14-48-30-886Z/codex-exec-gpt5-default/workspace.zip",
+      "size": 70478
+    }
   },
   {
     "evalName": "report-builder",
@@ -818,6 +908,7 @@
     "runId": "report-builder-2025-10-24T14-59-14-234Z",
     "date": "2025-10-24",
     "finishedAt": "2025-10-24T15:01:51.590Z",
+    "repoVersion": "unknown",
     "vybes": {
       "taskName": "report-builder",
       "configId": "llxprt-synthetic-glm4.6-temp1",
@@ -854,7 +945,11 @@
         }
       }
     },
-    "workspaceArchive": "outputs/report-builder-2025-10-24T14-59-14-234Z/llxprt-synthetic-glm4.6-temp1/workspace"
+    "workspaceArchive": "outputs/report-builder-2025-10-24T14-59-14-234Z/llxprt-synthetic-glm4.6-temp1/workspace",
+    "workspaceZip": {
+      "path": "runs/report-builder-2025-10-24T14-59-14-234Z/llxprt-synthetic-glm4.6-temp1/workspace.zip",
+      "size": 45850
+    }
   },
   {
     "evalName": "report-builder",
@@ -862,6 +957,7 @@
     "runId": "report-builder-2025-10-24T15-01-51-896Z",
     "date": "2025-10-24",
     "finishedAt": "2025-10-24T15:02:25.655Z",
+    "repoVersion": "unknown",
     "vybes": {
       "taskName": "report-builder",
       "configId": "cerebrasqwen3-qwen3-coder-temp1",
@@ -898,7 +994,11 @@
         }
       }
     },
-    "workspaceArchive": "outputs/report-builder-2025-10-24T15-01-51-896Z/cerebrasqwen3-qwen3-coder-temp1/workspace"
+    "workspaceArchive": "outputs/report-builder-2025-10-24T15-01-51-896Z/cerebrasqwen3-qwen3-coder-temp1/workspace",
+    "workspaceZip": {
+      "path": "runs/report-builder-2025-10-24T15-01-51-896Z/cerebrasqwen3-qwen3-coder-temp1/workspace.zip",
+      "size": 42994
+    }
   },
   {
     "evalName": "report-builder",
@@ -906,6 +1006,7 @@
     "runId": "report-builder-2025-10-24T15-02-26-037Z",
     "date": "2025-10-24",
     "finishedAt": "2025-10-24T15:03:02.775Z",
+    "repoVersion": "unknown",
     "vybes": {
       "taskName": "report-builder",
       "configId": "codex-exec-gpt5-default",
@@ -943,6 +1044,10 @@
         }
       }
     },
-    "workspaceArchive": "outputs/report-builder-2025-10-24T15-02-26-037Z/codex-exec-gpt5-default/workspace"
+    "workspaceArchive": "outputs/report-builder-2025-10-24T15-02-26-037Z/codex-exec-gpt5-default/workspace",
+    "workspaceZip": {
+      "path": "runs/report-builder-2025-10-24T15-02-26-037Z/codex-exec-gpt5-default/workspace.zip",
+      "size": 39869
+    }
   }
 ]

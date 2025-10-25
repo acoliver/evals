@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "eval:base64": "tsx evals/run-evals.ts --eval base64-fix",
-    "eval:pagination": "tsx evals/run-evals.ts --eval pagination", 
+    "eval:pagination": "tsx evals/run-evals.ts --eval pagination",
     "eval:report": "tsx evals/run-evals.ts --eval report-builder",
     "eval:form": "tsx evals/run-evals.ts --eval form-capture",
     "eval:regex": "tsx evals/run-evals.ts --eval regex-challenge",
@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@types/uuid": "^10.0.0",
+    "archiver": "^7.0.1",
     "uuid": "^13.0.0"
   }
 }
