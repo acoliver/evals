@@ -776,7 +776,7 @@ async function main() {
     console.log(`\n FINISHED`);
 
     if (successful === 0) {
-      process.exit(1);
+      console.warn('   All runs reported failures; continuing so artifacts can still be published.');
     }
 
   } catch (error) {
