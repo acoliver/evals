@@ -13,13 +13,25 @@ import { VybesScoringEngine, VybesResult, VybesTaskConfig } from './vybes';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+interface EnvArgConfig {
+  env: string;
+  required?: boolean;
+  default?: string;
+  sensitive?: boolean;
+}
+
+type ArgValue = string | EnvArgConfig;
+
 interface Configuration {
   cli: string;
   name: string;
   description?: string;
-  args: string[];
+  args: ArgValue[];
   timeout: number;
 }
+
+const SENSITIVE_FLAGS = new Set(['--key', '--keyfile', '--auth-key', '--auth-keyfile']);
+const SENSITIVE_VALUE_SUBSTRINGS = ['key=', 'token=', 'secret=', 'authorization='];
 
 interface CommandDefinition {
   command: string;
@@ -89,12 +101,13 @@ class ConfigurationManager {
     const config = this.getConfiguration(configId);
     
     // Both LLxprt and Codex read from stdin when no prompt argument is provided
-    const args = [...config.args];
+    const { args, maskArgIndices } = this.resolveArgs(configId, config.args);
     
     return await this.runCommand(config.cli, args, { 
       cwd, 
       timeout: config.timeout,
-      input: promptContent
+      input: promptContent,
+      maskArgIndices
     });
   }
 
@@ -110,7 +123,47 @@ class ConfigurationManager {
     });
   }
 
-  private async runCommand(command: string, args: string[], options: { cwd: string; timeout: number; input?: string }): Promise<CommandResult> {
+  private resolveArgs(configId: string, argDefinitions: ArgValue[] = []): { args: string[]; maskArgIndices: Set<number> } {
+    const args: string[] = [];
+    const maskArgIndices = new Set<number>();
+
+    argDefinitions.forEach((definition) => {
+      if (typeof definition === 'string') {
+        args.push(definition);
+        return;
+      }
+
+      if (!definition || typeof definition !== 'object') {
+        throw new Error(`Invalid argument definition encountered for ${configId}`);
+      }
+
+      const envName = definition.env;
+      if (!envName) {
+        throw new Error(`Invalid env placeholder in configuration ${configId}`);
+      }
+
+      let value = process.env[envName];
+      if (value === undefined || value === null || value === '') {
+        if (definition.default !== undefined) {
+          value = definition.default;
+        }
+      }
+
+      if ((value === undefined || value === null || value === '') && definition.required !== false) {
+        throw new Error(`Missing required environment variable ${envName} for configuration ${configId}`);
+      }
+
+      const resolved = value ?? '';
+      args.push(resolved);
+      if (definition.sensitive) {
+        maskArgIndices.add(args.length - 1);
+      }
+    });
+
+    return { args, maskArgIndices };
+  }
+
+  private async runCommand(command: string, args: string[], options: { cwd: string; timeout: number; input?: string; maskArgIndices?: Set<number> }): Promise<CommandResult> {
     const start = Date.now();
     
     // Configure stdio for stdin if input is provided
@@ -125,6 +178,7 @@ class ConfigurationManager {
     });
 
     const duration = Date.now() - start;
+    const sanitizedCommand = this.buildSanitizedCommand(command, args, options.maskArgIndices);
 
     // Proper error handling: timeouts or spawn failures should be non-zero exit
     let exitCode: number;
@@ -142,13 +196,78 @@ class ConfigurationManager {
     const stderr = result.stderr ? (typeof result.stderr === 'string' ? result.stderr : result.stderr.toString()) : '';
 
     return {
-      command: `${command} ${args.join(' ')}`,
+      command: sanitizedCommand,
       cwd: options.cwd,
       exitCode,
       stdout,
       stderr,
       duration
     };
+  }
+
+  private buildSanitizedCommand(command: string, args: string[], maskArgIndices?: Set<number>): string {
+    if (!args?.length) {
+      return command;
+    }
+
+    const sanitizedArgs = args.map((arg, index) => {
+      const shouldMask = this.shouldMaskArg(args, index, maskArgIndices);
+      return shouldMask ? '***' : this.formatArg(arg);
+    });
+
+    return `${command} ${sanitizedArgs.join(' ')}`.trim();
+  }
+
+  private formatArg(value: string): string {
+    if (value === undefined || value === null) {
+      return '""';
+    }
+
+    if (value === '') {
+      return '""';
+    }
+
+    if (/\s/.test(value) || value.includes('"')) {
+      return `"${value.replace(/"/g, '\\"')}"`;
+    }
+
+    return value;
+  }
+
+  private shouldMaskArg(args: string[], index: number, maskArgIndices?: Set<number>): boolean {
+    if (maskArgIndices?.has(index)) {
+      return true;
+    }
+
+    const current = args[index] ?? '';
+    const previous = index > 0 ? args[index - 1] : '';
+    const lowerCurrent = current.toLowerCase();
+    if (SENSITIVE_FLAGS.has(previous)) {
+      return true;
+    }
+
+    if (previous === '--set' && this.containsSensitiveKeyword(lowerCurrent)) {
+      return true;
+    }
+
+    if (
+      lowerCurrent.startsWith('--key=') ||
+      lowerCurrent.startsWith('--keyfile=') ||
+      lowerCurrent.startsWith('--auth-key=') ||
+      lowerCurrent.startsWith('--auth-keyfile=')
+    ) {
+      return true;
+    }
+
+    if (!current.startsWith('--') && this.containsSensitiveKeyword(lowerCurrent)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private containsSensitiveKeyword(value: string): boolean {
+    return SENSITIVE_VALUE_SUBSTRINGS.some((needle) => value.includes(needle));
   }
 }
 
@@ -632,7 +751,7 @@ async function main() {
 
     // Determine which configurations to run
     const configIds = args.config === 'ALL' || !args.config
-      ? (args.quick ? ['llxprt-synthetic-glm4.6-temp1'] : configManager.getDefaultConfigurations())
+      ? (args.quick ? ['llxprt-synthetic-main'] : configManager.getDefaultConfigurations())
       : args.config.split(',');
 
     console.log(` RUNNING EVALUATIONS`);
