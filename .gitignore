@@ -6,3 +6,9 @@ npm-debug.log*
 tmp/
 reports/
 outputs/
+public/runs/
+public/vybes-daily.json
+public/vybes-runs.json
+archives/
+eval-*.log
+problems/*/.tmp-workspace-*/
