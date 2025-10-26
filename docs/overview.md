@@ -33,7 +33,7 @@ npm --prefix grading/regex-challenge install
 ```
 
 ## Running the Base64 Eval
-Use the provided npm script for a full sweep of configured profiles (currently `cerebrasqwen3`, `synthetic`, and `codex`):
+Use the provided npm script for a full sweep of configured profiles (currently `llxprt-synthetic-main` and `llxprt-cerebras-main`):
 
 ```bash
 npm run eval:base64
@@ -41,9 +41,7 @@ npm run eval:base64
 
 What it does:
 1. Copies `problems/base64-fix/workspace` to a temporary directory per profile.
-2. Invokes the agent:
-   - llxprt: `llxprt --profile-load <profile> --yolo --prompt "<task>"`
-   - Codex: `codex --dangerously-bypass-approvals-and-sandbox exec --skip-git-repo-check "<task>"`
+2. Invokes the LLxprt CLI twice (once per configuration) with the env-driven arguments resolved from `evals/config/cli-config.json`.
 3. Syncs the workspace into `grading/base64-fix/workspace` and runs:
    - `npm run typecheck`
    - `npm run lint`
