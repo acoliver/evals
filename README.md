@@ -21,14 +21,12 @@ the framework remains lightweight.
 | `SYNTHETIC_BASEURL` | Synthetic base URL (`--baseurl`) | `https://api.synthetic.new/openai/v1` |
 | `SYNTHETIC_MODEL` | Model slug (`--model`) | `hf:zai-org/GLM-4.6` |
 | `SYNTHETIC_KEY` | **Required** API key used with `--key` | – |
-| `SYNTHETIC_TEMPERATURE` | Value passed to `--set` (e.g. `temperature=1`) | `temperature=1` |
 | `SYNTHETIC_CONTEXT_LIMIT` | Workspace context limit `--set` | `context-limit=190000` |
 | `SYNTHETIC_SHELL_REPLACEMENT` | Shell replacement flag `--set` | `shell-replacement=true` |
 | `CEREBRAS_PROVIDER` | Provider for the Cerebras stack | `openai` |
 | `CEREBRAS_BASEURL` | Cerebras base URL | `https://api.cerebras.ai/v1` |
 | `CEREBRAS_MODEL` | Model slug | `qwen-3-coder-480b` |
 | `CEREBRAS_KEY` | **Required** API key passed to `--key` | – |
-| `CEREBRAS_TEMPERATURE` | `--set` temperature override | `temperature=1` |
 | `CEREBRAS_CONTEXT_LIMIT` | `--set` context limit | `context-limit=128000` |
 | `CEREBRAS_CUSTOM_HEADERS` | Optional custom header tuple (`--set`) | `custom-headers=response_format.json_schema.strict true` |
 | `CEREBRAS_SHELL_REPLACEMENT` | Shell replacement flag | `shell-replacement=true` |
