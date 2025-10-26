@@ -14,10 +14,12 @@
 - `evals/runBase64Fix.ts` / `evals/runPagination.ts` / `evals/runReportBuilder.ts` / `evals/runFormCapture.ts` / `evals/runRegexChallenge.ts`: Driver scripts that copy a fresh workspace, run each configured agent profile (llxprt models and/or Codex), then execute grading commands.
 - `project-plans/initial/` & `project-plans/pagination/`: Planning notes and usage guidance.
 
+> **Heads up:** The current `evals/run-evals.ts` harness now passes `--provider/--baseurl/--model/--key/--set` arguments via environment variables instead of loading `~/.llxprt/profiles`, and only the LLxprt configurations (`llxprt-synthetic-main`, `llxprt-cerebras-main`) are run by default. Codex references below describe the legacy workflow and are retained for historical context.
+
 ## Prerequisites
 - Node.js 20+ and npm.
-- `llxprt` CLI on `PATH` with profiles such as `cerebrasqwen3` or `synthetic` configured (`llxprt --profile-load <name>`).
-- (Optional) `codex` CLI if you want to benchmark Codex. For write access, launch it with `--sandbox danger-full-access` or another writable sandbox.
+- `llxprt` CLI on `PATH`. Export the env vars listed in `README.md` (at minimum `SYNTHETIC_KEY` / `CEREBRAS_KEY`) so the harness can pass the correct CLI arguments.
+- (Optional) `codex` CLI if you want to benchmark Codex manually—the main harness no longer launches it automatically.
 
 Install dependencies once:
 
@@ -31,7 +33,7 @@ npm --prefix grading/regex-challenge install
 ```
 
 ## Running the Base64 Eval
-Use the provided npm script for a full sweep of configured profiles (currently `cerebrasqwen3`, `synthetic`, and `codex`):
+Use the provided npm script for a full sweep of configured profiles (currently `llxprt-synthetic-main` and `llxprt-cerebras-main`):
 
 ```bash
 npm run eval:base64
@@ -39,9 +41,7 @@ npm run eval:base64
 
 What it does:
 1. Copies `problems/base64-fix/workspace` to a temporary directory per profile.
-2. Invokes the agent:
-   - llxprt: `llxprt --profile-load <profile> --yolo --prompt "<task>"`
-   - Codex: `codex --dangerously-bypass-approvals-and-sandbox exec --skip-git-repo-check "<task>"`
+2. Invokes the LLxprt CLI twice (once per configuration) with the env-driven arguments resolved from `evals/config/cli-config.json`.
 3. Syncs the workspace into `grading/base64-fix/workspace` and runs:
    - `npm run typecheck`
    - `npm run lint`

@@ -7,8 +7,33 @@ the framework remains lightweight.
 ## Running evaluations
 
 1. Install dependencies if needed: `npm install`.
-2. Kick off the desired scenario, e.g. `npm run eval:all` or `npm run eval:base64`.
+2. Export the env vars that feed the LLxprt CLI arguments (see below). At minimum you need the `*_KEY` values.
+3. Kick off the desired scenario, e.g. `npm run eval:all` or `npm run eval:base64`.
 3. Regenerate dashboard data/zips with `npm run build:vybes` when the runs finish.
+
+### Env vars for LLxprt
+
+`evals/config/cli-config.json` defines two env-driven configurations:
+
+| Variable | Description | Default |
+| --- | --- | --- |
+| `SYNTHETIC_PROVIDER` | Provider passed to `--provider` for the Synthetic stack | `openai` |
+| `SYNTHETIC_BASEURL` | Synthetic base URL (`--baseurl`) | `https://api.synthetic.new/openai/v1` |
+| `SYNTHETIC_MODEL` | Model slug (`--model`) | `hf:zai-org/GLM-4.6` |
+| `SYNTHETIC_KEY` | **Required** API key used with `--key` | – |
+| `SYNTHETIC_TEMPERATURE` | Value passed to `--set` (e.g. `temperature=1`) | `temperature=1` |
+| `SYNTHETIC_CONTEXT_LIMIT` | Workspace context limit `--set` | `context-limit=190000` |
+| `SYNTHETIC_SHELL_REPLACEMENT` | Shell replacement flag `--set` | `shell-replacement=true` |
+| `CEREBRAS_PROVIDER` | Provider for the Cerebras stack | `openai` |
+| `CEREBRAS_BASEURL` | Cerebras base URL | `https://api.cerebras.ai/v1` |
+| `CEREBRAS_MODEL` | Model slug | `qwen-3-coder-480b` |
+| `CEREBRAS_KEY` | **Required** API key passed to `--key` | – |
+| `CEREBRAS_TEMPERATURE` | `--set` temperature override | `temperature=1` |
+| `CEREBRAS_CONTEXT_LIMIT` | `--set` context limit | `context-limit=128000` |
+| `CEREBRAS_CUSTOM_HEADERS` | Optional custom header tuple (`--set`) | `custom-headers=response_format.json_schema.strict true` |
+| `CEREBRAS_SHELL_REPLACEMENT` | Shell replacement flag | `shell-replacement=true` |
+
+Only the `*_KEY` variables are strictly required—everything else falls back to the defaults above, but you can override them in CI by exporting new values before running `npm run eval:all`.
 
 ## Archiving artifacts
 
@@ -29,9 +54,3 @@ This command creates `archives/vybes-artifacts-<timestamp>.tar.gz` containing:
 
 Move or extract the tarball into the publication repo and commit the contents
 there. The archive directory itself stays ignored in this repo.
-
-## Configuration overrides
-
-Additional LLxprt configuration overrides (e.g., passing model parameters via the
-CLI) will be wired up once the next LLxprt release lands, so no ad-hoc env vars
-are added here yet.

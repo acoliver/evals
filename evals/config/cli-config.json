@@ -1,26 +1,53 @@
 {
   "configurations": {
-    "llxprt-synthetic-glm4.6-temp1": {
+    "llxprt-synthetic-main": {
       "cli": "llxprt",
-      "name": "LLxprt Code/Synthetic GLM 4.6, Temp 1",
-      "description": "LLxprt running synthetic profile with GLM-4.6 model at temperature 1.0",
-      "args": ["--profile-load", "synthetic", "--yolo"],
+      "name": "LLxprt Synthetic GLM 4.6",
+      "description": "LLxprt running the Synthetic GLM-4.6 stack via explicit CLI arguments",
+      "args": [
+        "--provider",
+        { "env": "SYNTHETIC_PROVIDER", "default": "openai" },
+        "--baseurl",
+        { "env": "SYNTHETIC_BASEURL", "default": "https://api.synthetic.new/openai/v1" },
+        "--key",
+        { "env": "SYNTHETIC_KEY", "required": true, "sensitive": true },
+        "--model",
+        { "env": "SYNTHETIC_MODEL", "default": "hf:zai-org/GLM-4.6" },
+        "--set",
+        { "env": "SYNTHETIC_TEMPERATURE", "default": "temperature=1" },
+        "--set",
+        { "env": "SYNTHETIC_CONTEXT_LIMIT", "default": "context-limit=190000" },
+        "--set",
+        { "env": "SYNTHETIC_SHELL_REPLACEMENT", "default": "shell-replacement=true" },
+        "--yolo"
+      ],
       "timeout": 900000
     },
-    "cerebrasqwen3-qwen3-coder-temp1": {
+    "llxprt-cerebras-main": {
       "cli": "llxprt",
-      "name": "Cerebras Qwen 3 480B, Temp 1",
-      "description": "LLxprt running cerebrasqwen3 profile with Qwen3 Coder at temperature 1.0",
-      "args": ["--profile-load", "cerebrasqwen3", "--yolo"],
-      "timeout": 900000
-    },
-    "codex-exec-gpt5-default": {
-      "cli": "codex",
-      "name": "Codex/GPT-5-Codex, Medium Reasoning, Default Settings",
-      "description": "Codex with medium reasoning effort and full system access using existing arguments",
-      "args": ["exec", "--dangerously-bypass-approvals-and-sandbox", "--skip-git-repo-check", "--config", "model_reasoning_effort=medium"],
+      "name": "LLxprt Cerebras Qwen 3",
+      "description": "LLxprt running Cerebras-hosted Qwen 3 Coder with env-driven arguments",
+      "args": [
+        "--provider",
+        { "env": "CEREBRAS_PROVIDER", "default": "openai" },
+        "--baseurl",
+        { "env": "CEREBRAS_BASEURL", "default": "https://api.cerebras.ai/v1" },
+        "--key",
+        { "env": "CEREBRAS_KEY", "required": true, "sensitive": true },
+        "--model",
+        { "env": "CEREBRAS_MODEL", "default": "qwen-3-coder-480b" },
+        "--set",
+        { "env": "CEREBRAS_TEMPERATURE", "default": "temperature=1" },
+        "--set",
+        { "env": "CEREBRAS_CONTEXT_LIMIT", "default": "context-limit=128000" },
+        "--set",
+        { "env": "CEREBRAS_CUSTOM_HEADERS", "default": "custom-headers=response_format.json_schema.strict true" },
+        "--set",
+        { "env": "CEREBRAS_SHELL_REPLACEMENT", "default": "shell-replacement=true" },
+        "--yolo"
+      ],
       "timeout": 900000
     }
   },
-  "defaultConfigurations": ["llxprt-synthetic-glm4.6-temp1", "cerebrasqwen3-qwen3-coder-temp1", "codex-exec-gpt5-default"]
+  "defaultConfigurations": ["llxprt-synthetic-main", "llxprt-cerebras-main"]
 }

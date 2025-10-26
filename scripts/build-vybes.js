@@ -80,7 +80,23 @@ async function ensureWorkspaceZip(runId, configId, workspacePath) {
   };
 }
 
-async function collectRuns() {
+async function loadExistingRuns() {
+  if (!(await pathExists(runsPath))) {
+    return [];
+  }
+  try {
+    const raw = await fs.readFile(runsPath, 'utf8');
+    if (!raw.trim()) {
+      return [];
+    }
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+async function collectRunsFromOutputs() {
   const runs = [];
 
   if (!(await pathExists(outputsRoot))) {
@@ -132,13 +148,34 @@ async function collectRuns() {
     }
   }
 
+  return runs;
+}
+
+function sortRuns(runs) {
   runs.sort((a, b) => {
     const aTime = a.finishedAt ? Date.parse(a.finishedAt) : Infinity;
     const bTime = b.finishedAt ? Date.parse(b.finishedAt) : Infinity;
     return aTime - bTime;
   });
-
   return runs;
+}
+
+function mergeRuns(existingRuns = [], newRuns = []) {
+  const merged = new Map();
+  const keyFor = (run) => `${run.runId ?? 'unknown'}::${run.configId ?? 'unknown'}`;
+
+  for (const run of existingRuns) {
+    if (run && run.runId && run.configId) {
+      merged.set(keyFor(run), run);
+    }
+  }
+
+  for (const run of newRuns) {
+    if (!run || !run.runId || !run.configId) continue;
+    merged.set(keyFor(run), run);
+  }
+
+  return sortRuns(Array.from(merged.values()));
 }
 
 function toDaily(runs) {
@@ -237,12 +274,17 @@ async function writeJSON(target, data) {
 
 async function main() {
   await ensurePublicDir();
-  const runs = await collectRuns();
-  await writeJSON(runsPath, runs);
-  const daily = toDaily(runs);
+  const [existingRuns, newRuns] = await Promise.all([
+    loadExistingRuns(),
+    collectRunsFromOutputs()
+  ]);
+
+  const mergedRuns = mergeRuns(existingRuns, newRuns);
+  await writeJSON(runsPath, mergedRuns);
+  const daily = toDaily(mergedRuns);
   await writeJSON(dailyPath, daily);
 
-  console.log(`Generated ${runs.length} runs → ${runsPath}`);
+  console.log(`Generated ${mergedRuns.length} runs → ${runsPath}`);
   console.log(`Generated ${daily.length} daily summaries → ${dailyPath}`);
 }
 
