@@ -434,6 +434,99 @@ th.numeric {
   transition: box-shadow 0.3s ease;
 }
 
+.config-run-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.run-config-group {
+  border: 1px solid rgba(106, 153, 85, 0.25);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  background: rgba(106, 153, 85, 0.04);
+}
+
+.run-config-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 0.85rem;
+}
+
+.run-config-head h4 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.config-command {
+  font-size: 0.85rem;
+  color: #6a9955;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.config-command details summary {
+  cursor: pointer;
+  text-decoration: underline;
+  list-style: none;
+}
+
+.config-command details summary::marker,
+.config-command details summary::-webkit-details-marker {
+  display: none;
+}
+
+.config-command details summary::after {
+  content: '▾';
+  margin-left: 0.35rem;
+  font-size: 0.75rem;
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.config-command details[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.command-text {
+  margin-top: 0.6rem;
+  padding: 0.75rem;
+  background: rgba(106, 153, 85, 0.08);
+  border: 1px solid rgba(106, 153, 85, 0.25);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  overflow-x: auto;
+}
+
+.command-actions {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.command-actions .copy-command,
+.command-actions .download-command {
+  background: rgba(106, 153, 85, 0.12);
+  border: 1px solid rgba(106, 153, 85, 0.4);
+  color: #66ff66;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.command-actions .copy-command:hover,
+.command-actions .download-command:hover {
+  background: rgba(102, 255, 102, 0.2);
+}
+
 .run-accordion {
   display: flex;
   flex-direction: column;
@@ -483,6 +576,11 @@ th.numeric {
 
 .run-score {
   font-weight: 700;
+}
+
+.run-score-raw {
+  font-weight: 600;
+  opacity: 0.85;
 }
 
 .run-details {

@@ -17,6 +17,9 @@
         { "env": "SYNTHETIC_CONTEXT_LIMIT", "default": "context-limit=190000" },
         "--set",
         { "env": "SYNTHETIC_SHELL_REPLACEMENT", "default": "shell-replacement=true" },
+        "--set",
+        "modelparam.temperature",
+        "1",
         "--yolo"
       ],
       "timeout": 900000
@@ -38,6 +41,9 @@
         { "env": "SYNTHETIC_CONTEXT_LIMIT", "default": "context-limit=190000" },
         "--set",
         { "env": "SYNTHETIC_SHELL_REPLACEMENT", "default": "shell-replacement=true" },
+        "--set",
+        "modelparam.temperature",
+        "1",
         "--yolo"
       ],
       "timeout": 900000
@@ -61,6 +67,9 @@
         { "env": "CEREBRAS_CUSTOM_HEADERS", "default": "custom-headers=response_format.json_schema.strict true" },
         "--set",
         { "env": "CEREBRAS_SHELL_REPLACEMENT", "default": "shell-replacement=true" },
+        "--set",
+        "modelparam.temperature",
+        "1",
         "--yolo"
       ],
       "timeout": 900000
