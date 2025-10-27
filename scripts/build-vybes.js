@@ -14,6 +14,7 @@ const runsPublicRoot = join(publicRoot, 'runs');
 
 const runsPath = join(publicRoot, 'vybes-runs.json');
 const dailyPath = join(publicRoot, 'vybes-daily.json');
+const cyclesPath = join(publicRoot, 'vybes-run-cycles.json');
 
 async function pathExists(target) {
   try {
@@ -111,8 +112,11 @@ async function collectRunsFromOutputs() {
     const configDirs = await fs.readdir(evalPath, { withFileTypes: true });
     for (const configDir of configDirs) {
       if (!configDir.isDirectory()) continue;
-      const workspacePath = join(evalPath, configDir.name, 'workspace');
-      const resultsPath = join(workspacePath, 'results.json');
+      const configBasePath = join(evalPath, configDir.name);
+      const workspacePath = join(configBasePath, 'workspace');
+      const resultsPath = (await pathExists(join(workspacePath, 'results.json')))
+        ? join(workspacePath, 'results.json')
+        : join(configBasePath, 'results.json');
       if (!(await pathExists(resultsPath))) continue;
 
       let data;
@@ -132,7 +136,7 @@ async function collectRunsFromOutputs() {
       const runId = evalDir.name;
       const relativeWorkspace = relative(repoRoot, data.workspaceArchive ?? workspacePath);
       const repoVersion = data.vybes?.repoVersion ?? data.repoVersion ?? 'unknown';
-      const workspaceZip = await ensureWorkspaceZip(runId, configDir.name, workspacePath);
+      const workspaceZip = await ensureWorkspaceZip(runId, configDir.name, (await pathExists(workspacePath)) ? workspacePath : configBasePath);
 
       runs.push({
         evalName: data.evalName,
@@ -143,7 +147,9 @@ async function collectRunsFromOutputs() {
         repoVersion,
         vybes: data.vybes,
         workspaceArchive: relativeWorkspace.replace(/\\/g, '/'),
-        workspaceZip
+        workspaceZip,
+        runSessionId: data.runSessionId ?? null,
+        runSessionStartedAt: data.runSessionStartedAt ?? null
       });
     }
   }
@@ -178,87 +184,229 @@ function mergeRuns(existingRuns = [], newRuns = []) {
   return sortRuns(Array.from(merged.values()));
 }
 
-function toDaily(runs) {
-  const byDate = new Map();
+function buildRunCycles(runs) {
+  const sessions = new Map();
 
-  for (const run of runs) {
-    const dateKey = run.date ?? 'unknown';
-    if (!byDate.has(dateKey)) {
-      byDate.set(dateKey, {
-        profiles: new Map(),
-        runs: []
+  const ensureSession = (run) => {
+    const key = run.runSessionId || `legacy-${run.runId}-${run.configId}`;
+    if (!sessions.has(key)) {
+      sessions.set(key, {
+        sessionId: key,
+        repoVersions: new Set(),
+        scenarios: [],
+        perConfig: new Map(),
+        totalVybes: 0,
+        totalMinutes: 0,
+        startedAt: run.runSessionStartedAt || run.finishedAt || null,
+        finishedAt: run.finishedAt || null,
+        date: run.date ?? (run.finishedAt ? run.finishedAt.slice(0, 10) : null)
       });
     }
-    const dayBucket = byDate.get(dateKey);
-    dayBucket.runs.push(run);
+    return sessions.get(key);
+  };
 
-    if (!dayBucket.profiles.has(run.configId)) {
-      dayBucket.profiles.set(run.configId, {
-        runs: [],
+  for (const run of runs) {
+    const session = ensureSession(run);
+    session.scenarios.push(run);
+    session.repoVersions.add(run.repoVersion);
+    session.totalVybes += run.vybes?.finalScore ?? 0;
+    session.totalMinutes += run.vybes?.actualTimeMinutes ?? 0;
+    if (!session.startedAt || (run.runSessionStartedAt && run.runSessionStartedAt < session.startedAt)) {
+      session.startedAt = run.runSessionStartedAt ?? session.startedAt;
+    }
+    if (!session.finishedAt || (run.finishedAt && run.finishedAt > session.finishedAt)) {
+      session.finishedAt = run.finishedAt;
+    }
+    if (!session.date && session.finishedAt) {
+      session.date = session.finishedAt.slice(0, 10);
+    }
+
+    const stats =
+      session.perConfig.get(run.configId) || {
+        runs: 0,
         totalVybes: 0,
         totalSuccess: 0,
         totalPenalty: 0,
-        versions: new Set()
+        bestRun: null,
+        worstRun: null
+      };
+    const score = run.vybes?.finalScore ?? 0;
+    stats.runs += 1;
+    stats.totalVybes += score;
+    stats.totalSuccess += run.vybes?.successPercentage ?? 0;
+    stats.totalPenalty += run.vybes?.timePenaltyMultiplier ?? 0;
+
+    if (!stats.bestRun || score > stats.bestRun.score) {
+      stats.bestRun = {
+        eval: run.evalName,
+        score
+      };
+    }
+    if (!stats.worstRun || score < stats.worstRun.score) {
+      stats.worstRun = {
+        eval: run.evalName,
+        score
+      };
+    }
+    session.perConfig.set(run.configId, stats);
+  }
+
+  const toFixed = (value, digits = 2) => Number(value.toFixed(digits));
+
+  return Array.from(sessions.values())
+    .map((session) => {
+      const perConfigStats = {};
+      session.perConfig.forEach((stats, configId) => {
+        perConfigStats[configId] = {
+          runs: stats.runs,
+          totalVybes: toFixed(stats.totalVybes),
+          avgVybes: toFixed(stats.totalVybes / stats.runs),
+          avgSuccess: toFixed(stats.totalSuccess / stats.runs, 4),
+          avgPenalty: toFixed(stats.totalPenalty / stats.runs, 4),
+          bestRun: stats.bestRun,
+          worstRun: stats.worstRun
+        };
+      });
+
+      return {
+        sessionId: session.sessionId,
+        date: session.date ?? 'unknown',
+        startedAt: session.startedAt,
+        finishedAt: session.finishedAt,
+        repoVersions: Array.from(session.repoVersions),
+        totalVybes: toFixed(session.totalVybes),
+        totalMinutes: toFixed(session.totalMinutes),
+        configs: Object.keys(perConfigStats),
+        perConfigStats,
+        scenarios: session.scenarios
+      };
+    })
+    .sort((a, b) => {
+      const aTime = a.finishedAt ? Date.parse(a.finishedAt) : -Infinity;
+      const bTime = b.finishedAt ? Date.parse(b.finishedAt) : -Infinity;
+      return bTime - aTime;
+    });
+}
+
+function toDaily(runs, runCycles) {
+  const byDate = new Map();
+
+  const ensureBucket = (dateKey) => {
+    if (!byDate.has(dateKey)) {
+      byDate.set(dateKey, {
+        scenarioRuns: [],
+        runCycles: [],
+        profiles: new Map(),
+        summary: {
+          totalRuns: 0,
+          totalMinutes: 0,
+          totalVybes: 0,
+          profiles: new Set(),
+          repoVersions: new Set()
+        }
       });
     }
-    const profileStats = dayBucket.profiles.get(run.configId);
-    profileStats.runs.push(run);
-    profileStats.totalVybes += run.vybes.finalScore ?? 0;
-    profileStats.totalSuccess += run.vybes.successPercentage ?? 0;
-    profileStats.totalPenalty += run.vybes.timePenaltyMultiplier ?? 0;
+    return byDate.get(dateKey);
+  };
+
+  const ensureProfile = (bucket, configId) => {
+    if (!bucket.profiles.has(configId)) {
+      bucket.profiles.set(configId, {
+        scenarioCount: 0,
+        cycleCount: 0,
+        totalVybes: 0,
+        successSum: 0,
+        penaltySum: 0,
+        bestScenario: null,
+        worstScenario: null,
+        repoVersions: new Set()
+      });
+    }
+    return bucket.profiles.get(configId);
+  };
+
+  const toFixed = (value, digits = 2) => Number(value.toFixed(digits));
+
+  for (const run of runs) {
+    const dateKey = run.date ?? 'unknown';
+    const bucket = ensureBucket(dateKey);
+    bucket.scenarioRuns.push(run);
+
+    const profileStats = ensureProfile(bucket, run.configId);
+    profileStats.scenarioCount += 1;
+    const score = run.vybes?.finalScore ?? 0;
+    const candidate = {
+      eval: run.evalName,
+      score,
+      runId: run.runId,
+      sessionId: run.runSessionId ?? null
+    };
+    if (!profileStats.bestScenario || score > profileStats.bestScenario.score) {
+      profileStats.bestScenario = candidate;
+    }
+    if (!profileStats.worstScenario || score < profileStats.worstScenario.score) {
+      profileStats.worstScenario = candidate;
+    }
     if (run.repoVersion) {
-      profileStats.versions.add(run.repoVersion);
+      profileStats.repoVersions.add(run.repoVersion);
+    }
+  }
+
+  for (const cycle of runCycles) {
+    const dateKey = cycle.date ?? 'unknown';
+    const bucket = ensureBucket(dateKey);
+    bucket.runCycles.push(cycle);
+
+    bucket.summary.totalRuns += 1;
+    bucket.summary.totalMinutes += cycle.totalMinutes ?? 0;
+    bucket.summary.totalVybes += cycle.totalVybes ?? 0;
+    (cycle.configs ?? []).forEach((configId) => bucket.summary.profiles.add(configId));
+    (cycle.repoVersions ?? []).forEach((version) => bucket.summary.repoVersions.add(version));
+
+    for (const configId of cycle.configs ?? []) {
+      const profileStats = ensureProfile(bucket, configId);
+      profileStats.cycleCount += 1;
+      const configMetrics = cycle.perConfigStats?.[configId];
+      if (configMetrics) {
+        profileStats.totalVybes += configMetrics.totalVybes ?? 0;
+        profileStats.successSum += configMetrics.avgSuccess ?? 0;
+        profileStats.penaltySum += configMetrics.avgPenalty ?? 0;
+      }
+      (cycle.repoVersions ?? []).forEach((version) => profileStats.repoVersions.add(version));
     }
   }
 
   const summaries = [];
   for (const [date, bucket] of byDate.entries()) {
     const profiles = {};
-    for (const [configId, stats] of bucket.profiles.entries()) {
-      const sortedRuns = [...stats.runs].sort((a, b) => (b.vybes.finalScore ?? 0) - (a.vybes.finalScore ?? 0));
-      const bestRun = sortedRuns[0];
-      const worstRun = sortedRuns[sortedRuns.length - 1];
-      const count = stats.runs.length;
+    bucket.profiles.forEach((stats, configId) => {
+      const runsCount = stats.cycleCount;
       profiles[configId] = {
-        runs: count,
-        totalVybes: Number(stats.totalVybes.toFixed(2)),
-        avgVybes: Number((stats.totalVybes / count).toFixed(2)),
-        avgSuccess: Number((stats.totalSuccess / count).toFixed(4)),
-        avgPenalty: Number((stats.totalPenalty / count).toFixed(4)),
-        bestRun: bestRun
-          ? {
-              eval: bestRun.evalName,
-              score: bestRun.vybes.finalScore ?? 0,
-              runId: bestRun.runId
-            }
-          : null,
-        worstRun: worstRun
-          ? {
-              eval: worstRun.evalName,
-              score: worstRun.vybes.finalScore ?? 0,
-              runId: worstRun.runId
-            }
-          : null,
-        repoVersions: Array.from(stats.versions)
+        runs: runsCount,
+        evals: stats.scenarioCount,
+        totalVybes: toFixed(stats.totalVybes),
+        avgVybes: runsCount ? toFixed(stats.totalVybes / runsCount) : 0,
+        avgSuccess: runsCount ? toFixed(stats.successSum / runsCount, 4) : 0,
+        avgPenalty: runsCount ? toFixed(stats.penaltySum / runsCount, 4) : 0,
+        bestRun: stats.bestScenario,
+        worstRun: stats.worstScenario,
+        repoVersions: Array.from(stats.repoVersions)
       };
-    }
-
-    const totalRuns = bucket.runs.length;
-    const totalMinutes = bucket.runs.reduce((sum, run) => sum + (run.vybes.actualTimeMinutes ?? 0), 0);
-    const totalVybes = bucket.runs.reduce((sum, run) => sum + (run.vybes.finalScore ?? 0), 0);
-    const profileList = Array.from(bucket.profiles.keys());
-    const versionList = Array.from(
-      new Set(bucket.runs.map((run) => run.repoVersion).filter(Boolean))
-    );
+    });
 
     summaries.push({
       date,
+      runCycles: bucket.runCycles.sort((a, b) => {
+        const aTime = a.finishedAt ? Date.parse(a.finishedAt) : -Infinity;
+        const bTime = b.finishedAt ? Date.parse(b.finishedAt) : -Infinity;
+        return bTime - aTime;
+      }),
       summary: {
-        totalRuns,
-        totalMinutes: Number(totalMinutes.toFixed(2)),
-        avgVybes: totalRuns ? Number((totalVybes / totalRuns).toFixed(2)) : 0,
-        profiles: profileList,
-        repoVersions: versionList
+        totalRuns: bucket.summary.totalRuns,
+        totalMinutes: toFixed(bucket.summary.totalMinutes),
+        avgVybes: bucket.summary.totalRuns ? toFixed(bucket.summary.totalVybes / bucket.summary.totalRuns) : 0,
+        profiles: Array.from(bucket.summary.profiles),
+        repoVersions: Array.from(bucket.summary.repoVersions)
       },
       profiles
     });
@@ -280,8 +428,10 @@ async function main() {
   ]);
 
   const mergedRuns = mergeRuns(existingRuns, newRuns);
+  const runCycles = buildRunCycles(mergedRuns);
   await writeJSON(runsPath, mergedRuns);
-  const daily = toDaily(mergedRuns);
+  await writeJSON(cyclesPath, runCycles);
+  const daily = toDaily(mergedRuns, runCycles);
   await writeJSON(dailyPath, daily);
 
   console.log(`Generated ${mergedRuns.length} runs → ${runsPath}`);

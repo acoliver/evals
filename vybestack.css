@@ -49,6 +49,28 @@ h4 {
   color: #6a9955;
 }
 
+.section-date {
+  font-size: 1.05rem;
+  font-weight: 500;
+  margin-left: 0.75rem;
+  color: #6a9955 !important;
+}
+
+.site-version {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.75rem;
+  border: 1px solid rgba(106, 153, 85, 0.35);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6a9955 !important;
+  background: rgba(106, 153, 85, 0.08);
+  margin-bottom: 1.5rem;
+}
+
 p, ul {
   font-size: 1.15rem;
   font-weight: 400;
@@ -320,18 +342,18 @@ th.sortable {
 }
 
 th.sortable::after {
-  content: '\\2195';
+  content: '\2195';
   font-size: 0.8rem;
   margin-left: 0.4rem;
   opacity: 0.65;
 }
 
 th.sortable.asc::after {
-  content: '\\2191';
+  content: '\2191';
 }
 
 th.sortable.desc::after {
-  content: '\\2193';
+  content: '\2193';
 }
 
 .numeric,

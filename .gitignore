@@ -9,6 +9,7 @@ outputs/
 public/runs/
 public/vybes-daily.json
 public/vybes-runs.json
+public/vybes-run-cycles.json
 archives/
 eval-*.log
 problems/*/.tmp-workspace-*/

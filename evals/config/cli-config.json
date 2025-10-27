@@ -21,6 +21,27 @@
       ],
       "timeout": 900000
     },
+    "llxprt-synthetic-minimax": {
+      "cli": "llxprt",
+      "name": "LLxprt Synthetic MiniMax M2",
+      "description": "LLxprt running the Synthetic stack with MiniMax M2 model",
+      "args": [
+        "--provider",
+        { "env": "SYNTHETIC_PROVIDER", "default": "openai" },
+        "--baseurl",
+        { "env": "SYNTHETIC_BASEURL", "default": "https://api.synthetic.new/openai/v1" },
+        "--key",
+        { "env": "SYNTHETIC_KEY", "required": true, "sensitive": true },
+        "--model",
+        { "env": "SYNTHETIC_MINIMAX_MODEL", "default": "hf:MiniMaxAI/MiniMax-M2" },
+        "--set",
+        { "env": "SYNTHETIC_CONTEXT_LIMIT", "default": "context-limit=190000" },
+        "--set",
+        { "env": "SYNTHETIC_SHELL_REPLACEMENT", "default": "shell-replacement=true" },
+        "--yolo"
+      ],
+      "timeout": 900000
+    },
     "llxprt-cerebras-main": {
       "cli": "llxprt",
       "name": "LLxprt Cerebras Qwen 3",
@@ -45,5 +66,5 @@
       "timeout": 900000
     }
   },
-  "defaultConfigurations": ["llxprt-synthetic-main", "llxprt-cerebras-main"]
+  "defaultConfigurations": ["llxprt-synthetic-main", "llxprt-synthetic-minimax", "llxprt-cerebras-main"]
 }

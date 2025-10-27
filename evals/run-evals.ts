@@ -293,6 +293,8 @@ interface EvalResult {
   archivePath: string;
   vybesScore?: VybesResult;
   repoVersion?: string;
+  runSessionId?: string;
+  runSessionStartedAt?: string;
 }
 
 class EvaluationLoader {
@@ -493,6 +495,8 @@ class ResultsManager {
         success: cmd.exitCode === 0
       })),
       workspaceArchive: result.archivePath,
+      runSessionId: result.runSessionId,
+      runSessionStartedAt: result.runSessionStartedAt,
       repoVersion: result.repoVersion
     };
 
@@ -505,6 +509,11 @@ class ResultsManager {
     
     return resultsPath;
   }
+}
+
+interface RunSessionContext {
+  id: string;
+  startedAt: string;
 }
 
 class UnifiedRunner {
@@ -524,7 +533,7 @@ class UnifiedRunner {
     this.repoRoot = resolve(__dirname, '..');
   }
 
-  async runEvaluation(evalName: string, configId: string): Promise<EvalResult> {
+  async runEvaluation(evalName: string, configId: string, session?: RunSessionContext): Promise<EvalResult> {
     console.log(`\n STARTED: ${evalName} + ${configId}`);
     
     const start = Date.now();
@@ -633,7 +642,9 @@ class UnifiedRunner {
         totalDuration,
         archivePath: finalArchivePath,
         vybesScore,
-        repoVersion
+        repoVersion,
+        runSessionId: session?.id,
+        runSessionStartedAt: session?.startedAt
       });
 
       return {
@@ -648,7 +659,9 @@ class UnifiedRunner {
         totalDuration,
         archivePath: finalArchivePath,
         vybesScore,
-        repoVersion
+        repoVersion,
+        runSessionId: session?.id,
+        runSessionStartedAt: session?.startedAt
       };
 
     } finally {
@@ -670,11 +683,15 @@ class UnifiedRunner {
 
   async runMultipleEvaluations(evalNames: string[], configIds: string[]): Promise<EvalResult[]> {
     const results: EvalResult[] = [];
+    const sessionContext: RunSessionContext = {
+      id: uuidv4(),
+      startedAt: new Date().toISOString()
+    };
     
     for (const evalName of evalNames) {
       for (const configId of configIds) {
         try {
-          const result = await this.runEvaluation(evalName, configId);
+          const result = await this.runEvaluation(evalName, configId, sessionContext);
           results.push(result);
         } catch (error) {
           console.error(`\n FATAL: ${evalName} + ${configId}`);
