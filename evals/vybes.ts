@@ -29,6 +29,8 @@ export interface VybesBreakdown {
   modules: Record<string, VybesBreakdownModule>;
 }
 
+export type VybesStatus = 'ok' | 'cli_failed' | 'no_op' | 'error';
+
 export interface VybesResult {
   taskName: string;
   configId: string;
@@ -36,14 +38,18 @@ export interface VybesResult {
   timeLimitMinutes: number;
   baseScore: number;
   successPercentage: number;
+  baselineSuccessPercentage: number;
+  adjustedSuccessPercentage: number;
   timePenaltyMultiplier: number;
   finalScore: number;
+  rawScore: number;
   actualTimeMinutes: number;
   description?: string;
   category?: string;
   breakdown?: VybesBreakdown;
   error?: string;
   repoVersion?: string;
+  status?: VybesStatus;
 }
 
 export interface VybesScoringContext {
@@ -102,8 +108,20 @@ const DEFAULT_CONFIGS: Record<string, VybesTaskConfig> = {
 };
 
 const MIN_PENALTY = 0.2;
+const BASELINE_SUCCESS: Record<string, number> = {
+  'base64-fix': 16 / 18
+};
 
 export class VybesScoringEngine {
+  private describeFailure(buildResults: CommandSummary[], gradeResults: CommandSummary[]): string | undefined {
+    const failingCommand = [...buildResults, ...gradeResults].find((result) => result.exitCode !== 0);
+    if (!failingCommand) {
+      return undefined;
+    }
+    const command = failingCommand.command || 'unknown step';
+    return `${command} failed (exit ${failingCommand.exitCode})`;
+  }
+
   calculate(context: VybesScoringContext): VybesResult {
     const config = this.resolveConfig(context.evalName, context.providedConfig);
     const baseScore = 100 * config.multiplier;
@@ -123,16 +141,33 @@ export class VybesScoringEngine {
 
     const actualTimeMinutes = this.computeActualMinutes(context.cliResult.duration);
     const timePenaltyMultiplier = this.computeTimePenalty(actualTimeMinutes, config.timeLimitMinutes);
+    const { baselineSuccess, adjustedSuccess } = this.adjustForBaseline(context.evalName, successPercentage);
 
     let error: string | undefined;
+    let status: VybesStatus = 'ok';
 
     if (qualityFailed) {
       successPercentage = 0;
       error = 'lint/typecheck failed';
     }
 
+    let adjustedForError = adjustedSuccess;
+    if (qualityFailed) {
+      adjustedForError = 0;
+      error = 'lint/typecheck failed';
+      status = 'error';
+    } else if (!context.overallSuccess) {
+      adjustedForError = 0;
+      status = 'error';
+      error =
+        this.describeFailure(context.buildResults, context.gradeResults) ?? 'one or more grading steps failed';
+    } else if (adjustedForError === 0 && baselineSuccess > 0) {
+      status = 'no_op';
+    }
+
+    const rawScore = Number((baseScore * adjustedForError).toFixed(2));
     const finalScore = Number(
-      (baseScore * successPercentage * timePenaltyMultiplier).toFixed(2)
+      (rawScore * timePenaltyMultiplier).toFixed(2)
     );
 
     return {
@@ -142,13 +177,48 @@ export class VybesScoringEngine {
       timeLimitMinutes: config.timeLimitMinutes,
       baseScore,
       successPercentage: Number(successPercentage.toFixed(4)),
+      baselineSuccessPercentage: Number(baselineSuccess.toFixed(4)),
+      adjustedSuccessPercentage: Number(adjustedForError.toFixed(4)),
       timePenaltyMultiplier: Number(timePenaltyMultiplier.toFixed(4)),
+      rawScore,
       finalScore,
       actualTimeMinutes: Number(actualTimeMinutes.toFixed(3)),
       description: config.description,
       category: config.category,
       breakdown,
-      error
+      error,
+      status
+    };
+  }
+
+  createZeroScore(
+    context: VybesScoringContext,
+    options: { status?: VybesStatus; error?: string } = {}
+  ): VybesResult {
+    const config = this.resolveConfig(context.evalName, context.providedConfig);
+    const baseScore = 100 * config.multiplier;
+    const actualTimeMinutes = this.computeActualMinutes(context.cliResult.duration);
+    const timePenaltyMultiplier = this.computeTimePenalty(actualTimeMinutes, config.timeLimitMinutes);
+    const baseline = this.resolveBaseline(context.evalName);
+
+    return {
+      taskName: context.evalName,
+      configId: context.configId,
+      complexityMultiplier: config.multiplier,
+      timeLimitMinutes: config.timeLimitMinutes,
+      baseScore,
+      successPercentage: 0,
+      baselineSuccessPercentage: Number(baseline.toFixed(4)),
+      adjustedSuccessPercentage: 0,
+      timePenaltyMultiplier: Number(timePenaltyMultiplier.toFixed(4)),
+      rawScore: 0,
+      finalScore: 0,
+      actualTimeMinutes: Number(actualTimeMinutes.toFixed(3)),
+      description: config.description,
+      category: config.category,
+      breakdown: this.emptyBreakdown(),
+      error: options.error,
+      status: options.status ?? 'error'
     };
   }
 
@@ -291,5 +361,39 @@ export class VybesScoringEngine {
       modulesIncomplete: [],
       modules: {}
     };
+  }
+
+  private adjustForBaseline(evalName: string, successPercentage: number): {
+    baselineSuccess: number;
+    adjustedSuccess: number;
+  } {
+    const baseline = this.resolveBaseline(evalName);
+    const clampedSuccess = Math.max(0, Math.min(1, successPercentage));
+    const clampedBaseline = Math.max(0, Math.min(0.99, baseline));
+
+    if (clampedSuccess <= clampedBaseline) {
+      return { baselineSuccess: clampedBaseline, adjustedSuccess: 0 };
+    }
+
+    const denominator = 1 - clampedBaseline;
+    if (denominator <= 0) {
+      return { baselineSuccess: clampedBaseline, adjustedSuccess: 0 };
+    }
+
+    const normalized = (clampedSuccess - clampedBaseline) / denominator;
+    return {
+      baselineSuccess: clampedBaseline,
+      adjustedSuccess: Math.max(0, Math.min(1, normalized))
+    };
+  }
+
+  private resolveBaseline(evalName: string): number {
+    const normalized = evalName.toLowerCase();
+    for (const [key, value] of Object.entries(BASELINE_SUCCESS)) {
+      if (normalized.includes(key)) {
+        return value;
+      }
+    }
+    return 0;
   }
 }

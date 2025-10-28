@@ -233,6 +233,11 @@ footer {
   font-weight: 600;
 }
 
+.badge-warn {
+  color: #ffc966;
+  font-weight: 600;
+}
+
 .timestamp {
   font-size: 0.9rem;
   opacity: 0.75;
@@ -434,6 +439,55 @@ th.numeric {
   transition: box-shadow 0.3s ease;
 }
 
+.run-cycle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.run-cycle {
+  border: 1px solid rgba(106, 153, 85, 0.25);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  background: rgba(106, 153, 85, 0.04);
+}
+
+.run-cycle-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.run-cycle-head h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.run-cycle-head small {
+  display: block;
+  color: rgba(206, 255, 185, 0.8);
+  font-size: 0.85rem;
+}
+
+.run-cycle-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.run-cycle-meta span {
+  font-weight: 600;
+}
+
+.run-cycle-meta .version-tag-group {
+  justify-content: flex-end;
+}
+
 .config-run-groups {
   display: flex;
   flex-direction: column;
@@ -453,6 +507,21 @@ th.numeric {
   gap: 1rem;
   align-items: flex-start;
   margin-bottom: 0.85rem;
+}
+
+.run-config-head small {
+  display: block;
+  font-size: 0.8rem;
+  color: rgba(206, 255, 185, 0.75);
+}
+
+.run-config-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  text-align: right;
+  font-size: 0.85rem;
+  color: rgba(206, 255, 185, 0.85);
 }
 
 .run-config-head h4 {
@@ -566,6 +635,32 @@ th.numeric {
   gap: 0.25rem;
 }
 
+.run-scenario-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.run-config {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(106, 153, 85, 0.18);
+  color: rgba(217, 255, 208, 0.9);
+}
+
+.run-profile {
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: rgba(102, 255, 102, 0.85);
+}
+
 .run-summary-meta {
   display: flex;
   flex-wrap: wrap;
@@ -581,6 +676,29 @@ th.numeric {
 .run-score-raw {
   font-weight: 600;
   opacity: 0.85;
+}
+
+.run-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.run-status-badge.badge-fail {
+  background: rgba(255, 0, 0, 0.12);
+  border-color: rgba(255, 0, 0, 0.35);
+}
+
+.run-status-badge.badge-warn {
+  background: rgba(255, 201, 102, 0.15);
+  border-color: rgba(255, 201, 102, 0.35);
 }
 
 .run-details {
@@ -621,6 +739,31 @@ th.numeric {
   font-weight: 600;
 }
 
+.run-command {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.run-command strong {
+  display: block;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(106, 153, 85, 0.85);
+  margin-bottom: 0.35rem;
+}
+
+.run-command code {
+  display: block;
+  background: rgba(2, 15, 2, 0.9);
+  border: 1px solid rgba(106, 153, 85, 0.25);
+  border-radius: 10px;
+  padding: 0.7rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.35;
+}
+
 .run-modules strong {
   font-size: 0.85rem;
   letter-spacing: 0.05em;
@@ -651,8 +794,14 @@ th.numeric {
   padding: 0.35rem 0.6rem;
   border-radius: 8px;
   margin-top: 0.25rem;
-  background: rgba(255, 0, 0, 0.08);
   border: 1px solid rgba(255, 0, 0, 0.35);
+  background: rgba(255, 0, 0, 0.08);
+}
+
+.run-notes.badge-warn {
+  border-color: rgba(255, 201, 102, 0.35);
+  background: rgba(255, 201, 102, 0.15);
+  color: #ffc966;
 }
 
 @media (max-width: 900px) {
