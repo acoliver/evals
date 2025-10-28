@@ -439,55 +439,6 @@ th.numeric {
   transition: box-shadow 0.3s ease;
 }
 
-.run-cycle-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.run-cycle {
-  border: 1px solid rgba(106, 153, 85, 0.25);
-  border-radius: 12px;
-  padding: 1rem 1.25rem;
-  background: rgba(106, 153, 85, 0.04);
-}
-
-.run-cycle-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  margin-bottom: 0.75rem;
-}
-
-.run-cycle-head h4 {
-  margin: 0;
-  font-size: 1rem;
-}
-
-.run-cycle-head small {
-  display: block;
-  color: rgba(206, 255, 185, 0.8);
-  font-size: 0.85rem;
-}
-
-.run-cycle-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  align-items: flex-end;
-  text-align: right;
-}
-
-.run-cycle-meta span {
-  font-weight: 600;
-}
-
-.run-cycle-meta .version-tag-group {
-  justify-content: flex-end;
-}
-
 .config-run-groups {
   display: flex;
   flex-direction: column;
@@ -627,17 +578,6 @@ th.numeric {
   flex-wrap: wrap;
 }
 
-.run-config {
-  font-size: 0.78rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 0.1rem 0.45rem;
-  border-radius: 999px;
-  background: rgba(106, 153, 85, 0.18);
-  color: rgba(217, 255, 208, 0.9);
-}
-
 .run-profile {
   font-size: 0.8rem;
   letter-spacing: 0.1em;
@@ -722,31 +662,6 @@ th.numeric {
 .run-links a {
   color: #66ff66;
   font-weight: 600;
-}
-
-.run-command {
-  margin-top: 0.75rem;
-  font-size: 0.85rem;
-}
-
-.run-command strong {
-  display: block;
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(106, 153, 85, 0.85);
-  margin-bottom: 0.35rem;
-}
-
-.run-command code {
-  display: block;
-  background: rgba(2, 15, 2, 0.9);
-  border: 1px solid rgba(106, 153, 85, 0.25);
-  border-radius: 10px;
-  padding: 0.7rem;
-  white-space: pre-wrap;
-  word-break: break-word;
-  line-height: 1.35;
 }
 
 .run-modules strong {

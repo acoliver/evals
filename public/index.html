@@ -16,7 +16,12 @@
     </header>
 
     <section>
-      <h2>Daily Overview</h2>
+      <h2>Today's Summary</h2>
+      <div id="today-summary" class="table-wrapper"></div>
+    </section>
+
+    <section>
+      <h2>Daily Overview <span id="daily-overview-date" class="section-date"></span></h2>
       <div class="table-wrapper">
         <table id="daily-table">
           <thead>
@@ -68,6 +73,7 @@
   <script type="module">
     const PROFILE_LABELS = {
       'llxprt-synthetic-main': 'Synthetic GLM 4.6',
+      'llxprt-synthetic-minimax': 'Synthetic MiniMax M2',
       'llxprt-cerebras-main': 'Cerebras Qwen 3',
       'llxprt-synthetic-glm4.6-temp1': 'Synthetic GLM 4.6 (legacy)',
       'cerebrasqwen3-qwen3-coder-temp1': 'Cerebras Qwen 3 (legacy)',
@@ -86,7 +92,7 @@
     const formatter = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 });
     const percentFormatter = new Intl.NumberFormat(undefined, { style: 'percent', maximumFractionDigits: 1 });
     const dateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
-    const dayFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'long' });
+    const dayFormatterUTC = new Intl.DateTimeFormat(undefined, { dateStyle: 'long', timeZone: 'UTC' });
 
     const dailyBody = document.getElementById('daily-summary');
     const daySummaryBody = document.getElementById('daily-run-summary');
@@ -94,16 +100,23 @@
     const dailyTable = document.getElementById('daily-table');
     const daySummaryTable = document.getElementById('day-table');
     const updatedAtEl = document.getElementById('updated-at');
+    const dailyOverviewDateEl = document.getElementById('daily-overview-date');
 
     const dailyEntriesByDate = new Map();
+    let todayKey = null;
+    const configOrder = [];
+    const configSet = new Set();
+    let orderedConfigs = [];
     let latestDayKey = null;
     let activeDayKey = null;
     let currentDailyRows = [];
+    let currentTodayRows = [];
     let currentDaySummaryRows = [];
     let currentRunRows = [];
     let currentRunGroups = [];
     const dailySort = { field: 'totalVybes', desc: true };
     const daySort = { field: 'sortValue', desc: true };
+    const todaySort = { field: 'totalVybes', desc: true };
 
     async function safeFetch(path) {
       const response = await fetch(path);
@@ -111,6 +124,13 @@
         throw new Error(`Failed to load ${path}: ${response.status}`);
       }
       return response.json();
+    }
+
+    function formatDayLabel(rawDate) {
+      if (!rawDate || rawDate === 'unknown') {
+        return 'Unknown Date';
+      }
+      return dayFormatterUTC.format(new Date(`${rawDate}T00:00:00Z`));
     }
 
     function buildDailyRowMarkup(row) {
@@ -127,7 +147,6 @@
             <span>${row.profileLabel}</span>
             <div class="version-tag-group">${formatVersionTags(row.repoVersions)}</div>
           </div>
-          <small>${row.date}</small>
         </td>
         <td class="numeric" data-field="totalVybes">${formatter.format(row.totalVybes)}</td>
         <td class="numeric" data-field="runs">${row.runs}</td>
@@ -143,11 +162,12 @@
       const rows = [];
       entries.forEach((entry) => {
         if (!entry) return;
-        const dayLabel = entry.date === 'unknown' ? 'Unknown Date' : entry.date;
+        const dayLabel = formatDayLabel(entry.date ?? 'unknown');
         const profiles = Object.entries(entry.profiles);
         profiles.forEach(([configId, stats]) => {
           rows.push({
-            date: dayLabel,
+            dateKey: entry.date ?? 'unknown',
+            dateLabel: dayLabel,
             configId,
             totalVybes: stats.totalVybes,
             runs: stats.runs,
@@ -170,14 +190,21 @@
         const rawDate = entry.date ?? 'unknown';
         const profiles = (summary.profiles ?? []).map((configId) => PROFILE_LABELS[configId] ?? configId);
         const versions = summary.repoVersions ?? [];
-        const label =
-          rawDate === 'unknown' ? 'Unknown Date' : dayFormatter.format(new Date(`${rawDate}T00:00:00Z`));
+        const label = formatDayLabel(rawDate);
+        const totalVybes = (entry.runCycles ?? []).reduce((sum, cycle) => sum + (cycle.totalVybes ?? 0), 0);
+        const totalScenarios = (entry.runCycles ?? []).reduce(
+          (sum, cycle) => sum + (cycle.scenarios ? cycle.scenarios.length : 0),
+          0
+        );
+        const avgVybes = totalScenarios ? totalVybes / totalScenarios : summary.avgVybes ?? 0;
         return {
           rawDate,
           dateLabel: label,
           totalRuns: summary.totalRuns ?? 0,
           totalMinutes: summary.totalMinutes ?? 0,
-          avgVybes: summary.avgVybes ?? 0,
+          avgVybes,
+          totalVybes,
+          totalScenarios,
           profilesLabel: profiles.join(', ') || '–',
           repoVersions: versions,
           versionsLabel: versions.join(', ') || 'unknown',
@@ -193,13 +220,28 @@
       return versions.map((version) => `<span class="version-pill">${version}</span>`).join('');
     }
 
-    function escapeHtml(value = '') {
+    function escapeHtml(value) {
+      if (value === null || value === undefined) {
+        return '';
+      }
       return String(value)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+    }
+
+    function groupScenariosByConfig(scenarios = []) {
+      const map = new Map();
+      scenarios.forEach((scenario) => {
+        const key = scenario.configId ?? 'unknown';
+        if (!map.has(key)) {
+          map.set(key, []);
+        }
+        map.get(key).push(scenario);
+      });
+      return map;
     }
 
     function parseDateValue(dateKey) {
@@ -298,13 +340,11 @@
         return '';
       }
       const rows = createDailyRows([entry]);
+      rows.sort((a, b) => (b.totalVybes ?? 0) - (a.totalVybes ?? 0));
       if (!rows.length) {
         return '';
       }
-      const label =
-        entry.date === 'unknown'
-          ? 'Unknown Date'
-          : dayFormatter.format(new Date(`${entry.date}T00:00:00Z`));
+      const label = formatDayLabel(entry.date ?? 'unknown');
       return `<div class="run-day-summary">
         <div class="run-day-summary-head">Daily Overview for ${label}</div>
         <div class="table-wrapper compact">
@@ -342,271 +382,196 @@
       setTimeout(() => section.classList.remove('run-day-highlight'), 1200);
     }
 
-    function buildRunDayGroups(runs, runCycles = []) {
-      const cyclesById = new Map();
-      runCycles.forEach((cycle) => {
-        if (cycle?.sessionId) {
-          cyclesById.set(cycle.sessionId, cycle);
-        }
-      });
-
-      const ensureDay = (map, key) => {
-        if (!map.has(key)) {
-          map.set(key, {
-            date: key,
-            cycleMap: new Map()
-          });
-        }
-        return map.get(key);
-      };
-
-      const dayMap = new Map();
-
-      runs.forEach((run) => {
-        const cycle = run.runSessionId ? cyclesById.get(run.runSessionId) : null;
-        const dateKey = cycle?.date ?? run.date ?? 'unknown';
-        const dayBucket = ensureDay(dayMap, dateKey);
-        const cycleKey = cycle?.sessionId ?? `single-${run.runId}-${run.configId}`;
-
-        if (!dayBucket.cycleMap.has(cycleKey)) {
-          const cycleFinished = cycle?.finishedAt ? Date.parse(cycle.finishedAt) : run.finishedAtValue ?? 0;
-          dayBucket.cycleMap.set(cycleKey, {
-            type: cycle ? 'cycle' : 'single',
-            cycle,
-            runs: [],
-            profiles: new Set(),
-            repoVersions: new Set(),
-            configIds: new Set(),
-            evalNames: new Set(),
-            totalMinutes: 0,
-            totalVybes: 0,
-            finishedAtValue: cycleFinished,
-            startedAtValue: cycle?.startedAt ? Date.parse(cycle.startedAt) : run.finishedAtValue ?? 0,
-            configMap: new Map()
-          });
-        }
-
-        const group = dayBucket.cycleMap.get(cycleKey);
-        group.runs.push(run);
-        group.profiles.add(run.profileLabel);
-        if (run.repoVersion) {
-          group.repoVersions.add(run.repoVersion);
-        }
-        group.configIds.add(run.configId);
-        group.evalNames.add(run.evalName);
-        group.totalMinutes += run.actualTimeMinutes ?? 0;
-        group.totalVybes += run.finalScore ?? 0;
-
-        if (!group.configMap.has(run.configId)) {
-          group.configMap.set(run.configId, {
-            configId: run.configId,
-            profileLabel: run.profileLabel,
-            cliCommand: run.cliCommand ?? null,
-            runs: [],
-            totalVybes: 0,
-            totalMinutes: 0,
-            totalSuccess: 0
-          });
-        }
-        const cfg = group.configMap.get(run.configId);
-        cfg.runs.push(run);
-        cfg.totalVybes += run.finalScore ?? 0;
-        cfg.totalMinutes += run.actualTimeMinutes ?? 0;
-        cfg.totalSuccess += run.successPercentage ?? 0;
-        if (!cfg.cliCommand && run.cliCommand) {
-          cfg.cliCommand = run.cliCommand;
-        }
-
-        if (run.finishedAtValue > group.finishedAtValue) {
-          group.finishedAtValue = run.finishedAtValue;
-        }
-      });
-
-      const dayGroups = Array.from(dayMap.values()).map((day) => {
-        const cycles = Array.from(day.cycleMap.values())
-          .map((group) => {
-            const cycleMeta = group.cycle ?? null;
-            const scenarioEvalNames = cycleMeta?.scenarios
-              ? Array.from(new Set(cycleMeta.scenarios.map((scenario) => scenario.evalName)))
-              : null;
-            const configCount = cycleMeta?.configs?.length ?? group.configIds.size;
-            const evalCount = scenarioEvalNames ? scenarioEvalNames.length : group.evalNames.size;
-            const runCount = cycleMeta?.scenarios?.length ?? group.runs.length;
-            const finishedAtIso =
-              cycleMeta?.finishedAt ??
-              (group.finishedAtValue ? new Date(group.finishedAtValue).toISOString() : null);
-
-            const configGroups = Array.from(group.configMap.values()).map((cfg) => ({
-              ...cfg,
-              totalVybes: Number(cfg.totalVybes.toFixed(2)),
-              totalMinutes: Number(cfg.totalMinutes.toFixed(2)),
-              avgSuccess: cfg.runs.length ? Number((cfg.totalSuccess / cfg.runs.length).toFixed(4)) : 0
-            }));
-
-            return {
-              type: group.type,
-              cycle: cycleMeta,
-              runs: group.runs.sort((a, b) => b.finishedAtValue - a.finishedAtValue),
-              profiles: group.profiles,
-              repoVersions: group.repoVersions,
-              configCount,
-              evalCount,
-              runCount,
-              totalMinutes: Number(
-                (cycleMeta?.totalMinutes ?? group.totalMinutes).toFixed(2)
-              ),
-              totalVybes: Number(
-                (cycleMeta?.totalVybes ?? group.totalVybes).toFixed(2)
-              ),
-              finishedAtValue: group.finishedAtValue,
-              finishedAt: finishedAtIso,
-              sessionId: cycleMeta?.sessionId ?? null,
-              configGroups
-            };
-          })
-          .sort((a, b) => b.finishedAtValue - a.finishedAtValue);
-
-        return {
-          date: day.date,
-          cycles
-        };
-      });
-
-      dayGroups.sort((a, b) => {
-        if (a.date === b.date) return 0;
-        if (a.date === 'unknown') return 1;
-        if (b.date === 'unknown') return -1;
-        return a.date > b.date ? -1 : 1;
-      });
-
-      return dayGroups;
+    function registerConfig(configId) {
+      if (!configId || configSet.has(configId)) {
+        return;
+      }
+      configSet.add(configId);
+      configOrder.push(configId);
     }
 
-    function renderRunCycle(group) {
-      const profileList = [...group.profiles].join(', ') || 'unknown profile';
-      const versions = [...group.repoVersions];
-      const summaryParts = [];
-      if (group.type === 'cycle') {
-        summaryParts.push(
-          `${group.configCount} configuration${group.configCount === 1 ? '' : 's'}`
-        );
-        summaryParts.push(`${group.evalCount} eval${group.evalCount === 1 ? '' : 's'}`);
-      }
-      summaryParts.push(`${group.runCount} run${group.runCount === 1 ? '' : 's'}`);
-      const finishedLabel = group.finishedAtValue
-        ? dateFormatter.format(new Date(group.finishedAtValue))
-        : 'unknown';
-      const title = group.type === 'cycle' ? 'Run Cycle' : 'Single Run';
+    function groupRunCycles(cycles = []) {
+      const map = new Map();
+      cycles.forEach((cycle) => {
+        const key = cycle.date ?? 'unknown';
+        if (!map.has(key)) {
+          map.set(key, []);
+        }
+        map.get(key).push(cycle);
+      });
+      return Array.from(map.entries())
+        .map(([date, list]) => ({
+          date,
+          cycles: list.sort((a, b) => {
+            const aTime = a.finishedAt ? Date.parse(a.finishedAt) : -Infinity;
+            const bTime = b.finishedAt ? Date.parse(b.finishedAt) : -Infinity;
+            return bTime - aTime;
+          })
+        }))
+        .sort((a, b) => {
+          const aValue = parseDateValue(a.date);
+          const bValue = parseDateValue(b.date);
+          return (bValue ?? 0) - (aValue ?? 0);
+        });
+    }
 
-      return `<article class="run-cycle">
-        <header class="run-cycle-head">
+    function renderRunLog() {
+      runLogContainer.innerHTML = currentRunGroups
+        .map((group) => renderRunDay(group))
+        .join('');
+      bindCopyButtons();
+    }
+
+    function renderRunDay(group) {
+      const anchorId = getDayAnchor(group.date);
+      const label = formatDayLabel(group.date);
+      const totalMinutes = group.cycles.reduce((sum, cycle) => sum + (cycle.totalMinutes ?? 0), 0);
+      const configs = [...new Set(group.cycles.flatMap((cycle) => cycle.configs ?? []))]
+        .map((configId) => PROFILE_LABELS[configId] ?? configId)
+        .join(', ');
+      const versions = [...new Set(group.cycles.flatMap((cycle) => cycle.repoVersions ?? []))];
+      const summaryEntry = dailyEntriesByDate.get(group.date);
+      const isActiveDay = group.date === activeDayKey;
+      const summaryBlock = isActiveDay ? renderDaySummary(summaryEntry) : '';
+      const totalEvals = group.cycles.reduce((sum, cycle) => sum + (cycle.scenarios?.length ?? 0), 0);
+      const profileCount = new Set(group.cycles.flatMap((cycle) => cycle.configs ?? [])).size;
+      const cycleLabel = `${group.cycles.length} run cycle${group.cycles.length === 1 ? '' : 's'}`;
+      const evalLabel = `${totalEvals} eval${totalEvals === 1 ? '' : 's'}`;
+      const profileLabel = `${profileCount} profile${profileCount === 1 ? '' : 's'}`;
+      const headerMetrics = `${cycleLabel} · ${evalLabel} · ${profileLabel} · ${formatter.format(totalMinutes)} minutes`;
+      const cyclesMarkup = group.cycles.map(renderRunCycle).join('');
+
+      return `<section class="run-day${isActiveDay ? ' active-day' : ''}" id="${anchorId}">
+        <div class="run-day-head">
           <div>
-            <h4>${title}</h4>
-            <small>${summaryParts.join(' · ')}</small>
-            <small>Finished ${finishedLabel}</small>
-            <small>${profileList}</small>
+            <h3>${label}</h3>
+            <small>${headerMetrics}</small>
           </div>
-          <div class="run-cycle-meta">
-            <span>${formatter.format(group.totalVybes)} vybes</span>
-            <span>${formatter.format(group.totalMinutes)} min</span>
+          <div class="run-day-meta">
+            <span>${configs || '–'}</span>
             <div class="version-tag-group">${formatVersionTags(versions)}</div>
           </div>
-        </header>
-        <div class="config-run-groups">
-          ${group.configGroups.map(renderConfigGroup).join('')}
         </div>
-      </article>`;
+        ${summaryBlock}
+        ${cyclesMarkup || '<p class="badge-fail">No run details recorded.</p>'}
+      </section>`;
     }
 
-    function renderConfigGroup(configGroup) {
-      const headerMetrics = [
-        `${formatter.format(configGroup.totalVybes)} vybes`,
-        `${formatter.format(configGroup.totalMinutes)} min`,
-        `${percentFormatter.format(configGroup.avgSuccess)} avg success`
-      ].join(' · ');
+    function updateDailyOverviewHeading(entry) {
+      if (!dailyOverviewDateEl) return;
+      if (!entry || !entry.date || entry.date === 'unknown') {
+        dailyOverviewDateEl.textContent = '';
+        return;
+      }
+      const label = formatDayLabel(entry.date);
+      dailyOverviewDateEl.textContent = label === 'Unknown Date' ? '' : `· ${label}`;
+    }
 
-      const commandBlock = configGroup.cliCommand
-        ? `<div class="config-command">
-            <details>
-              <summary>View CLI command</summary>
-              <div class="command-text"><code>${escapeHtml(configGroup.cliCommand)}</code></div>
-            </details>
+    function renderRunCycle(cycle) {
+      const finishedLabel = cycle.finishedAt ? dateFormatter.format(new Date(cycle.finishedAt)) : 'unknown';
+      const configs = cycle.configs ?? [];
+      const scenariosByConfig = groupScenariosByConfig(cycle.scenarios ?? []);
+      const configRows = configs
+        .map((configId) => {
+          const stats = cycle.perConfigStats?.[configId];
+          const configScenarios = scenariosByConfig.get(configId) ?? [];
+          const rawTotal = stats?.totalRawVybes ?? configScenarios.reduce((sum, scenario) => {
+            if (typeof scenario.rawVybes === 'number') {
+              return sum + scenario.rawVybes;
+            }
+            const base = scenario.vybes?.baseScore ?? 0;
+            const success =
+              scenario.vybes?.adjustedSuccessPercentage ??
+              scenario.vybes?.successPercentage ??
+              0;
+            return sum + base * success;
+          }, 0);
+          const rawLabel = formatter.format(rawTotal ?? 0);
+          if (!stats) {
+            return `<tr><td>${PROFILE_LABELS[configId] ?? configId}</td><td class="numeric">–</td><td class="numeric">${rawLabel}</td><td class="numeric">–</td><td class="numeric">–</td></tr>`;
+          }
+          return `<tr>
+            <td>${PROFILE_LABELS[configId] ?? configId}</td>
+            <td class="numeric">${formatter.format(stats.totalVybes ?? 0)}</td>
+            <td class="numeric">${formatter.format(stats.totalRawVybes ?? rawTotal ?? 0)}</td>
+            <td class="numeric">${percentFormatter.format(stats.avgSuccess ?? 0)}</td>
+            <td class="numeric">${formatter.format(stats.avgPenalty ?? 0)}</td>
+          </tr>`;
+        })
+        .join('');
+
+      const summaryTable = configs.length
+        ? `<div class="table-wrapper compact">
+            <table class="day-eval-table">
+              <thead>
+                <tr>
+                  <th>Profile</th>
+                  <th class="numeric">Total Vybes</th>
+                  <th class="numeric">Raw Vybes</th>
+                  <th class="numeric">Avg Success</th>
+                  <th class="numeric">Avg Penalty</th>
+                </tr>
+              </thead>
+              <tbody>${configRows}</tbody>
+            </table>
           </div>`
         : '';
+      const versions = cycle.repoVersions ?? [];
+      const configGroupsMarkup = configs
+        .map((configId) => renderConfigGroup(configId, scenariosByConfig.get(configId) ?? [], cycle.perConfigStats?.[configId]))
+        .join('');
+
+      return `<div class="run-cycle">
+        <div class="run-cycle-head">
+          <div>
+            <strong>Run ${cycle.sessionId ?? 'unknown'}</strong>
+            <small>${finishedLabel}</small>
+          </div>
+          <div class="run-day-meta">
+            <span>${formatter.format(cycle.totalMinutes ?? 0)} min</span>
+            <div class="version-tag-group">${formatVersionTags(versions)}</div>
+          </div>
+        </div>
+        ${summaryTable}
+        <div class="config-run-groups">
+          ${configGroupsMarkup || '<p class="badge-warn">No scenario details recorded.</p>'}
+        </div>
+      </div>`;
+    }
+
+    function renderConfigGroup(configId, scenarios = [], stats) {
+      const label = PROFILE_LABELS[configId] ?? configId;
+      const runsLabel = stats?.runs ?? scenarios.length;
+      const command = scenarios.length ? scenarios[0]?.cliCommand ?? '' : '';
+      const encodedCommand = command ? encodeURIComponent(command) : '';
+      const commandMarkup = command
+        ? `<div class="config-command">
+            <details>
+              <summary>View config</summary>
+              <pre class="command-text">${escapeHtml(command)}</pre>
+            </details>
+            <div class="command-actions">
+              <button type="button" class="copy-command" data-command="${escapeHtml(command)}">Copy</button>
+              <a class="download-command" href="data:text/plain;charset=utf-8,${encodedCommand}" download="${configId}-command.txt">Download</a>
+            </div>
+          </div>`
+        : '';
+      const cardsMarkup = scenarios
+        .map((scenario) => renderRunCard(scenario, { showProfile: false }))
+        .join('');
 
       return `<section class="run-config-group">
         <div class="run-config-head">
           <div>
-            <h4>${configGroup.profileLabel}</h4>
-            <small>${configGroup.configId}</small>
+            <h4>${label}</h4>
+            <small>${runsLabel} scenario${runsLabel === 1 ? '' : 's'}</small>
           </div>
-          <div class="run-config-stats">${headerMetrics}</div>
+          ${commandMarkup}
         </div>
-        ${commandBlock}
         <div class="run-accordion">
-          ${configGroup.runs.map(renderRunCard).join('')}
+          ${cardsMarkup || '<p class="badge-warn">No scenario details recorded.</p>'}
         </div>
       </section>`;
-    }
-
-    function renderRunLog() {
-      if (!currentRunGroups.length) {
-        runLogContainer.innerHTML = '<p class="badge-fail">No runs recorded.</p>';
-        return;
-      }
-      runLogContainer.innerHTML = currentRunGroups
-        .map((group) => {
-          const anchorId = getDayAnchor(group.date);
-          const summaryEntry = dailyEntriesByDate.get(group.date);
-          const isActiveDay = group.date === activeDayKey;
-          const summaryBlock = isActiveDay ? renderDaySummary(summaryEntry) : '';
-          const label =
-            group.date === 'unknown'
-              ? 'Unknown Date'
-              : dayFormatter.format(new Date(`${group.date}T00:00:00Z`));
-          const totalMinutes = group.cycles.reduce((sum, cycle) => sum + (cycle.totalMinutes ?? 0), 0);
-          const totalVybes = group.cycles.reduce((sum, cycle) => sum + (cycle.totalVybes ?? 0), 0);
-          const evalCount = group.cycles.reduce((sum, cycle) => sum + (cycle.evalCount ?? 0), 0);
-          const cycleCount = group.cycles.filter((cycle) => cycle.type === 'cycle').length;
-          const singleCount = group.cycles.length - cycleCount;
-          const summaryParts = [];
-          if (cycleCount > 0) {
-            summaryParts.push(`${cycleCount} cycle${cycleCount === 1 ? '' : 's'}`);
-          }
-          if (singleCount > 0) {
-            summaryParts.push(`${singleCount} extra run${singleCount === 1 ? '' : 's'}`);
-          }
-          if (evalCount > 0) {
-            summaryParts.push(`${evalCount} eval${evalCount === 1 ? '' : 's'}`);
-          }
-          summaryParts.push(`${formatter.format(totalVybes)} vybes`);
-          summaryParts.push(`${formatter.format(totalMinutes)} total minutes`);
-
-          const profileLabels = [
-            ...new Set(group.cycles.flatMap((cycle) => Array.from(cycle.profiles)))
-          ].join(', ');
-          const versions = [
-            ...new Set(group.cycles.flatMap((cycle) => Array.from(cycle.repoVersions)))
-          ];
-
-          return `<section class="run-day${isActiveDay ? ' active-day' : ''}" id="${anchorId}">
-            <div class="run-day-head">
-              <div>
-                <h3>${label}</h3>
-                <small>${summaryParts.join(' · ')}</small>
-              </div>
-              <div class="run-day-meta">
-                <span>${profileLabels || 'unknown profile'}</span>
-                <div class="version-tag-group">${formatVersionTags(versions)}</div>
-              </div>
-            </div>
-            ${summaryBlock}
-            <div class="run-cycle-list">
-              ${group.cycles.map(renderRunCycle).join('')}
-            </div>
-          </section>`;
-        })
-        .join('');
     }
 
     function formatBytes(bytes) {
@@ -621,10 +586,45 @@
       return `${value.toFixed(1)} ${units[index]}`;
     }
 
-    function renderRunCard(run) {
+    function getRunStatusInfo(run) {
+      const status = run?.status;
+      if (!status || status === 'ok') return null;
+      const normalized = status.toLowerCase();
+      if (normalized === 'cli_failed') {
+        return {
+          label: 'CLI Failed',
+          className: 'badge-fail',
+          detail: run.error ?? 'CLI exited with an error before grading.'
+        };
+      }
+      if (normalized === 'no_op') {
+        return {
+          label: 'No Changes',
+          className: 'badge-warn',
+          detail: 'Baseline output only — no progress beyond starter code.'
+        };
+      }
+      if (normalized === 'error') {
+        return {
+          label: 'Build Failure',
+          className: 'badge-fail',
+          detail: run.error ?? 'Build or grading step failed.'
+        };
+      }
+      return null;
+    }
+
+    function renderStatusBadge(run) {
+      const info = getRunStatusInfo(run);
+      if (!info) return '';
+      return `<span class="run-status-badge ${info.className}">${info.label}</span>`;
+    }
+
+    function renderRunCard(run, options = {}) {
+      const showProfile = options.showProfile ?? false;
       const scenario = EVAL_LABELS[run.evalName] ?? run.evalName;
       const finishedLabel = run.finishedAtValue ? dateFormatter.format(new Date(run.finishedAtValue)) : 'unknown';
-      const modules = Object.entries(run.vybes.breakdown?.modules ?? {});
+      const modules = Object.entries(run.vybes?.breakdown?.modules ?? {});
       const moduleSummary = modules.length
         ? modules
             .map(([name, stats]) => `<span>${name}: ${stats.passed}/${stats.total}</span>`)
@@ -634,33 +634,50 @@
       const artifactLink = run.workspaceZip?.path
         ? `<a href="${run.workspaceZip.path}" download>workspace.zip${sizeLabel ? ` (${sizeLabel})` : ''}</a>`
         : '';
-      const noteMessages = [];
-      if (run.error) {
-        noteMessages.push(run.error);
+      const statusInfo = getRunStatusInfo(run);
+      const notesMessages = [];
+      if (statusInfo?.detail) {
+        notesMessages.push(statusInfo.detail);
       }
-      if (run.status && run.status !== 'ok') {
-        noteMessages.push(`Status: ${run.status.replace(/_/g, ' ')}`);
+      if (run.error && (!statusInfo || statusInfo.detail !== run.error)) {
+        notesMessages.push(run.error);
       }
-      const notes = noteMessages.length ? `<div class="run-notes badge-fail">${noteMessages.join('<br/>')}</div>` : '';
-      const commandBlock = run.cliCommand
-        ? `<div class="run-command">
-            <strong>Command</strong>
-            <code>${escapeHtml(run.cliCommand)}</code>
-          </div>`
+      const notes = notesMessages.length
+        ? `<div class="run-notes ${statusInfo?.className ?? 'badge-fail'}">${notesMessages.join('<br>')}</div>`
         : '';
+      const rawValue = typeof run.rawVybes === 'number'
+        ? run.rawVybes
+        : run.vybes?.rawScore ?? (run.vybes?.baseScore ?? 0) * (run.vybes?.adjustedSuccessPercentage ?? run.vybes?.successPercentage ?? 0);
+      const rawLabel = formatter.format(rawValue ?? 0);
+      const profileMarkup = showProfile ? `<span class="run-profile">${run.profileLabel}</span>` : '';
+      const statusBadge = renderStatusBadge(run);
+      const baselineRow = typeof run.baselineSuccessPercentage === 'number' && run.baselineSuccessPercentage > 0
+        ? `<div>
+              <strong>Baseline</strong>
+              <span>${percentFormatter.format(run.baselineSuccessPercentage)}</span>
+            </div>`
+        : '';
+      const originalSuccessRow =
+        typeof run.originalSuccessPercentage === 'number' && run.originalSuccessPercentage !== run.successPercentage
+          ? `<div>
+              <strong>Success (raw)</strong>
+              <span>${percentFormatter.format(run.originalSuccessPercentage)}</span>
+            </div>`
+          : '';
       return `<details class="run-card">
         <summary>
           <div class="run-summary-main">
-            <span class="run-profile">${run.profileLabel}</span>
+            ${profileMarkup}
             <div class="run-scenario-line">
               <span class="run-scenario">${scenario}</span>
-              <span class="run-config">${run.configId}</span>
+              ${statusBadge}
             </div>
           </div>
           <div class="run-summary-meta">
-            <span class="run-score">${formatter.format(run.finalScore)} vybes</span>
-            <span>${percentFormatter.format(run.successPercentage)}</span>
-            <span>${formatter.format(run.actualTimeMinutes)} min</span>
+            <span class="run-score">${formatter.format(run.finalScore ?? 0)} vybes</span>
+            <span class="run-score run-score-raw">Raw ${rawLabel} vybes</span>
+            <span>Adj ${percentFormatter.format(run.successPercentage)}</span>
+            <span>${formatter.format(run.actualTimeMinutes ?? 0)} min</span>
             <span class="version-pill">${run.repoVersion ?? 'unknown'}</span>
           </div>
         </summary>
@@ -671,10 +688,6 @@
               <span>${finishedLabel}</span>
             </div>
             <div>
-              <strong>Configuration</strong>
-              <span>${run.configId}</span>
-            </div>
-            <div>
               <strong>Subtasks</strong>
               <span>${run.subtasksPassed}/${run.subtasksTotal}</span>
             </div>
@@ -683,15 +696,16 @@
               <span>${formatter.format(run.timePenaltyMultiplier)}</span>
             </div>
             <div>
-              <strong>Success</strong>
+              <strong>Success (adj)</strong>
               <span>${percentFormatter.format(run.successPercentage)}</span>
             </div>
+            ${originalSuccessRow}
+            ${baselineRow}
           </div>
           <div class="run-links">
             ${artifactLink || ''}
             ${run.workspaceArchive ? `<small>${run.workspaceArchive}</small>` : ''}
           </div>
-          ${commandBlock}
           <div class="run-modules">
             <strong>Modules</strong>
             <div class="module-grid">${moduleSummary}</div>
@@ -745,13 +759,104 @@
       markSortHeader(table, sortState.field, sortState.desc);
     }
 
+    function bindCopyButtons() {
+      const buttons = Array.from(document.querySelectorAll('.copy-command'));
+      buttons.forEach((button) => {
+        const command = button.getAttribute('data-command');
+        if (!command) return;
+        button.addEventListener('click', async () => {
+          try {
+            if (navigator?.clipboard?.writeText) {
+              await navigator.clipboard.writeText(command);
+              button.textContent = 'Copied';
+              setTimeout(() => {
+                button.textContent = 'Copy';
+              }, 1600);
+            }
+          } catch {
+            button.textContent = 'Copy failed';
+            setTimeout(() => {
+              button.textContent = 'Copy';
+            }, 1600);
+          }
+        });
+      });
+    }
+
+    function renderTodaySummary(entry) {
+      const container = document.getElementById('today-summary');
+      if (!container) return;
+      if (!todayKey || !entry) {
+        container.innerHTML = '<p class="badge-fail">No runs recorded yet.</p>';
+        currentTodayRows = [];
+        return;
+      }
+      const totalRuns = entry.summary?.totalRuns ?? 0;
+      if (!totalRuns) {
+        container.innerHTML = '<p class="badge-fail">No runs recorded for today.</p>';
+        currentTodayRows = [];
+        return;
+      }
+      currentTodayRows = createDailyRows([entry]);
+      if (!currentTodayRows.length) {
+        container.innerHTML = '<p class="badge-fail">No runs recorded for today.</p>';
+        return;
+      }
+      sortRows(currentTodayRows, todaySort, todaySort.field, true, true);
+      container.innerHTML = `<div class="table-wrapper compact">
+        <table id="today-table" class="summary-table">
+          <thead>
+            <tr>
+              <th class="sortable" data-field="profileLabel">Profile</th>
+              <th class="sortable sorted desc numeric" data-field="totalVybes">Total Vybes</th>
+              <th class="sortable numeric" data-field="runs">Runs</th>
+              <th class="sortable numeric" data-field="avgVybes">Avg Vybes</th>
+              <th class="sortable numeric" data-field="avgSuccess">Avg Success</th>
+              <th class="sortable numeric" data-field="avgPenalty">Avg Penalty</th>
+              <th>Best Run</th>
+              <th>Worst Run</th>
+            </tr>
+          </thead>
+          <tbody id="today-summary-body"></tbody>
+        </table>
+      </div>`;
+      updateTodayTable();
+      const todayTable = container.querySelector('#today-table');
+      if (todayTable) {
+        bindSortHandlers(
+          todayTable,
+          currentTodayRows,
+          todaySort,
+          updateTodayTable,
+          {
+            profileLabel: { numeric: false },
+            totalVybes: { numeric: true },
+            runs: { numeric: true },
+            avgVybes: { numeric: true },
+            avgSuccess: { numeric: true },
+            avgPenalty: { numeric: true }
+          }
+        );
+      }
+    }
+
+    function updateTodayTable() {
+      const container = document.getElementById('today-summary');
+      if (!container) return;
+      const tbody = container.querySelector('#today-summary-body');
+      if (!tbody) return;
+      tbody.innerHTML = currentTodayRows.map(buildDailyRowMarkup).join('');
+    }
+
     async function bootstrap() {
       try {
-        const [daily, runs, runCycles] = await Promise.all([
+        const [daily, scenarioRuns, runCycleData] = await Promise.all([
           safeFetch('vybes-daily.json'),
           safeFetch('vybes-runs.json'),
-          safeFetch('vybes-run-cycles.json')
+          safeFetch('vybes-run-cycles.json').catch(() => [])
         ]);
+
+        const runCycles = Array.isArray(runCycleData) ? runCycleData : [];
 
         dailyEntriesByDate.clear();
         daily.forEach((entry) => {
@@ -759,45 +864,107 @@
           dailyEntriesByDate.set(key, entry);
         });
 
-        latestDayKey = daily.length ? findLatestDayKey(daily) : null;
+        latestDayKey = runCycles.length
+          ? findLatestDayKey(runCycles.map((cycle) => ({ date: cycle.date })))
+          : findLatestDayKey(daily);
         activeDayKey = latestDayKey ?? (daily[daily.length - 1]?.date ?? 'unknown');
+        todayKey = latestDayKey;
 
-        const heroEntries = [];
-        if (latestDayKey && dailyEntriesByDate.has(latestDayKey)) {
-          heroEntries.push(dailyEntriesByDate.get(latestDayKey));
-        } else if (daily.length) {
-          heroEntries.push(daily[daily.length - 1]);
-        }
+        const todayEntry = todayKey ? dailyEntriesByDate.get(todayKey) : null;
+        const heroEntry = todayEntry || daily[daily.length - 1] || null;
 
-        currentDailyRows = createDailyRows(heroEntries);
+        currentDailyRows = heroEntry ? createDailyRows([heroEntry]) : [];
         sortRows(currentDailyRows, dailySort, dailySort.field, true, true);
         updateDailyTable();
+        updateDailyOverviewHeading(heroEntry);
+        renderTodaySummary(todayEntry);
 
         currentDaySummaryRows = createDaySummaryRows(daily);
         sortRows(currentDaySummaryRows, daySort, daySort.field, true, true);
         updateDaySummaryTable();
 
-        currentRunRows = runs.map((run) => {
+        const scenarioLookup = new Map();
+        currentRunRows = scenarioRuns.map((run) => {
           const subtasksPassed = run.vybes.breakdown?.subtasksPassed ?? 0;
           const subtasksTotal = run.vybes.breakdown?.subtasksTotal ?? 0;
-          return {
+          const baselineSuccess = run.vybes.baselineSuccessPercentage ?? 0;
+          const adjustedSuccess = run.vybes.adjustedSuccessPercentage ?? run.vybes.successPercentage ?? 0;
+          const originalSuccess = run.vybes.successPercentage ?? adjustedSuccess;
+          const rawSource = typeof run.rawVybes === 'number'
+            ? run.rawVybes
+            : run.vybes.rawScore ?? (run.vybes.baseScore ?? 0) * adjustedSuccess;
+          const rawVybes = Number((rawSource ?? 0).toFixed(2));
+          const status = run.vybes.status ?? run.status ?? null;
+          registerConfig(run.configId);
+          const enriched = {
             ...run,
             profileLabel: PROFILE_LABELS[run.configId] ?? run.configId,
             finalScore: run.vybes.finalScore ?? 0,
-            successPercentage: run.vybes.successPercentage ?? 0,
+            successPercentage: adjustedSuccess,
+            originalSuccessPercentage: originalSuccess,
+            baselineSuccessPercentage: baselineSuccess,
             timePenaltyMultiplier: run.vybes.timePenaltyMultiplier ?? 0,
             actualTimeMinutes: run.vybes.actualTimeMinutes ?? 0,
             subtasksPassed,
             subtasksTotal,
             finishedAtValue: run.finishedAt ? Date.parse(run.finishedAt) : 0,
-            error: run.vybes.error ?? null,
+            error: run.vybes.error ?? run.error ?? null,
             repoVersion: run.repoVersion ?? run.vybes.repoVersion ?? 'unknown',
-            cliCommand: run.cliCommand ?? null,
-            status: run.status ?? run.vybes.status ?? null
+            date: run.date ?? (run.finishedAt ? run.finishedAt.slice(0, 10) : 'unknown'),
+            runSessionId: run.runSessionId ?? null,
+            rawVybes,
+            status,
+            cliCommand: run.cliCommand ?? null
           };
+          scenarioLookup.set(`${run.runId}::${run.configId}`, enriched);
+          return enriched;
         });
         currentRunRows.sort((a, b) => b.finishedAtValue - a.finishedAtValue);
-        currentRunGroups = buildRunDayGroups(currentRunRows, runCycles);
+        orderedConfigs = configOrder.length ? [...configOrder] : [];
+
+        const decoratedRunCycles = runCycles.map((cycle) => {
+          const scenarios = (cycle.scenarios ?? []).map((scenario) => {
+            const key = `${scenario.runId}::${scenario.configId}`;
+            return (
+              scenarioLookup.get(key) || {
+                ...scenario,
+                profileLabel: PROFILE_LABELS[scenario.configId] ?? scenario.configId,
+                finalScore: scenario.vybes?.finalScore ?? 0,
+                successPercentage:
+                  scenario.vybes?.adjustedSuccessPercentage ??
+                  scenario.vybes?.successPercentage ??
+                  0,
+                originalSuccessPercentage: scenario.vybes?.successPercentage ?? 0,
+                baselineSuccessPercentage: scenario.vybes?.baselineSuccessPercentage ?? 0,
+                timePenaltyMultiplier: scenario.vybes?.timePenaltyMultiplier ?? 0,
+                actualTimeMinutes: scenario.vybes?.actualTimeMinutes ?? 0,
+                subtasksPassed: scenario.vybes?.breakdown?.subtasksPassed ?? 0,
+                subtasksTotal: scenario.vybes?.breakdown?.subtasksTotal ?? 0,
+                finishedAtValue: scenario.finishedAt ? Date.parse(scenario.finishedAt) : 0,
+                error: scenario.vybes?.error ?? null,
+                repoVersion: scenario.repoVersion ?? scenario.vybes?.repoVersion ?? 'unknown',
+                rawVybes: Number(
+                  (
+                    scenario.rawVybes ??
+                    scenario.vybes?.rawScore ??
+                    (scenario.vybes?.baseScore ?? 0) *
+                      (scenario.vybes?.adjustedSuccessPercentage ?? scenario.vybes?.successPercentage ?? 0)
+                  ).toFixed(2)
+                ),
+                status: scenario.vybes?.status ?? null,
+                cliCommand: scenario.cliCommand ?? null
+              }
+            );
+          });
+          const totalMinutes = cycle.totalMinutes ?? scenarios.reduce((sum, sc) => sum + (sc.actualTimeMinutes ?? 0), 0);
+          return {
+            ...cycle,
+            scenarios,
+            totalMinutes
+          };
+        });
+
+        currentRunGroups = groupRunCycles(decoratedRunCycles);
         renderRunLog();
 
         bindSortHandlers(dailyTable, currentDailyRows, dailySort, updateDailyTable, {
@@ -818,8 +985,14 @@
           versionsLabel: { numeric: false }
         });
 
-        const latest = currentRunRows.find((row) => row.finishedAtValue);
-        updatedAtEl.textContent = latest ? dateFormatter.format(new Date(latest.finishedAtValue)) : 'unknown';
+        const latestCycle = decoratedRunCycles[0];
+        if (latestCycle?.finishedAt) {
+          updatedAtEl.textContent = dateFormatter.format(new Date(latestCycle.finishedAt));
+        } else if (currentRunRows[0]?.finishedAtValue) {
+          updatedAtEl.textContent = dateFormatter.format(new Date(currentRunRows[0].finishedAtValue));
+        } else {
+          updatedAtEl.textContent = 'unknown';
+        }
       } catch (error) {
         const message = `${error.message}. Serve this directory over HTTP to enable fetch().`;
         dailyBody.innerHTML = `<tr><td colspan="8">${message}</td></tr>`;
