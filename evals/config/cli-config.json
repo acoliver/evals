@@ -18,8 +18,7 @@
         "--set",
         { "env": "SYNTHETIC_SHELL_REPLACEMENT", "default": "shell-replacement=true" },
         "--set",
-        "modelparam.temperature",
-        "1",
+        "modelparam.temperature=1",
         "--yolo"
       ],
       "timeout": 900000
@@ -42,8 +41,7 @@
         "--set",
         { "env": "SYNTHETIC_SHELL_REPLACEMENT", "default": "shell-replacement=true" },
         "--set",
-        "modelparam.temperature",
-        "1",
+        "modelparam.temperature=1",
         "--yolo"
       ],
       "timeout": 900000
@@ -68,8 +66,7 @@
         "--set",
         { "env": "CEREBRAS_SHELL_REPLACEMENT", "default": "shell-replacement=true" },
         "--set",
-        "modelparam.temperature",
-        "1",
+        "modelparam.temperature=1",
         "--yolo"
       ],
       "timeout": 900000
