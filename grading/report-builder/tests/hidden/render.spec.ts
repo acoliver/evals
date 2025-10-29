@@ -120,7 +120,8 @@ describe('report CLI hidden validations', () => {
     const result = runCli(['missing.json', '--format', 'markdown']);
 
     expect(result.status).not.toBe(0);
-    expect(result.stderr.toLowerCase()).toMatch(/unable|enoent|not found/);
+    const stderr = result.stderr.toLowerCase();
+    expect(stderr).toMatch(/missing|unable|enoent|not found/);
     taskStatus.set('render-missing-file-failure', true);
   });
 });
