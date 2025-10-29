@@ -50,6 +50,9 @@ export interface VybesResult {
   error?: string;
   repoVersion?: string;
   status?: VybesStatus;
+  passesAttempted?: number;
+  selectedPass?: number;
+  totalCliDurationMs?: number;
 }
 
 export interface VybesScoringContext {
@@ -61,6 +64,9 @@ export interface VybesScoringContext {
   buildResults: CommandSummary[];
   gradeResults: CommandSummary[];
   overallSuccess: boolean;
+  totalCliDuration?: number;
+  passCount?: number;
+  selectedPassIndex?: number;
 }
 
 type RawTaskResult = {
@@ -139,7 +145,8 @@ export class VybesScoringEngine {
         ? 1
         : 0;
 
-    const actualTimeMinutes = this.computeActualMinutes(context.cliResult.duration);
+    const cliDurationMs = context.totalCliDuration ?? context.cliResult.duration;
+    const actualTimeMinutes = this.computeActualMinutes(cliDurationMs);
     const timePenaltyMultiplier = this.computeTimePenalty(actualTimeMinutes, config.timeLimitMinutes);
     const { baselineSuccess, adjustedSuccess } = this.adjustForBaseline(context.evalName, successPercentage);
 
@@ -187,7 +194,10 @@ export class VybesScoringEngine {
       category: config.category,
       breakdown,
       error,
-      status
+      status,
+      passesAttempted: context.passCount ?? undefined,
+      selectedPass: context.selectedPassIndex ?? undefined,
+      totalCliDurationMs: cliDurationMs
     };
   }
 
@@ -197,7 +207,8 @@ export class VybesScoringEngine {
   ): VybesResult {
     const config = this.resolveConfig(context.evalName, context.providedConfig);
     const baseScore = 100 * config.multiplier;
-    const actualTimeMinutes = this.computeActualMinutes(context.cliResult.duration);
+    const cliDurationMs = context.totalCliDuration ?? context.cliResult.duration;
+    const actualTimeMinutes = this.computeActualMinutes(cliDurationMs);
     const timePenaltyMultiplier = this.computeTimePenalty(actualTimeMinutes, config.timeLimitMinutes);
     const baseline = this.resolveBaseline(context.evalName);
 
@@ -218,7 +229,10 @@ export class VybesScoringEngine {
       category: config.category,
       breakdown: this.emptyBreakdown(),
       error: options.error,
-      status: options.status ?? 'error'
+      status: options.status ?? 'error',
+      passesAttempted: context.passCount ?? undefined,
+      selectedPass: context.selectedPassIndex ?? undefined,
+      totalCliDurationMs: cliDurationMs
     };
   }
 

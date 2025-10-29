@@ -33,6 +33,21 @@ the framework remains lightweight.
 
 Only the `*_KEY` variables are strictly required—everything else falls back to the defaults above, but you can override them in CI by exporting new values before running `npm run eval:all`.
 
+### Multipass remediation
+
+Each evaluation now supports a remediation loop that can retry a scenario up to
+three times by default. After every failing attempt the harness summarises the
+lint/test/build errors and feeds those bullets back into the next pass. The
+highest scoring pass is reported, while time penalties are applied to the total
+elapsed wall-clock time across all passes.
+
+- Disable multipass entirely with `--skip-multipass` or by exporting
+  `EVALS_SKIP_MULTIPASS=1`.
+- Override the retry budget with `--max-passes <n>` or
+  `EVALS_MAX_PASSES=<n>` (minimum of 1).
+- The `outputs/**/results.json` files include a `multipass` block with per-pass
+  prompts, feedback, and Vybe scores so you can audit each attempt.
+
 ## Archiving artifacts
 
 Use the helper to bundle results before copying them to `vybestack-site` (or any

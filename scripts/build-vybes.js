@@ -81,6 +81,75 @@ async function ensureWorkspaceZip(runId, configId, workspacePath) {
   };
 }
 
+function summarizeMultipass(rawMultipass, vybes) {
+  if (!rawMultipass || rawMultipass.enabled === false) {
+    return null;
+  }
+
+  const passes = Array.isArray(rawMultipass.passes) ? rawMultipass.passes : [];
+  const clampIndex = (index) => {
+    if (!passes.length) {
+      return 0;
+    }
+    if (!Number.isInteger(index)) {
+      return passes.length - 1;
+    }
+    return Math.min(Math.max(index, 0), passes.length - 1);
+  };
+
+  const selectedIndex = clampIndex(rawMultipass.selectedPass ?? passes.length - 1);
+  const selected = passes[selectedIndex] ?? null;
+  const bestSuccess = passes.reduce((max, pass) => {
+    if (!pass) {
+      return max;
+    }
+    const pct =
+      (pass.vybes && typeof pass.vybes.successPercentage === 'number'
+        ? pass.vybes.successPercentage
+        : pass.success
+        ? 1
+        : 0);
+    return Math.max(max, pct);
+  }, 0);
+
+  const finalSuccess = selected
+    ? selected.vybes?.successPercentage ?? (selected.success ? 1 : 0)
+    : 0;
+
+  const passSummaries = passes.map((pass) => ({
+    passNumber: pass?.passNumber ?? 0,
+    success: !!pass?.success,
+    partialSuccess: !!pass?.partialSuccess,
+    successPercentage:
+      pass?.vybes?.successPercentage ?? (pass?.success ? 1 : 0),
+    finalScore: pass?.vybes?.finalScore ?? null,
+    rawScore: pass?.vybes?.rawScore ?? null,
+    timePenaltyMultiplier: pass?.vybes?.timePenaltyMultiplier ?? null,
+    appliedFeedback: Array.isArray(pass?.appliedFeedback)
+      ? pass.appliedFeedback
+      : [],
+    publicTestFailures: Array.isArray(pass?.publicTestFailures)
+      ? pass.publicTestFailures
+      : [],
+    durationMs: pass?.totalDuration ?? null
+  }));
+
+  return {
+    enabled: true,
+    maxPasses: rawMultipass.maxPasses ?? passes.length,
+    passCount: passes.length,
+    selectedPass: selectedIndex,
+    totalCliDurationMs:
+      rawMultipass.totalCliDuration ?? vybes?.totalCliDurationMs ?? null,
+    feedback: Array.isArray(rawMultipass.feedback) ? rawMultipass.feedback : [],
+    passes: passSummaries,
+    partialBest: passes.length > 0 && selectedIndex < passes.length - 1,
+    bestSuccessPercentage: bestSuccess,
+    finalSuccessPercentage: finalSuccess,
+    timePenalized: (vybes?.timePenaltyMultiplier ?? 1) < 1
+  };
+}
+
 async function loadExistingRuns() {
   if (!(await pathExists(runsPath))) {
     return [];
@@ -139,6 +208,7 @@ async function collectRunsFromOutputs() {
       const workspaceZip = await ensureWorkspaceZip(runId, configDir.name, (await pathExists(workspacePath)) ? workspacePath : configBasePath);
 
       const cliCommand = Array.isArray(data.commands) && data.commands.length ? data.commands[0]?.command ?? null : null;
+      const multipassSummary = summarizeMultipass(data.multipass, data.vybes);
 
       runs.push({
         evalName: data.evalName,
@@ -148,6 +218,17 @@ async function collectRunsFromOutputs() {
         finishedAt,
         repoVersion,
         vybes: data.vybes,
+        multipass: multipassSummary,
+        passCount: multipassSummary?.passCount ?? 1,
+        passes: multipassSummary?.passCount ?? 1,
+        selectedPass: multipassSummary?.selectedPass ?? null,
+        partialBest: multipassSummary?.partialBest ?? false,
+        timePenalized:
+          multipassSummary?.timePenalized ?? (data.vybes?.timePenaltyMultiplier ?? 1) < 1,
+        bestSuccessPercentage:
+          multipassSummary?.bestSuccessPercentage ?? data.vybes?.successPercentage ?? null,
+        finalSuccessPercentage:
+          multipassSummary?.finalSuccessPercentage ?? data.vybes?.successPercentage ?? null,
         workspaceArchive: relativeWorkspace.replace(/\\/g, '/'),
         workspaceZip,
         runSessionId: data.runSessionId ?? null,
@@ -200,6 +281,9 @@ function buildRunCycles(runs) {
         perConfig: new Map(),
         totalVybes: 0,
         totalMinutes: 0,
+        totalPasses: 0,
+        partialBestRuns: 0,
+        timePenalizedRuns: 0,
         startedAt: run.runSessionStartedAt || run.finishedAt || null,
         finishedAt: run.finishedAt || null,
         date: run.date ?? (run.finishedAt ? run.finishedAt.slice(0, 10) : null)
@@ -214,6 +298,14 @@ function buildRunCycles(runs) {
     session.repoVersions.add(run.repoVersion);
     session.totalVybes += run.vybes?.finalScore ?? 0;
     session.totalMinutes += run.vybes?.actualTimeMinutes ?? 0;
+    const runPassCount = run.passCount ?? 1;
+    session.totalPasses += runPassCount;
+    if (run.partialBest) {
+      session.partialBestRuns += 1;
+    }
+    if (run.timePenalized) {
+      session.timePenalizedRuns += 1;
+    }
     if (!session.startedAt || (run.runSessionStartedAt && run.runSessionStartedAt < session.startedAt)) {
       session.startedAt = run.runSessionStartedAt ?? session.startedAt;
     }
@@ -232,6 +324,9 @@ function buildRunCycles(runs) {
         totalPenalty: 0,
         penaltyCount: 0,
         totalRawVybes: 0,
+        totalPasses: 0,
+        partialBestRuns: 0,
+        timePenalizedRuns: 0,
         bestRun: null,
         worstRun: null
       };
@@ -245,6 +340,13 @@ function buildRunCycles(runs) {
       stats.penaltyCount += 1;
     }
     stats.totalRawVybes += rawScore;
+    stats.totalPasses += runPassCount;
+    if (run.partialBest) {
+      stats.partialBestRuns += 1;
+    }
+    if (run.timePenalized) {
+      stats.timePenalizedRuns += 1;
+    }
 
     if (!stats.bestRun || score > stats.bestRun.score) {
       stats.bestRun = {
@@ -283,6 +385,10 @@ function buildRunCycles(runs) {
           avgPenalty: stats.penaltyCount ? toFixed(stats.totalPenalty / stats.penaltyCount, 4) : 0,
           totalRawVybes: toFixed(stats.totalRawVybes),
           avgRawVybes: toFixed(stats.totalRawVybes / stats.runs),
+          totalPasses: stats.totalPasses,
+          avgPasses: stats.totalPasses ? toFixed(stats.totalPasses / stats.runs, 2) : 0,
+          partialBestRuns: stats.partialBestRuns,
+          timePenalizedRuns: stats.timePenalizedRuns,
           bestRun: stats.bestRun,
           worstRun: stats.worstRun
         };
@@ -296,6 +402,10 @@ function buildRunCycles(runs) {
         repoVersions: Array.from(session.repoVersions),
         totalVybes: toFixed(session.totalVybes),
         totalMinutes: toFixed(session.totalMinutes),
+        totalPasses: session.totalPasses,
+        avgPasses: session.scenarios.length ? toFixed(session.totalPasses / session.scenarios.length, 2) : 0,
+        partialBestRuns: session.partialBestRuns,
+        timePenalizedRuns: session.timePenalizedRuns,
         configs: Object.keys(perConfigStats),
         perConfigStats,
         scenarios: session.scenarios
@@ -321,6 +431,9 @@ function toDaily(runs, runCycles) {
           totalRuns: 0,
           totalMinutes: 0,
           totalVybes: 0,
+          totalPasses: 0,
+          partialBestRuns: 0,
+          timePenalizedRuns: 0,
           profiles: new Set(),
           repoVersions: new Set()
         }
@@ -339,6 +452,9 @@ function toDaily(runs, runCycles) {
         successSum: 0,
         penaltySum: 0,
         penaltyCount: 0,
+        totalPasses: 0,
+        partialBestRuns: 0,
+        timePenalizedRuns: 0,
         bestScenario: null,
         worstScenario: null,
         repoVersions: new Set()
@@ -382,6 +498,9 @@ function toDaily(runs, runCycles) {
     bucket.summary.totalRuns += 1;
     bucket.summary.totalMinutes += cycle.totalMinutes ?? 0;
     bucket.summary.totalVybes += cycle.totalVybes ?? 0;
+    bucket.summary.totalPasses += cycle.totalPasses ?? 0;
+    bucket.summary.partialBestRuns += cycle.partialBestRuns ?? 0;
+    bucket.summary.timePenalizedRuns += cycle.timePenalizedRuns ?? 0;
     (cycle.configs ?? []).forEach((configId) => bucket.summary.profiles.add(configId));
     (cycle.repoVersions ?? []).forEach((version) => bucket.summary.repoVersions.add(version));
 
@@ -395,6 +514,9 @@ function toDaily(runs, runCycles) {
         profileStats.successSum += configMetrics.avgSuccess ?? 0;
         profileStats.penaltySum += configMetrics.penaltySum ?? 0;
         profileStats.penaltyCount += configMetrics.penaltyCount ?? 0;
+        profileStats.totalPasses += configMetrics.totalPasses ?? 0;
+        profileStats.partialBestRuns += configMetrics.partialBestRuns ?? 0;
+        profileStats.timePenalizedRuns += configMetrics.timePenalizedRuns ?? 0;
       }
       (cycle.repoVersions ?? []).forEach((version) => profileStats.repoVersions.add(version));
     }
@@ -414,6 +536,10 @@ function toDaily(runs, runCycles) {
         avgRawVybes: runsCount ? toFixed(stats.totalRawVybes / runsCount) : 0,
         avgSuccess: runsCount ? toFixed(stats.successSum / runsCount, 4) : 0,
         avgPenalty: stats.penaltyCount ? toFixed(stats.penaltySum / stats.penaltyCount, 4) : 0,
+        totalPasses: stats.totalPasses,
+        avgPasses: runsCount ? toFixed(stats.totalPasses / runsCount, 2) : 0,
+        partialBestRuns: stats.partialBestRuns,
+        timePenalizedRuns: stats.timePenalizedRuns,
         bestRun: stats.bestScenario,
         worstRun: stats.worstScenario,
         repoVersions: Array.from(stats.repoVersions)
@@ -431,6 +557,12 @@ function toDaily(runs, runCycles) {
         totalRuns: bucket.summary.totalRuns,
         totalMinutes: toFixed(bucket.summary.totalMinutes),
         totalVybes: toFixed(bucket.summary.totalVybes),
+        totalPasses: bucket.summary.totalPasses,
+        avgPasses: bucket.summary.totalRuns
+          ? toFixed(bucket.summary.totalPasses / bucket.summary.totalRuns, 2)
+          : 0,
+        partialBestRuns: bucket.summary.partialBestRuns,
+        timePenalizedRuns: bucket.summary.timePenalizedRuns,
         avgVybes: bucket.summary.totalRuns ? toFixed(bucket.summary.totalVybes / bucket.summary.totalRuns) : 0,
         profiles: Array.from(bucket.summary.profiles),
         repoVersions: Array.from(bucket.summary.repoVersions)
