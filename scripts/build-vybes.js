@@ -131,6 +131,9 @@ function summarizeMultipass(rawMultipass, vybes) {
     publicTestFailures: Array.isArray(pass?.publicTestFailures)
       ? pass.publicTestFailures
       : [],
+    hiddenTestFailures: Array.isArray(pass?.hiddenTestFailures)
+      ? pass.hiddenTestFailures
+      : [],
     durationMs: pass?.totalDuration ?? null
   }));
 

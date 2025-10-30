@@ -301,6 +301,7 @@ interface RemediationFeedback {
   failingSteps: FailureSummaryDetail[];
   hiddenAssertions: string[];
   publicTestFailures: string[];
+  hiddenTestFailures: string[];
 }
 
 interface PromptBuildResult {
@@ -325,6 +326,7 @@ interface PassExecutionRecord {
   feedbackForNextPass?: RemediationFeedback;
   vybesScore?: VybesResult;
   publicTestFailures: string[];
+  hiddenTestFailures: string[];
 }
 
 class FailureFeedbackGenerator {
@@ -338,14 +340,16 @@ class FailureFeedbackGenerator {
     buildResults: CommandResult[];
     gradeResults: CommandResult[];
     publicTestFailures?: string[];
+    hiddenTestFailures?: string[];
   }): RemediationFeedback | undefined {
     const failingCommands = [...context.buildResults, ...context.gradeResults].filter(
       (result) => result.exitCode !== 0
     );
     const cliFailed = context.cliResult.exitCode !== 0;
     const hasPublicFailures = (context.publicTestFailures?.length ?? 0) > 0;
+    const hasHiddenFailures = (context.hiddenTestFailures?.length ?? 0) > 0;
 
-    if (!cliFailed && failingCommands.length === 0 && !hasPublicFailures) {
+    if (!cliFailed && failingCommands.length === 0 && !hasPublicFailures && !hasHiddenFailures) {
       return undefined;
     }
 
@@ -356,9 +360,16 @@ class FailureFeedbackGenerator {
     bullets.push(FailureFeedbackGenerator.INTRO);
 
     const publicFailures = (context.publicTestFailures ?? []).map((title) =>
-      this.formatPublicTestFailure(title)
+      this.formatTestFailure(title)
     );
     for (const bullet of publicFailures) {
+      bullets.push(bullet);
+    }
+
+    const hiddenFailures = (context.hiddenTestFailures ?? []).map((title) =>
+      this.formatTestFailure(title)
+    );
+    for (const bullet of hiddenFailures) {
       bullets.push(bullet);
     }
 
@@ -399,7 +410,8 @@ class FailureFeedbackGenerator {
       bullets: finalBullets,
       failingSteps,
       hiddenAssertions,
-      publicTestFailures: [...(context.publicTestFailures ?? [])]
+      publicTestFailures: [...(context.publicTestFailures ?? [])],
+      hiddenTestFailures: [...(context.hiddenTestFailures ?? [])]
     };
   }
 
@@ -408,7 +420,7 @@ class FailureFeedbackGenerator {
     return `Your previous attempt exited with code ${exitCode}. Review the CLI logs to diagnose the issue.`;
   }
 
-  private formatPublicTestFailure(title: string): string {
+  private formatTestFailure(title: string): string {
     const normalized = title.trim().replace(/\s+/g, ' ');
     const stripped = normalized.replace(/\.+$/, '');
     let sentence = stripped.length ? stripped : 'the failing test';
@@ -791,6 +803,7 @@ class ResultsManager {
         gradeResults: pass.gradeResults,
         feedbackForNextPass: pass.feedbackForNextPass,
         publicTestFailures: pass.publicTestFailures,
+        hiddenTestFailures: pass.hiddenTestFailures,
         vybes: pass.vybesScore
       }))
     };
@@ -955,6 +968,7 @@ class UnifiedRunner {
         );
 
         const publicTestFailures = this.collectPublicTestFailures([...buildResults, ...gradeResults]);
+        const hiddenTestFailures = this.collectHiddenTestFailures([...buildResults, ...gradeResults]);
 
         const stageSucceeded =
           cliResult.exitCode === 0 &&
@@ -1006,6 +1020,7 @@ class UnifiedRunner {
           workspaceArchive,
           resultsArchive,
           publicTestFailures,
+          hiddenTestFailures,
           vybesScore: passVybes
         };
 
@@ -1037,7 +1052,8 @@ class UnifiedRunner {
           cliResult,
           buildResults,
           gradeResults,
-          publicTestFailures
+          publicTestFailures,
+          hiddenTestFailures
         });
         passRecord.feedbackForNextPass = pendingFeedback;
 
@@ -1259,6 +1275,27 @@ class UnifiedRunner {
       const label = (result.label ?? '').toLowerCase();
       const command = result.command.toLowerCase();
       if (!label.includes('test:public') && !command.includes('test:public')) {
+        continue;
+      }
+      const combined = [result.stdout ?? '', result.stderr ?? ''].join('\n');
+      for (const title of this.extractTestTitlesFromOutput(combined)) {
+        if (title) {
+          titles.add(title);
+        }
+      }
+    }
+    return Array.from(titles);
+  }
+
+  private collectHiddenTestFailures(results: CommandResult[]): string[] {
+    const titles = new Set<string>();
+    for (const result of results) {
+      if (result.exitCode === 0) {
+        continue;
+      }
+      const label = (result.label ?? '').toLowerCase();
+      const command = result.command.toLowerCase();
+      if (!label.includes('test:hidden') && !command.includes('test:hidden')) {
         continue;
       }
       const combined = [result.stdout ?? '', result.stderr ?? ''].join('\n');
