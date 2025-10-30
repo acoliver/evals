@@ -32,6 +32,7 @@
               <th class="sortable numeric" data-field="avgVybes">Avg Vybes</th>
               <th class="sortable numeric" data-field="avgSuccess">Avg Success</th>
               <th class="sortable numeric" data-field="avgPenalty">Avg Penalty</th>
+              <th class="sortable numeric" data-field="avgPasses">Avg Passes</th>
               <th>Best Run</th>
               <th>Worst Run</th>
             </tr>
@@ -153,6 +154,7 @@
         <td class="numeric" data-field="avgVybes">${formatter.format(row.avgVybes)}</td>
         <td class="numeric" data-field="avgSuccess">${percentFormatter.format(row.avgSuccess)}</td>
         <td class="numeric" data-field="avgPenalty">${formatter.format(row.avgPenalty)}</td>
+        <td class="numeric" data-field="avgPasses">${formatter.format(row.avgPasses ?? 0)}</td>
         <td>${best}</td>
         <td>${worst}</td>
       </tr>`;
@@ -174,6 +176,13 @@
             avgVybes: stats.avgVybes,
             avgSuccess: stats.avgSuccess,
             avgPenalty: stats.avgPenalty,
+            totalPasses: stats.totalPasses ?? 0,
+            avgPasses:
+              typeof stats.avgPasses === 'number'
+                ? stats.avgPasses
+                : stats.runs
+                ? (stats.totalPasses ?? 0) / stats.runs
+                : 0,
             bestRun: stats.bestRun,
             worstRun: stats.worstRun,
             profileLabel: PROFILE_LABELS[configId] ?? configId,
@@ -271,7 +280,7 @@
 
     function updateDailyTable() {
       if (!currentDailyRows.length) {
-        dailyBody.innerHTML = '<tr><td colspan="8">No runs recorded for today yet.</td></tr>';
+        dailyBody.innerHTML = '<tr><td colspan="9">No runs recorded for today yet.</td></tr>';
         return;
       }
       dailyBody.innerHTML = currentDailyRows.map(buildDailyRowMarkup).join('');
@@ -357,6 +366,7 @@
                 <th class="numeric">Avg Vybes</th>
                 <th class="numeric">Avg Success</th>
                 <th class="numeric">Avg Penalty</th>
+                <th class="numeric">Avg Passes</th>
                 <th>Best Run</th>
                 <th>Worst Run</th>
               </tr>
@@ -438,7 +448,9 @@
       const cycleLabel = `${group.cycles.length} run cycle${group.cycles.length === 1 ? '' : 's'}`;
       const evalLabel = `${totalEvals} eval${totalEvals === 1 ? '' : 's'}`;
       const profileLabel = `${profileCount} profile${profileCount === 1 ? '' : 's'}`;
-      const headerMetrics = `${cycleLabel} · ${evalLabel} · ${profileLabel} · ${formatter.format(totalMinutes)} minutes`;
+      const totalPasses = group.cycles.reduce((sum, cycle) => sum + (cycle.totalPasses ?? 0), 0);
+      const passesLabel = `${totalPasses} pass${totalPasses === 1 ? '' : 'es'}`;
+      const headerMetrics = `${cycleLabel} · ${evalLabel} · ${profileLabel} · ${passesLabel} · ${formatter.format(totalMinutes)} minutes`;
       const cyclesMarkup = group.cycles.map(renderRunCycle).join('');
 
       return `<section class="run-day${isActiveDay ? ' active-day' : ''}" id="${anchorId}">
@@ -488,14 +500,21 @@
           }, 0);
           const rawLabel = formatter.format(rawTotal ?? 0);
           if (!stats) {
-            return `<tr><td>${PROFILE_LABELS[configId] ?? configId}</td><td class="numeric">–</td><td class="numeric">${rawLabel}</td><td class="numeric">–</td><td class="numeric">–</td></tr>`;
+            return `<tr><td>${PROFILE_LABELS[configId] ?? configId}</td><td class="numeric">–</td><td class="numeric">${rawLabel}</td><td class="numeric">–</td><td class="numeric">–</td><td class="numeric">–</td></tr>`;
           }
+          const avgPasses =
+            typeof stats.avgPasses === 'number'
+              ? stats.avgPasses
+              : stats.runs
+              ? (stats.totalPasses ?? 0) / stats.runs
+              : 0;
           return `<tr>
             <td>${PROFILE_LABELS[configId] ?? configId}</td>
             <td class="numeric">${formatter.format(stats.totalVybes ?? 0)}</td>
             <td class="numeric">${formatter.format(stats.totalRawVybes ?? rawTotal ?? 0)}</td>
             <td class="numeric">${percentFormatter.format(stats.avgSuccess ?? 0)}</td>
             <td class="numeric">${formatter.format(stats.avgPenalty ?? 0)}</td>
+            <td class="numeric">${formatter.format(avgPasses)}</td>
           </tr>`;
         })
         .join('');
@@ -510,6 +529,7 @@
                   <th class="numeric">Raw Vybes</th>
                   <th class="numeric">Avg Success</th>
                   <th class="numeric">Avg Penalty</th>
+                  <th class="numeric">Avg Passes</th>
                 </tr>
               </thead>
               <tbody>${configRows}</tbody>
@@ -634,6 +654,18 @@
       const artifactLink = run.workspaceZip?.path
         ? `<a href="${run.workspaceZip.path}" download>workspace.zip${sizeLabel ? ` (${sizeLabel})` : ''}</a>`
         : '';
+      const passCount =
+        run.passCount ??
+        run.passes ??
+        run.multipass?.passCount ??
+        (run.multipass?.passes?.length ?? 1);
+      const passLabel = `${passCount} pass${passCount === 1 ? '' : 'es'}`;
+      const bestPassNumber =
+        typeof run.multipass?.selectedPass === 'number'
+          ? run.multipass.selectedPass + 1
+          : null;
+      const bestPassDetail =
+        bestPassNumber && passCount > 1 ? ` (best pass #${bestPassNumber})` : '';
       const statusInfo = getRunStatusInfo(run);
       const notesMessages = [];
       if (statusInfo?.detail) {
@@ -677,6 +709,7 @@
             <span class="run-score">${formatter.format(run.finalScore ?? 0)} vybes</span>
             <span class="run-score run-score-raw">Raw ${rawLabel} vybes</span>
             <span>Adj ${percentFormatter.format(run.successPercentage)}</span>
+            <span>${passLabel}</span>
             <span>${formatter.format(run.actualTimeMinutes ?? 0)} min</span>
             <span class="version-pill">${run.repoVersion ?? 'unknown'}</span>
           </div>
@@ -694,6 +727,10 @@
             <div>
               <strong>Penalty</strong>
               <span>${formatter.format(run.timePenaltyMultiplier)}</span>
+            </div>
+            <div>
+              <strong>Passes</strong>
+              <span>${passLabel}${bestPassDetail}</span>
             </div>
             <div>
               <strong>Success (adj)</strong>
@@ -813,6 +850,7 @@
               <th class="sortable numeric" data-field="avgVybes">Avg Vybes</th>
               <th class="sortable numeric" data-field="avgSuccess">Avg Success</th>
               <th class="sortable numeric" data-field="avgPenalty">Avg Penalty</th>
+              <th class="sortable numeric" data-field="avgPasses">Avg Passes</th>
               <th>Best Run</th>
               <th>Worst Run</th>
             </tr>
@@ -834,7 +872,8 @@
             runs: { numeric: true },
             avgVybes: { numeric: true },
             avgSuccess: { numeric: true },
-            avgPenalty: { numeric: true }
+            avgPenalty: { numeric: true },
+            avgPasses: { numeric: true }
           }
         );
       }
@@ -973,7 +1012,8 @@
           runs: { numeric: true },
           avgVybes: { numeric: true },
           avgSuccess: { numeric: true },
-          avgPenalty: { numeric: true }
+          avgPenalty: { numeric: true },
+          avgPasses: { numeric: true }
         });
 
         bindSortHandlers(daySummaryTable, currentDaySummaryRows, daySort, updateDaySummaryTable, {
@@ -995,7 +1035,7 @@
         }
       } catch (error) {
         const message = `${error.message}. Serve this directory over HTTP to enable fetch().`;
-        dailyBody.innerHTML = `<tr><td colspan="8">${message}</td></tr>`;
+        dailyBody.innerHTML = `<tr><td colspan="9">${message}</td></tr>`;
         daySummaryBody.innerHTML = `<tr><td colspan="6">${message}</td></tr>`;
         runLogContainer.innerHTML = `<p class="badge-fail">${message}</p>`;
         console.error(error);
