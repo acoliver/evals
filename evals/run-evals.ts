@@ -334,6 +334,22 @@ class FailureFeedbackGenerator {
   private static readonly REMINDER =
     'Please resolve the issues and re-run lint, tests, and build before finishing.';
   private static readonly MAX_BULLETS = 6;
+  private static readonly WORKSPACE_PATTERNS: RegExp[] = FailureFeedbackGenerator.buildWorkspacePatterns();
+
+  private static buildWorkspacePatterns(): RegExp[] {
+    const patterns: RegExp[] = [
+      /\/?home\/runner\/work\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\//gi
+    ];
+    const workspace = process.env.GITHUB_WORKSPACE ?? process.cwd();
+    if (workspace) {
+      patterns.push(new RegExp(FailureFeedbackGenerator.escapeRegExp(workspace), 'gi'));
+    }
+    return patterns;
+  }
+
+  private static escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
 
   generate(context: {
     cliResult: CommandResult;
@@ -356,6 +372,7 @@ class FailureFeedbackGenerator {
     const bullets: string[] = [];
     const failingSteps: FailureSummaryDetail[] = [];
     const hiddenAssertions: string[] = [];
+    const sanitizedHiddenFailures: string[] = [];
 
     bullets.push(FailureFeedbackGenerator.INTRO);
 
@@ -366,11 +383,12 @@ class FailureFeedbackGenerator {
       bullets.push(bullet);
     }
 
-    const hiddenFailures = (context.hiddenTestFailures ?? []).map((title) =>
-      this.formatTestFailure(title)
-    );
-    for (const bullet of hiddenFailures) {
-      bullets.push(bullet);
+    for (const hiddenTitle of context.hiddenTestFailures ?? []) {
+      const safeTitle = this.sanitizeHiddenTitle(hiddenTitle);
+      if (safeTitle) {
+        sanitizedHiddenFailures.push(safeTitle);
+        bullets.push(this.formatTestFailure(safeTitle));
+      }
     }
 
     if (cliFailed) {
@@ -392,9 +410,10 @@ class FailureFeedbackGenerator {
       };
       const snippet = this.extractHiddenAssertion(command);
       if (snippet) {
-        hiddenAssertions.push(snippet);
-        detail.snippet = snippet;
-        bullets.push(snippet.endsWith('.') ? snippet : `${snippet}`);
+        const sanitizedSnippet = this.sanitizeVisibleText(snippet);
+        hiddenAssertions.push(sanitizedSnippet);
+        detail.snippet = sanitizedSnippet;
+        bullets.push(sanitizedSnippet.endsWith('.') ? sanitizedSnippet : `${sanitizedSnippet}`);
       } else {
         bullets.push(detail.message);
       }
@@ -404,14 +423,16 @@ class FailureFeedbackGenerator {
     bullets.push(FailureFeedbackGenerator.REMINDER);
 
     const uniqueBullets = this.dedupeBullets(bullets);
-    const finalBullets = this.enforceBulletLimit(uniqueBullets);
+    const finalBullets = this.enforceBulletLimit(uniqueBullets).map((bullet) =>
+      this.sanitizeVisibleText(bullet)
+    );
 
     return {
       bullets: finalBullets,
       failingSteps,
-      hiddenAssertions,
+      hiddenAssertions: hiddenAssertions.map((value) => this.sanitizeVisibleText(value)),
       publicTestFailures: [...(context.publicTestFailures ?? [])],
-      hiddenTestFailures: [...(context.hiddenTestFailures ?? [])]
+      hiddenTestFailures: sanitizedHiddenFailures
     };
   }
 
@@ -440,7 +461,7 @@ class FailureFeedbackGenerator {
     }
 
     const command = result.command.toLowerCase();
-    if (command.includes('test:hidden')) return 'test:hidden';
+    if (command.includes('test:hidden')) return 'verification';
     if (command.includes('test:public')) return 'test:public';
     if (command.includes('typecheck')) return 'typecheck';
     if (command.includes('lint')) return 'lint';
@@ -464,9 +485,9 @@ class FailureFeedbackGenerator {
     if (normalized.includes('test:hidden')) {
       const snippet = this.extractHiddenAssertion(result);
       if (snippet) {
-        return snippet;
+        return this.sanitizeVisibleText(snippet);
       }
-      return 'One of the verification checks failed. Review the output for details.';
+      return 'A verification check failed. Review the CLI grader output for more information.';
     }
     if (normalized.includes('build')) {
       return 'Build failed. Address the build-time errors.';
@@ -490,20 +511,21 @@ class FailureFeedbackGenerator {
       .filter(Boolean);
 
     for (const line of lines) {
-      if (/^expected\b/i.test(line)) {
-        return this.truncate(line);
+      const sanitizedLine = this.sanitizeVisibleText(line);
+      if (/^expected\b/i.test(sanitizedLine)) {
+        return this.truncate(sanitizedLine);
       }
-      if (line.includes('Expected') && line.includes('Received')) {
-        return this.truncate(line);
+      if (sanitizedLine.includes('Expected') && sanitizedLine.includes('Received')) {
+        return this.truncate(sanitizedLine);
       }
-      if (/assertionerror/i.test(line) && line.includes(':')) {
-        return this.truncate(line);
+      if (/assertionerror/i.test(sanitizedLine) && sanitizedLine.includes(':')) {
+        return this.truncate(sanitizedLine);
       }
-      if (line.startsWith('Received:') || line.startsWith('Received ')) {
-        return this.truncate(line);
+      if (sanitizedLine.startsWith('Received:') || sanitizedLine.startsWith('Received ')) {
+        return this.truncate(sanitizedLine);
       }
-      if (line.startsWith('Difference:')) {
-        return this.truncate(line);
+      if (sanitizedLine.startsWith('Difference:')) {
+        return this.truncate(sanitizedLine);
       }
     }
 
@@ -546,6 +568,31 @@ class FailureFeedbackGenerator {
     const trimmed = middle.slice(0, Math.max(available, 0));
 
     return [intro, ...trimmed, reminder];
+  }
+
+  private sanitizeHiddenTitle(rawTitle: string | undefined): string | undefined {
+    if (!rawTitle) {
+      return undefined;
+    }
+    const cleaned = this.sanitizeVisibleText(rawTitle);
+    const tail = cleaned.split('>').pop() ?? cleaned;
+    const withoutHidden = tail.replace(/tests\/hidden\//gi, 'tests/').replace(/\bhidden\//gi, '');
+    const trimmed = withoutHidden.trim();
+    return trimmed || undefined;
+  }
+
+  private sanitizeVisibleText(value: string): string {
+    if (!value) {
+      return value;
+    }
+    let sanitized = value;
+    for (const pattern of FailureFeedbackGenerator.WORKSPACE_PATTERNS) {
+      sanitized = sanitized.replace(pattern, 'workspace/');
+    }
+    sanitized = sanitized.replace(/::error\s+file=[^,]+,?/gi, '::error ');
+    sanitized = sanitized.replace(/tests\/hidden\//gi, 'tests/');
+    sanitized = sanitized.replace(/\bhidden\//gi, '');
+    return sanitized;
   }
 }
 
