@@ -16,6 +16,50 @@ const runsPath = join(publicRoot, 'vybes-runs.json');
 const dailyPath = join(publicRoot, 'vybes-daily.json');
 const cyclesPath = join(publicRoot, 'vybes-run-cycles.json');
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+const WORKSPACE_PATTERNS = [
+  /\/?home\/runner\/work\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\//gi,
+  new RegExp(`${escapeRegExp(join(repoRoot, ''))}`, 'gi')
+];
+
+function sanitizeText(value) {
+  if (typeof value !== 'string' || !value) {
+    return value;
+  }
+  let sanitized = value;
+  for (const pattern of WORKSPACE_PATTERNS) {
+    sanitized = sanitized.replace(pattern, 'workspace/');
+  }
+  sanitized = sanitized.replace(/::error\s+file=[^,]+,?/gi, '::error ');
+  sanitized = sanitized.replace(/tests\/hidden/gi, 'tests');
+  sanitized = sanitized.replace(/hidden(?=\s|$)/gi, 'private');
+  return sanitized;
+}
+
+function sanitizeValue(value) {
+  if (typeof value === 'string') {
+    return sanitizeText(value);
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeValue(item));
+  }
+  if (value && typeof value === 'object') {
+    const next = {};
+    for (const [key, entry] of Object.entries(value)) {
+      next[key] = sanitizeValue(entry);
+    }
+    return next;
+  }
+  return value;
+}
+
+function sanitizeRunRecord(run) {
+  return sanitizeValue(run);
+}
+
 async function pathExists(target) {
   try {
     await fs.access(target);
@@ -213,7 +257,7 @@ async function collectRunsFromOutputs() {
       const cliCommand = Array.isArray(data.commands) && data.commands.length ? data.commands[0]?.command ?? null : null;
       const multipassSummary = summarizeMultipass(data.multipass, data.vybes);
 
-      runs.push({
+      const runRecord = {
         evalName: data.evalName,
         configId: data.configId,
         runId,
@@ -237,7 +281,9 @@ async function collectRunsFromOutputs() {
         runSessionId: data.runSessionId ?? null,
         runSessionStartedAt: data.runSessionStartedAt ?? null,
         cliCommand
-      });
+      };
+
+      runs.push(sanitizeRunRecord(runRecord));
     }
   }
 
@@ -389,7 +435,7 @@ function buildRunCycles(runs) {
           totalRawVybes: toFixed(stats.totalRawVybes),
           avgRawVybes: toFixed(stats.totalRawVybes / stats.runs),
           totalPasses: stats.totalPasses,
-          avgPasses: stats.totalPasses ? toFixed(stats.totalPasses / stats.runs, 2) : 0,
+          avgPasses: stats.runs ? toFixed(stats.totalPasses / stats.runs, 2) : 0,
           partialBestRuns: stats.partialBestRuns,
           timePenalizedRuns: stats.timePenalizedRuns,
           bestRun: stats.bestRun,
@@ -433,13 +479,14 @@ function toDaily(runs, runCycles) {
         summary: {
           totalRuns: 0,
           totalMinutes: 0,
-          totalVybes: 0,
-          totalPasses: 0,
-          partialBestRuns: 0,
-          timePenalizedRuns: 0,
-          profiles: new Set(),
-          repoVersions: new Set()
-        }
+        totalVybes: 0,
+        totalPasses: 0,
+        totalScenarios: 0,
+        partialBestRuns: 0,
+        timePenalizedRuns: 0,
+        profiles: new Set(),
+        repoVersions: new Set()
+      }
       });
     }
     return byDate.get(dateKey);
@@ -475,6 +522,10 @@ function toDaily(runs, runCycles) {
 
     const profileStats = ensureProfile(bucket, run.configId);
     profileStats.scenarioCount += 1;
+    const passCountValue =
+      typeof run.passCount === 'number' && Number.isFinite(run.passCount) ? Math.max(run.passCount, 0) : 1;
+    bucket.summary.totalScenarios += 1;
+    bucket.summary.totalPasses += passCountValue;
     const score = run.vybes?.finalScore ?? 0;
     const candidate = {
       eval: run.evalName,
@@ -491,6 +542,7 @@ function toDaily(runs, runCycles) {
     if (run.repoVersion) {
       profileStats.repoVersions.add(run.repoVersion);
     }
+    profileStats.totalPasses += passCountValue;
   }
 
   for (const cycle of runCycles) {
@@ -501,7 +553,6 @@ function toDaily(runs, runCycles) {
     bucket.summary.totalRuns += 1;
     bucket.summary.totalMinutes += cycle.totalMinutes ?? 0;
     bucket.summary.totalVybes += cycle.totalVybes ?? 0;
-    bucket.summary.totalPasses += cycle.totalPasses ?? 0;
     bucket.summary.partialBestRuns += cycle.partialBestRuns ?? 0;
     bucket.summary.timePenalizedRuns += cycle.timePenalizedRuns ?? 0;
     (cycle.configs ?? []).forEach((configId) => bucket.summary.profiles.add(configId));
@@ -517,7 +568,6 @@ function toDaily(runs, runCycles) {
         profileStats.successSum += configMetrics.avgSuccess ?? 0;
         profileStats.penaltySum += configMetrics.penaltySum ?? 0;
         profileStats.penaltyCount += configMetrics.penaltyCount ?? 0;
-        profileStats.totalPasses += configMetrics.totalPasses ?? 0;
         profileStats.partialBestRuns += configMetrics.partialBestRuns ?? 0;
         profileStats.timePenalizedRuns += configMetrics.timePenalizedRuns ?? 0;
       }
@@ -540,7 +590,7 @@ function toDaily(runs, runCycles) {
         avgSuccess: runsCount ? toFixed(stats.successSum / runsCount, 4) : 0,
         avgPenalty: stats.penaltyCount ? toFixed(stats.penaltySum / stats.penaltyCount, 4) : 0,
         totalPasses: stats.totalPasses,
-        avgPasses: runsCount ? toFixed(stats.totalPasses / runsCount, 2) : 0,
+        avgPasses: stats.scenarioCount ? toFixed(stats.totalPasses / stats.scenarioCount, 2) : 0,
         partialBestRuns: stats.partialBestRuns,
         timePenalizedRuns: stats.timePenalizedRuns,
         bestRun: stats.bestScenario,
@@ -561,8 +611,9 @@ function toDaily(runs, runCycles) {
         totalMinutes: toFixed(bucket.summary.totalMinutes),
         totalVybes: toFixed(bucket.summary.totalVybes),
         totalPasses: bucket.summary.totalPasses,
-        avgPasses: bucket.summary.totalRuns
-          ? toFixed(bucket.summary.totalPasses / bucket.summary.totalRuns, 2)
+        totalScenarios: bucket.summary.totalScenarios,
+        avgPasses: bucket.summary.totalScenarios
+          ? toFixed(bucket.summary.totalPasses / bucket.summary.totalScenarios, 2)
           : 0,
         partialBestRuns: bucket.summary.partialBestRuns,
         timePenalizedRuns: bucket.summary.timePenalizedRuns,

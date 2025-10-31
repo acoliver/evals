@@ -52,6 +52,7 @@
               <th class="sortable numeric" data-field="totalRuns">Runs</th>
               <th class="sortable numeric" data-field="totalMinutes">Minutes</th>
               <th class="sortable numeric" data-field="avgVybes">Avg Vybes</th>
+              <th class="sortable numeric" data-field="avgPasses">Avg Passes</th>
               <th class="sortable" data-field="profilesLabel">Profiles</th>
               <th class="sortable" data-field="versionsLabel">Repo Versions</th>
             </tr>
@@ -167,6 +168,16 @@
         const dayLabel = formatDayLabel(entry.date ?? 'unknown');
         const profiles = Object.entries(entry.profiles);
         profiles.forEach(([configId, stats]) => {
+          const evalCount = Number(
+            stats.evals ?? stats.scenarioCount ?? stats.totalScenarios ?? stats.runs ?? 0
+          );
+          const totalPasses = Number(stats.totalPasses ?? 0);
+          const avgPasses =
+            typeof stats.avgPasses === 'number'
+              ? stats.avgPasses
+              : evalCount > 0
+              ? totalPasses / evalCount
+              : 0;
           rows.push({
             dateKey: entry.date ?? 'unknown',
             dateLabel: dayLabel,
@@ -176,13 +187,9 @@
             avgVybes: stats.avgVybes,
             avgSuccess: stats.avgSuccess,
             avgPenalty: stats.avgPenalty,
-            totalPasses: stats.totalPasses ?? 0,
-            avgPasses:
-              typeof stats.avgPasses === 'number'
-                ? stats.avgPasses
-                : stats.runs
-                ? (stats.totalPasses ?? 0) / stats.runs
-                : 0,
+            totalPasses,
+            evals: evalCount,
+            avgPasses,
             bestRun: stats.bestRun,
             worstRun: stats.worstRun,
             profileLabel: PROFILE_LABELS[configId] ?? configId,
@@ -200,17 +207,27 @@
         const profiles = (summary.profiles ?? []).map((configId) => PROFILE_LABELS[configId] ?? configId);
         const versions = summary.repoVersions ?? [];
         const label = formatDayLabel(rawDate);
-        const totalVybes = (entry.runCycles ?? []).reduce((sum, cycle) => sum + (cycle.totalVybes ?? 0), 0);
-        const totalScenarios = (entry.runCycles ?? []).reduce(
-          (sum, cycle) => sum + (cycle.scenarios ? cycle.scenarios.length : 0),
-          0
-        );
-        const avgVybes = totalScenarios ? totalVybes / totalScenarios : summary.avgVybes ?? 0;
+        const totalVybes = Number(summary.totalVybes ?? 0);
+        const totalScenarios = Number(summary.totalScenarios ?? 0);
+        const totalPasses = Number(summary.totalPasses ?? 0);
+        const avgPasses =
+          typeof summary.avgPasses === 'number'
+            ? summary.avgPasses
+            : totalScenarios > 0
+            ? totalPasses / totalScenarios
+            : 0;
+        const avgVybes =
+          totalScenarios > 0
+            ? totalVybes / totalScenarios
+            : Number.isFinite(Number(summary.avgVybes))
+            ? Number(summary.avgVybes)
+            : 0;
         return {
           rawDate,
           dateLabel: label,
           totalRuns: summary.totalRuns ?? 0,
           totalMinutes: summary.totalMinutes ?? 0,
+          avgPasses,
           avgVybes,
           totalVybes,
           totalScenarios,
@@ -227,6 +244,26 @@
         return '<span class="version-pill muted">unknown</span>';
       }
       return versions.map((version) => `<span class="version-pill">${version}</span>`).join('');
+    }
+
+    function extractPassCount(entity) {
+      if (!entity) {
+        return 1;
+      }
+      const candidates = [
+        entity.passCount,
+        entity.passes,
+        entity.passesAttempted,
+        entity?.multipass?.passCount,
+        Array.isArray(entity?.multipass?.passes) ? entity.multipass.passes.length : undefined
+      ];
+      for (const candidate of candidates) {
+        const numeric = Number(candidate);
+        if (Number.isFinite(numeric)) {
+          return Math.max(numeric, 0);
+        }
+      }
+      return 1;
     }
 
     function escapeHtml(value) {
@@ -298,6 +335,7 @@
             <td class="numeric" data-field="totalRuns">${row.totalRuns}</td>
             <td class="numeric" data-field="totalMinutes">${formatter.format(row.totalMinutes)}</td>
             <td class="numeric" data-field="avgVybes">${formatter.format(row.avgVybes)}</td>
+            <td class="numeric" data-field="avgPasses">${formatter.format(row.avgPasses ?? 0)}</td>
             <td>${row.profilesLabel}</td>
             <td><div class="version-tag-group">${formatVersionTags(row.repoVersions)}</div></td>
           </tr>`;
@@ -443,14 +481,34 @@
       const summaryEntry = dailyEntriesByDate.get(group.date);
       const isActiveDay = group.date === activeDayKey;
       const summaryBlock = isActiveDay ? renderDaySummary(summaryEntry) : '';
-      const totalEvals = group.cycles.reduce((sum, cycle) => sum + (cycle.scenarios?.length ?? 0), 0);
+      let totalEvals = Number(summaryEntry?.summary?.totalScenarios ?? 0);
+      let totalPasses = Number(summaryEntry?.summary?.totalPasses ?? 0);
+      if (!Number.isFinite(totalEvals) || totalEvals === 0) {
+        totalEvals = group.cycles.reduce((sum, cycle) => sum + (cycle.scenarios?.length ?? 0), 0);
+      }
+      if (!Number.isFinite(totalPasses) || totalPasses === 0) {
+        totalPasses = group.cycles.reduce((sum, cycle) => {
+          if (Array.isArray(cycle.scenarios) && cycle.scenarios.length) {
+            return sum + cycle.scenarios.reduce((inner, scenario) => inner + extractPassCount(scenario), 0);
+          }
+          const cyclePasses = Number(cycle.totalPasses);
+          return sum + (Number.isFinite(cyclePasses) ? cyclePasses : 0);
+        }, 0);
+      }
+      const explicitAvgPasses = Number(summaryEntry?.summary?.avgPasses);
+      const avgPassesValue = Number.isFinite(explicitAvgPasses)
+        ? explicitAvgPasses
+        : totalEvals > 0
+        ? totalPasses / totalEvals
+        : null;
       const profileCount = new Set(group.cycles.flatMap((cycle) => cycle.configs ?? [])).size;
       const cycleLabel = `${group.cycles.length} run cycle${group.cycles.length === 1 ? '' : 's'}`;
       const evalLabel = `${totalEvals} eval${totalEvals === 1 ? '' : 's'}`;
       const profileLabel = `${profileCount} profile${profileCount === 1 ? '' : 's'}`;
-      const totalPasses = group.cycles.reduce((sum, cycle) => sum + (cycle.totalPasses ?? 0), 0);
-      const passesLabel = `${totalPasses} pass${totalPasses === 1 ? '' : 'es'}`;
-      const headerMetrics = `${cycleLabel} · ${evalLabel} · ${profileLabel} · ${passesLabel} · ${formatter.format(totalMinutes)} minutes`;
+      const passesPart = Number.isFinite(avgPassesValue)
+        ? ` · avg passes ${formatter.format(avgPassesValue)}`
+        : '';
+      const headerMetrics = `${cycleLabel} · ${evalLabel} · ${profileLabel}${passesPart} · ${formatter.format(totalMinutes)} minutes`;
       const cyclesMarkup = group.cycles.map(renderRunCycle).join('');
 
       return `<section class="run-day${isActiveDay ? ' active-day' : ''}" id="${anchorId}">
@@ -487,6 +545,11 @@
         .map((configId) => {
           const stats = cycle.perConfigStats?.[configId];
           const configScenarios = scenariosByConfig.get(configId) ?? [];
+          const scenarioPassTotal = configScenarios.reduce(
+            (sum, scenario) => sum + extractPassCount(scenario),
+            0
+          );
+          const scenarioCount = configScenarios.length;
           const rawTotal = stats?.totalRawVybes ?? configScenarios.reduce((sum, scenario) => {
             if (typeof scenario.rawVybes === 'number') {
               return sum + scenario.rawVybes;
@@ -499,22 +562,25 @@
             return sum + base * success;
           }, 0);
           const rawLabel = formatter.format(rawTotal ?? 0);
+          const avgPassesValue =
+            typeof stats?.avgPasses === 'number'
+              ? stats.avgPasses
+              : stats?.runs && stats.runs > 0
+              ? (stats.totalPasses ?? 0) / stats.runs
+              : scenarioCount > 0
+              ? scenarioPassTotal / scenarioCount
+              : 0;
           if (!stats) {
             return `<tr><td>${PROFILE_LABELS[configId] ?? configId}</td><td class="numeric">–</td><td class="numeric">${rawLabel}</td><td class="numeric">–</td><td class="numeric">–</td><td class="numeric">–</td></tr>`;
           }
-          const avgPasses =
-            typeof stats.avgPasses === 'number'
-              ? stats.avgPasses
-              : stats.runs
-              ? (stats.totalPasses ?? 0) / stats.runs
-              : 0;
+          const avgPassesDisplay = Number.isFinite(avgPassesValue) ? formatter.format(avgPassesValue) : '–';
           return `<tr>
             <td>${PROFILE_LABELS[configId] ?? configId}</td>
             <td class="numeric">${formatter.format(stats.totalVybes ?? 0)}</td>
             <td class="numeric">${formatter.format(stats.totalRawVybes ?? rawTotal ?? 0)}</td>
+            <td class="numeric">${avgPassesDisplay}</td>
             <td class="numeric">${percentFormatter.format(stats.avgSuccess ?? 0)}</td>
             <td class="numeric">${formatter.format(stats.avgPenalty ?? 0)}</td>
-            <td class="numeric">${formatter.format(avgPasses)}</td>
           </tr>`;
         })
         .join('');
@@ -527,9 +593,9 @@
                   <th>Profile</th>
                   <th class="numeric">Total Vybes</th>
                   <th class="numeric">Raw Vybes</th>
+                  <th class="numeric">Avg Passes</th>
                   <th class="numeric">Avg Success</th>
                   <th class="numeric">Avg Penalty</th>
-                  <th class="numeric">Avg Passes</th>
                 </tr>
               </thead>
               <tbody>${configRows}</tbody>
@@ -562,6 +628,21 @@
     function renderConfigGroup(configId, scenarios = [], stats) {
       const label = PROFILE_LABELS[configId] ?? configId;
       const runsLabel = stats?.runs ?? scenarios.length;
+      const scenarioPassTotal = scenarios.reduce(
+        (sum, scenario) => sum + extractPassCount(scenario),
+        0
+      );
+      const scenarioCount = scenarios.length;
+      const avgPassesValue = Number.isFinite(Number(stats?.avgPasses))
+        ? Number(stats.avgPasses)
+        : scenarioCount > 0
+        ? scenarioPassTotal / scenarioCount
+        : Number.isFinite(stats?.totalPasses) && Number(stats?.runs ?? 0) > 0
+        ? stats.totalPasses / stats.runs
+        : null;
+      const passSummary = Number.isFinite(avgPassesValue)
+        ? ` · avg passes ${formatter.format(avgPassesValue)}`
+        : '';
       const command = scenarios.length ? scenarios[0]?.cliCommand ?? '' : '';
       const encodedCommand = command ? encodeURIComponent(command) : '';
       const commandMarkup = command
@@ -584,7 +665,7 @@
         <div class="run-config-head">
           <div>
             <h4>${label}</h4>
-            <small>${runsLabel} scenario${runsLabel === 1 ? '' : 's'}</small>
+            <small>${runsLabel} scenario${runsLabel === 1 ? '' : 's'}${passSummary}</small>
           </div>
           ${commandMarkup}
         </div>
@@ -1021,6 +1102,7 @@
           totalRuns: { numeric: true },
           totalMinutes: { numeric: true },
           avgVybes: { numeric: true },
+          avgPasses: { numeric: true },
           profilesLabel: { numeric: false },
           versionsLabel: { numeric: false }
         });
@@ -1036,7 +1118,7 @@
       } catch (error) {
         const message = `${error.message}. Serve this directory over HTTP to enable fetch().`;
         dailyBody.innerHTML = `<tr><td colspan="9">${message}</td></tr>`;
-        daySummaryBody.innerHTML = `<tr><td colspan="6">${message}</td></tr>`;
+        daySummaryBody.innerHTML = `<tr><td colspan="7">${message}</td></tr>`;
         runLogContainer.innerHTML = `<p class="badge-fail">${message}</p>`;
         console.error(error);
       }
