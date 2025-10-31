@@ -70,7 +70,39 @@
         "--yolo"
       ],
       "timeout": 900000
+    },
+    "llxprt-cerebras-glm46": {
+      "cli": "llxprt",
+      "name": "LLxprt Cerebras GLM 4.6",
+      "description": "LLxprt using Cerebras endpoint with the GLM 4.6 model and tighter max token cap",
+      "args": [
+        "--provider",
+        { "env": "CEREBRAS_PROVIDER", "default": "openai" },
+        "--baseurl",
+        { "env": "CEREBRAS_BASEURL", "default": "https://api.cerebras.ai/v1" },
+        "--key",
+        { "env": "CEREBRAS_KEY", "required": true, "sensitive": true },
+        "--model",
+        { "env": "CEREBRAS_GLM46_MODEL", "default": "zai-glm-4.6" },
+        "--set",
+        { "env": "CEREBRAS_CONTEXT_LIMIT", "default": "context-limit=128000" },
+        "--set",
+        { "env": "CEREBRAS_CUSTOM_HEADERS", "default": "custom-headers=response_format.json_schema.strict true" },
+        "--set",
+        { "env": "CEREBRAS_SHELL_REPLACEMENT", "default": "shell-replacement=true" },
+        "--set",
+        "modelparam.temperature=1",
+        "--set",
+        { "env": "CEREBRAS_GLM46_MAX_TOKENS", "default": "modelparam.max_tokens=10000" },
+        "--yolo"
+      ],
+      "timeout": 900000
     }
   },
-  "defaultConfigurations": ["llxprt-synthetic-main", "llxprt-synthetic-minimax", "llxprt-cerebras-main"]
+  "defaultConfigurations": [
+    "llxprt-synthetic-main",
+    "llxprt-synthetic-minimax",
+    "llxprt-cerebras-main",
+    "llxprt-cerebras-glm46"
+  ]
 }
