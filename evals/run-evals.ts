@@ -21,7 +21,11 @@ interface EnvArgConfig {
   sensitive?: boolean;
 }
 
-type ArgValue = string | EnvArgConfig;
+interface PromptArgConfig {
+  prompt: true;
+}
+
+type ArgValue = string | EnvArgConfig | PromptArgConfig;
 
 interface Configuration {
   cli: string;
@@ -29,6 +33,7 @@ interface Configuration {
   description?: string;
   args: ArgValue[];
   timeout: number;
+  promptPrefix?: string;
 }
 
 const SENSITIVE_FLAGS = new Set(['--key', '--keyfile', '--auth-key', '--auth-keyfile']);
@@ -98,11 +103,17 @@ class ConfigurationManager {
 
   async runConfiguration(configId: string, promptInstruction: string, cwd: string): Promise<CommandResult> {
     // Read the full prompt content from the file we already wrote
-    const promptContent = await readFile(join(cwd, 'prompt.md'), 'utf8');
     const config = this.getConfiguration(configId);
-    
+    let promptContent = await readFile(join(cwd, 'prompt.md'), 'utf8');
+    if (config.promptPrefix) {
+      const prefix = config.promptPrefix.endsWith('\n')
+        ? config.promptPrefix
+        : `${config.promptPrefix}\n`;
+      promptContent = `${prefix}\n${promptContent}`.replace(/\n{3,}/g, '\n\n');
+    }
+
     // Both LLxprt and Codex read from stdin when no prompt argument is provided
-    const { args, maskArgIndices } = this.resolveArgs(configId, config.args);
+    const { args, maskArgIndices } = this.resolveArgs(configId, config.args, promptContent);
     
     return await this.runCommand(config.cli, args, { 
       cwd, 
@@ -126,7 +137,11 @@ class ConfigurationManager {
     });
   }
 
-  private resolveArgs(configId: string, argDefinitions: ArgValue[] = []): { args: string[]; maskArgIndices: Set<number> } {
+  private resolveArgs(
+    configId: string,
+    argDefinitions: ArgValue[] = [],
+    promptContent = ''
+  ): { args: string[]; maskArgIndices: Set<number> } {
     const args: string[] = [];
     const maskArgIndices = new Set<number>();
 
@@ -138,6 +153,14 @@ class ConfigurationManager {
 
       if (!definition || typeof definition !== 'object') {
         throw new Error(`Invalid argument definition encountered for ${configId}`);
+      }
+
+      if ('prompt' in definition) {
+        if (!definition.prompt) {
+          throw new Error(`Invalid prompt placeholder in configuration ${configId}`);
+        }
+        args.push(promptContent);
+        return;
       }
 
       const envName = definition.env;

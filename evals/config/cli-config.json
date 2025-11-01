@@ -97,12 +97,36 @@
         "--yolo"
       ],
       "timeout": 900000
+    },
+    "codepuppy-synthetic-glm46": {
+      "cli": "code-puppy",
+      "name": "Code Puppy Synthetic GLM 4.6",
+      "description": "Code Puppy agent targeting Synthetic GLM 4.6 via Synthetic provider",
+      "promptPrefix": "/set model synthetic-GLM-4.6",
+      "args": [
+        "--prompt",
+        { "prompt": true }
+      ],
+      "timeout": 900000
+    },
+    "codepuppy-cerebras-glm46": {
+      "cli": "code-puppy",
+      "name": "Code Puppy Cerebras GLM 4.6",
+      "description": "Code Puppy agent targeting Cerebras-hosted GLM 4.6",
+      "promptPrefix": "/set model Cerebras-GLM-4.6",
+      "args": [
+        "--prompt",
+        { "prompt": true }
+      ],
+      "timeout": 900000
     }
   },
   "defaultConfigurations": [
     "llxprt-synthetic-main",
     "llxprt-synthetic-minimax",
     "llxprt-cerebras-main",
-    "llxprt-cerebras-glm46"
+    "llxprt-cerebras-glm46",
+    "codepuppy-synthetic-glm46",
+    "codepuppy-cerebras-glm46"
   ]
 }
