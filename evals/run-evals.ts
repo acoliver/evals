@@ -438,7 +438,10 @@ class FailureFeedbackGenerator {
         detail.snippet = sanitizedSnippet;
         bullets.push(sanitizedSnippet.endsWith('.') ? sanitizedSnippet : `${sanitizedSnippet}`);
       } else {
-        bullets.push(detail.message);
+        const fallback = detail.message?.trim();
+        if (fallback && stepLabel !== 'verification') {
+          bullets.push(fallback);
+        }
       }
       failingSteps.push(detail);
     }
@@ -510,7 +513,7 @@ class FailureFeedbackGenerator {
       if (snippet) {
         return this.sanitizeVisibleText(snippet);
       }
-      return 'A verification check failed. Review the CLI grader output for more information.';
+      return 'A verification check failed.';
     }
     if (normalized.includes('build')) {
       return 'Build failed. Address the build-time errors.';
