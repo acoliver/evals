@@ -1,6 +1,29 @@
 {
   "configurations": {
-    "llxprt-synthetic-main": {
+    "llxprt-cerebras-qwen480b": {
+      "cli": "llxprt",
+      "name": "LLxprt Cerebras Qwen 480B",
+      "description": "LLxprt using Cerebras Qwen 3 Coder 480B via OpenAI provider interface",
+      "args": [
+        "--provider",
+        { "env": "CEREBRAS_PROVIDER", "default": "openai" },
+        "--baseurl",
+        { "env": "CEREBRAS_BASEURL", "default": "https://api.cerebras.ai/v1" },
+        "--key",
+        { "env": "CEREBRAS_KEY", "required": true, "sensitive": true },
+        "--model",
+        { "env": "CEREBRAS_MODEL", "default": "qwen-3-coder-480b" },
+        "--set",
+        { "env": "CEREBRAS_CONTEXT_LIMIT", "default": "context-limit=128000" },
+        "--set",
+        { "env": "CEREBRAS_SHELL_REPLACEMENT", "default": "shell-replacement=true" },
+        "--set",
+        "modelparam.temperature=1",
+        "--yolo"
+      ],
+      "timeout": 900000
+    },
+    "llxprt-synthetic-glm46": {
       "cli": "llxprt",
       "name": "LLxprt Synthetic GLM 4.6",
       "description": "LLxprt running the Synthetic GLM-4.6 stack via explicit CLI arguments",
@@ -46,62 +69,42 @@
       ],
       "timeout": 900000
     },
-    "llxprt-cerebras-main": {
+    "llxprt-zai-glm46": {
       "cli": "llxprt",
-      "name": "LLxprt Cerebras Qwen 3",
-      "description": "LLxprt running Cerebras-hosted Qwen 3 Coder with env-driven arguments",
+      "name": "LLxprt ZAI GLM 4.6",
+      "description": "LLxprt using ZAI GLM 4.6 via Anthropic provider interface",
       "args": [
         "--provider",
-        { "env": "CEREBRAS_PROVIDER", "default": "openai" },
+        "anthropic",
         "--baseurl",
-        { "env": "CEREBRAS_BASEURL", "default": "https://api.cerebras.ai/v1" },
+        "https://api.z.ai/api/anthropic",
         "--key",
-        { "env": "CEREBRAS_KEY", "required": true, "sensitive": true },
+        { "env": "ZAI_KEY", "required": true, "sensitive": true },
         "--model",
-        { "env": "CEREBRAS_MODEL", "default": "qwen-3-coder-480b" },
+        "glm-4.6",
         "--set",
-        { "env": "CEREBRAS_CONTEXT_LIMIT", "default": "context-limit=128000" },
+        "context-limit=190000",
         "--set",
-        { "env": "CEREBRAS_CUSTOM_HEADERS", "default": "custom-headers=response_format.json_schema.strict true" },
-        "--set",
-        { "env": "CEREBRAS_SHELL_REPLACEMENT", "default": "shell-replacement=true" },
-        "--set",
-        "modelparam.temperature=1",
+        "shell-replacement=true",
         "--yolo"
       ],
       "timeout": 900000
     },
-    "llxprt-cerebras-glm46": {
-      "cli": "llxprt",
-      "name": "LLxprt Cerebras GLM 4.6",
-      "description": "LLxprt using Cerebras endpoint with the GLM 4.6 model and tighter max token cap",
+    "codepuppy-cerebras-qwen480b": {
+      "cli": "/home/acoliver/projects/sitandevals/codepuppy-wrapper.sh",
+      "name": "Code Puppy Cerebras Qwen 480B",
+      "description": "Code Puppy agent using Synthetic Qwen 3 Coder 480B (via Cerebras API key)",
+      "promptPrefix": "/set model synthetic-Qwen3-Coder-480B-A35B-Instruct",
       "args": [
-        "--provider",
-        { "env": "CEREBRAS_PROVIDER", "default": "openai" },
-        "--baseurl",
-        { "env": "CEREBRAS_BASEURL", "default": "https://api.cerebras.ai/v1" },
-        "--key",
-        { "env": "CEREBRAS_KEY", "required": true, "sensitive": true },
-        "--model",
-        { "env": "CEREBRAS_GLM46_MODEL", "default": "zai-glm-4.6" },
-        "--set",
-        { "env": "CEREBRAS_CONTEXT_LIMIT", "default": "context-limit=128000" },
-        "--set",
-        { "env": "CEREBRAS_CUSTOM_HEADERS", "default": "custom-headers=response_format.json_schema.strict true" },
-        "--set",
-        { "env": "CEREBRAS_SHELL_REPLACEMENT", "default": "shell-replacement=true" },
-        "--set",
-        "modelparam.temperature=1",
-        "--set",
-        { "env": "CEREBRAS_GLM46_MAX_TOKENS", "default": "modelparam.max_tokens=10000" },
-        "--yolo"
+        "--prompt",
+        { "prompt": true }
       ],
       "timeout": 900000
     },
     "codepuppy-synthetic-glm46": {
-      "cli": "code-puppy",
+      "cli": "/home/acoliver/projects/sitandevals/codepuppy-wrapper.sh",
       "name": "Code Puppy Synthetic GLM 4.6",
-      "description": "Code Puppy agent targeting Synthetic GLM 4.6 via Synthetic provider",
+      "description": "Code Puppy agent targeting Synthetic GLM 4.6",
       "promptPrefix": "/set model synthetic-GLM-4.6",
       "args": [
         "--prompt",
@@ -109,11 +112,22 @@
       ],
       "timeout": 900000
     },
-    "codepuppy-cerebras-glm46": {
-      "cli": "code-puppy",
-      "name": "Code Puppy Cerebras GLM 4.6",
-      "description": "Code Puppy agent targeting Cerebras-hosted GLM 4.6",
-      "promptPrefix": "/set model Cerebras-GLM-4.6",
+    "codepuppy-synthetic-minimax": {
+      "cli": "/home/acoliver/projects/sitandevals/codepuppy-wrapper.sh",
+      "name": "Code Puppy Synthetic MiniMax M2",
+      "description": "Code Puppy agent targeting Synthetic MiniMax M2",
+      "promptPrefix": "/set model synthetic-MiniMax-M2",
+      "args": [
+        "--prompt",
+        { "prompt": true }
+      ],
+      "timeout": 900000
+    },
+    "codepuppy-zai-glm46": {
+      "cli": "/home/acoliver/projects/sitandevals/codepuppy-wrapper.sh",
+      "name": "Code Puppy ZAI GLM 4.6",
+      "description": "Code Puppy agent targeting ZAI GLM 4.6",
+      "promptPrefix": "/set model glm-4.6-api",
       "args": [
         "--prompt",
         { "prompt": true }
@@ -122,11 +136,13 @@
     }
   },
   "defaultConfigurations": [
-    "llxprt-synthetic-main",
+    "llxprt-cerebras-qwen480b",
+    "llxprt-synthetic-glm46",
     "llxprt-synthetic-minimax",
-    "llxprt-cerebras-main",
-    "llxprt-cerebras-glm46",
+    "llxprt-zai-glm46",
+    "codepuppy-cerebras-qwen480b",
     "codepuppy-synthetic-glm46",
-    "codepuppy-cerebras-glm46"
+    "codepuppy-synthetic-minimax",
+    "codepuppy-zai-glm46"
   ]
 }

@@ -9,7 +9,7 @@ import { spawnSync } from 'child_process';
 import { v4 as uuidv4 } from 'uuid';
 import { execSync } from 'child_process';
 import { createHash } from 'crypto';
-import { VybesScoringEngine, VybesResult, VybesTaskConfig } from './vybes';
+import { VybesScoringEngine, VybesResult, VybesTaskConfig } from './vybes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -1531,7 +1531,7 @@ async function main() {
 
     // Determine which configurations to run
     const configIds = args.config === 'ALL' || !args.config
-      ? (args.quick ? ['llxprt-synthetic-main'] : configManager.getDefaultConfigurations())
+      ? (args.quick ? ['llxprt-synthetic-glm46'] : configManager.getDefaultConfigurations())
       : args.config.split(',');
 
     console.log(` RUNNING EVALUATIONS`);
