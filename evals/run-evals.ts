@@ -1040,6 +1040,9 @@ class UnifiedRunner {
           workspaceArchive
         );
 
+        // Save CLI stdout/stderr to workspace archive for diagnostics
+        await this.saveCliOutputs(workspaceArchive, cliResult, buildResults, gradeResults);
+
         const publicTestFailures = this.collectPublicTestFailures([...buildResults, ...gradeResults]);
         const hiddenTestFailures = this.collectHiddenTestFailures([...buildResults, ...gradeResults]);
 
@@ -1425,6 +1428,50 @@ class UnifiedRunner {
     await rm(workspaceResults, { recursive: true, force: true });
     await cp(source, workspaceResults, { recursive: true });
     return destination;
+  }
+
+  private async saveCliOutputs(
+    workspaceArchive: string,
+    cliResult: CommandResult,
+    buildResults: CommandResult[],
+    gradeResults: CommandResult[]
+  ): Promise<void> {
+    const outputsDir = join(workspaceArchive, '.eval-outputs');
+    mkdirSync(outputsDir, { recursive: true });
+
+    // Save CLI stdout/stderr
+    if (cliResult.stdout) {
+      await writeFile(join(outputsDir, 'cli-stdout.txt'), cliResult.stdout, 'utf8');
+    }
+    if (cliResult.stderr) {
+      await writeFile(join(outputsDir, 'cli-stderr.txt'), cliResult.stderr, 'utf8');
+    }
+
+    // Save build step outputs
+    for (let i = 0; i < buildResults.length; i++) {
+      const result = buildResults[i];
+      const label = result.label || `build-${i}`;
+      if (result.stdout) {
+        await writeFile(join(outputsDir, `${label}-stdout.txt`), result.stdout, 'utf8');
+      }
+      if (result.stderr) {
+        await writeFile(join(outputsDir, `${label}-stderr.txt`), result.stderr, 'utf8');
+      }
+    }
+
+    // Save grade step outputs
+    for (let i = 0; i < gradeResults.length; i++) {
+      const result = gradeResults[i];
+      const label = result.label || `grade-${i}`;
+      if (result.stdout) {
+        await writeFile(join(outputsDir, `${label}-stdout.txt`), result.stdout, 'utf8');
+      }
+      if (result.stderr) {
+        await writeFile(join(outputsDir, `${label}-stderr.txt`), result.stderr, 'utf8');
+      }
+    }
+
+    console.log(`  → Saved CLI outputs to ${outputsDir}`);
   }
 
   private async promotePassArtifacts(pass: PassExecutionRecord, archivePath: string): Promise<void> {
