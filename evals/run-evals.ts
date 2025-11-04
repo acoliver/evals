@@ -1436,7 +1436,7 @@ class UnifiedRunner {
     buildResults: CommandResult[],
     gradeResults: CommandResult[]
   ): Promise<void> {
-    const outputsDir = join(workspaceArchive, '.eval-outputs');
+    const outputsDir = join(workspaceArchive, 'eval-outputs');
     mkdirSync(outputsDir, { recursive: true });
 
     // Save CLI stdout/stderr
@@ -1471,7 +1471,7 @@ class UnifiedRunner {
       }
     }
 
-    console.log(`  → Saved CLI outputs to ${outputsDir}`);
+    console.log(`  → Saved CLI/build/grade outputs to ${outputsDir}`);
   }
 
   private async promotePassArtifacts(pass: PassExecutionRecord, archivePath: string): Promise<void> {
