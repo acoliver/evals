@@ -115,7 +115,15 @@ class ConfigurationManager {
     // Both LLxprt and Codex read from stdin when no prompt argument is provided
     const { args, maskArgIndices } = this.resolveArgs(configId, config.args, promptContent);
     
-    return await this.runCommand(config.cli, args, { 
+    // Resolve CLI path - if relative, make it relative to evals root
+    let cliPath = config.cli;
+    if (!cliPath.startsWith('/')) {
+      // Relative path - resolve relative to evals root directory
+      const evalRoot = resolve(__dirname, '..');
+      cliPath = join(evalRoot, cliPath);
+    }
+    
+    return await this.runCommand(cliPath, args, { 
       cwd, 
       timeout: config.timeout,
       input: promptContent,

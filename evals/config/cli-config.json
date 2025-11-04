@@ -91,7 +91,7 @@
       "timeout": 900000
     },
     "codepuppy-cerebras-qwen480b": {
-      "cli": "/home/acoliver/projects/sitandevals/codepuppy-wrapper.sh",
+      "cli": "codepuppy-wrapper.sh",
       "name": "Code Puppy Cerebras Qwen 480B",
       "description": "Code Puppy agent using Synthetic Qwen 3 Coder 480B (via Cerebras API key)",
       "promptPrefix": "/set model synthetic-Qwen3-Coder-480B-A35B-Instruct",
@@ -102,7 +102,7 @@
       "timeout": 900000
     },
     "codepuppy-synthetic-glm46": {
-      "cli": "/home/acoliver/projects/sitandevals/codepuppy-wrapper.sh",
+      "cli": "codepuppy-wrapper.sh",
       "name": "Code Puppy Synthetic GLM 4.6",
       "description": "Code Puppy agent targeting Synthetic GLM 4.6",
       "promptPrefix": "/set model synthetic-GLM-4.6",
@@ -113,7 +113,7 @@
       "timeout": 900000
     },
     "codepuppy-synthetic-minimax": {
-      "cli": "/home/acoliver/projects/sitandevals/codepuppy-wrapper.sh",
+      "cli": "codepuppy-wrapper.sh",
       "name": "Code Puppy Synthetic MiniMax M2",
       "description": "Code Puppy agent targeting Synthetic MiniMax M2",
       "promptPrefix": "/set model synthetic-MiniMax-M2",
@@ -124,7 +124,7 @@
       "timeout": 900000
     },
     "codepuppy-zai-glm46": {
-      "cli": "/home/acoliver/projects/sitandevals/codepuppy-wrapper.sh",
+      "cli": "codepuppy-wrapper.sh",
       "name": "Code Puppy ZAI GLM 4.6",
       "description": "Code Puppy agent targeting ZAI GLM 4.6",
       "promptPrefix": "/set model glm-4.6-api",
