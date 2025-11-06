@@ -18,8 +18,6 @@
         "--set",
         { "env": "CEREBRAS_SHELL_REPLACEMENT", "default": "shell-replacement=true" },
         "--set",
-        { "env": "CEREBRAS_CUSTOM_HEADERS", "default": "custom-headers=response_format.json_schema.strict true" },
-        "--set",
         "modelparam.temperature=1",
         "--set",
         "modelparam.max_tokens=10000",
