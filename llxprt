@@ -1,0 +1,3 @@
+#!/bin/bash
+# Wrapper for llxprt to work with eval harness
+exec /usr/local/bin/llxprt "$@"
