@@ -1592,7 +1592,7 @@ async function main() {
     console.log(` RUNNING EVALUATIONS`);
     console.log(`   Evaluations: ${evalNames.join(', ')}`);
     console.log(`   Configurations: ${configIds.join(', ')}`);
-    console.log(`   Total runs: ${evalNames.length * configIds.length}`);
+    console.log(`   Total evals: ${evalNames.length * configIds.length}`);
     console.log(
       `   Multipass: ${runner.isMultipassEnabled() ? 'enabled' : 'disabled'} (max ${runner.getMaxPasses()} passes)`
     );
