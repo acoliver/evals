@@ -14,7 +14,7 @@
         "--model",
         { "env": "CEREBRAS_MODEL", "default": "zai-glm-4.6" },
         "--set",
-        { "env": "CEREBRAS_CONTEXT_LIMIT", "default": "context-limit=121000" },
+        { "env": "CEREBRAS_CONTEXT_LIMIT", "default": "context-limit=190000" },
         "--set",
         { "env": "CEREBRAS_SHELL_REPLACEMENT", "default": "shell-replacement=true" },
         "--set",
@@ -44,6 +44,8 @@
         { "env": "SYNTHETIC_SHELL_REPLACEMENT", "default": "shell-replacement=true" },
         "--set",
         "modelparam.temperature=1",
+        "--set",
+        "modelparam.max_tokens=10000",
         "--yolo"
       ],
       "timeout": 900000
@@ -67,6 +69,8 @@
         { "env": "SYNTHETIC_SHELL_REPLACEMENT", "default": "shell-replacement=true" },
         "--set",
         "modelparam.temperature=1",
+        "--set",
+        "modelparam.max_tokens=10000",
         "--yolo"
       ],
       "timeout": 900000
@@ -74,16 +78,16 @@
     "llxprt-zai-glm46": {
       "cli": "llxprt",
       "name": "LLxprt ZAI GLM 4.6",
-      "description": "LLxprt using ZAI GLM 4.6 via ZAI API",
+      "description": "LLxprt using ZAI GLM 4.6 via ZAI API (Anthropic format)",
       "args": [
         "--provider",
-        "openai",
+        "anthropic",
         "--baseurl",
         "https://api.z.ai/api/anthropic",
         "--key",
         { "env": "ZAI_KEY", "required": true, "sensitive": true },
         "--model",
-        "glm-4.6",
+        { "env": "ZAI_MODEL", "default": "glm-4.6" },
         "--set",
         { "env": "ZAI_CONTEXT_LIMIT", "default": "context-limit=190000" },
         "--set",
