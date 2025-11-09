@@ -14,13 +14,13 @@
         "--model",
         { "env": "CEREBRAS_MODEL", "default": "zai-glm-4.6" },
         "--set",
-        { "env": "CEREBRAS_CONTEXT_LIMIT", "default": "context-limit=190000" },
+        { "env": "CEREBRAS_CONTEXT_LIMIT", "default": "context-limit=121000" },
         "--set",
         { "env": "CEREBRAS_SHELL_REPLACEMENT", "default": "shell-replacement=true" },
         "--set",
         "modelparam.temperature=1",
         "--set",
-        "modelparam.max_tokens=10000",
+        "modelparam.max_tokens=8192",
         "--yolo"
       ],
       "timeout": 900000
