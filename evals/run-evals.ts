@@ -478,13 +478,20 @@ class FailureFeedbackGenerator {
   private formatTestFailure(title: string): string {
     const normalized = title.trim().replace(/\s+/g, ' ');
     const stripped = normalized.replace(/\.+$/, '');
-    let sentence = stripped.length ? stripped : 'the failing test';
+    
+    // Extract just the test description (last part after > if exists)
+    const testDesc = stripped.includes('>') ? 
+      stripped.split('>').pop()?.trim() || stripped : stripped;
+    
+    let sentence = testDesc.length ? testDesc : 'the failing test';
     const lower = sentence.toLowerCase();
+    
     if (lower.startsWith('it should ')) {
       sentence = sentence.slice(9).trim();
     } else if (lower.startsWith('should ')) {
       sentence = sentence.slice(7).trim();
     }
+    
     const withPeriod = sentence.endsWith('.') ? sentence : `${sentence}.`;
     return `It should ${withPeriod}`;
   }
@@ -620,12 +627,30 @@ class FailureFeedbackGenerator {
       return value;
     }
     let sanitized = value;
+    
+    // Remove file paths and workspace information
     for (const pattern of FailureFeedbackGenerator.WORKSPACE_PATTERNS) {
       sanitized = sanitized.replace(pattern, 'workspace/');
     }
+    
+    // Remove error format file information
     sanitized = sanitized.replace(/::error\s+file=[^,]+,?/gi, '::error ');
+    
+    // Remove file paths from test output
+    sanitized = sanitized.replace(/\/[^>\s]+\.spec\.ts/g, '<test-file>');
+    sanitized = sanitized.replace(/\.[tj]s:\d+:\d+/g, '');
+    
+    // Remove hidden test references
     sanitized = sanitized.replace(/tests\/hidden\//gi, 'tests/');
     sanitized = sanitized.replace(/\bhidden\//gi, '');
+    
+    // Remove line numbers in parentheses
+    sanitized = sanitized.replace(/\(\d+\)/g, '');
+    
+    // Clean up extra spaces and separators
+    sanitized = sanitized.replace(/\s+>\s+/g, ' > ');
+    sanitized = sanitized.replace(/\s+/g, ' ');
+    
     return sanitized;
   }
 }
@@ -670,9 +695,17 @@ class RemediationPromptBuilder {
     }
 
     const bulletList = this.remediationBullets.map((bullet) => `- ${bullet}`).join('\n');
-    const prompt = `${this.basePrompt}\n\n### Remediation Guidance\n${bulletList}\n`;
+    const remediationPrompt = `Previously you worked on:
+${this.basePrompt}
+
+However,
+Its not working...
+
+### Remediation Guidance
+${bulletList}
+`;
     return {
-      prompt,
+      prompt: remediationPrompt,
       appliedBullets: [...this.remediationBullets]
     };
   }

@@ -7,8 +7,8 @@ import {
   isValidCreditCard
 } from '@workspace/validators.js';
 
-describe('validators hidden suite', () => {
-  it('validates emails with tricky cases', () => {
+describe('Validators', () => {
+  it('should validate emails with tricky cases', () => {
     const validSamples = [
       'name+tag@example.co.uk',
       'user.name@example.travel',
@@ -24,7 +24,7 @@ describe('validators hidden suite', () => {
     invalidSamples.forEach((sample) => expect(isValidEmail(sample)).toBe(false));
   });
 
-  it('validates US phone numbers thoroughly', () => {
+  it('should validate US phone numbers thoroughly', () => {
     const valid = [
       '+1 (212) 555-7890',
       '212-555-7890',
@@ -41,7 +41,7 @@ describe('validators hidden suite', () => {
     invalid.forEach((sample) => expect(isValidUSPhone(sample)).toBe(false));
   });
 
-  it('validates Argentine numbers across formats', () => {
+  it('should validate Argentine numbers across formats', () => {
     const valid = [
       '+54 9 11 1234 5678',
       '011 1234 5678',
@@ -58,14 +58,14 @@ describe('validators hidden suite', () => {
     invalid.forEach((sample) => expect(isValidArgentinePhone(sample)).toBe(false));
   });
 
-  it('validates human names with unicode characters', () => {
+  it('should validate human names with unicode characters', () => {
     const valid = ['María-José Carreño Quiñones', "O'Connor", 'Anne-Marie'];
     const invalid = ['X Æ A-12', '12345', 'Jane_Doe'];
     valid.forEach((sample) => expect(isValidName(sample)).toBe(true));
     invalid.forEach((sample) => expect(isValidName(sample)).toBe(false));
   });
 
-  it('validates credit card numbers with luhn', () => {
+  it('should validate credit card numbers with luhn', () => {
     const valid = ['4111111111111111', '5500000000000004', '340000000000009'];
     const invalid = ['4111111111111112', '1234567890123456', ''];
     valid.forEach((sample) => expect(isValidCreditCard(sample)).toBe(true));
