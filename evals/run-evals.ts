@@ -229,7 +229,7 @@ class EvaluationLoader {
       : join(evalPath, 'problem.md');
 
     return {
-      workspace: evalPath,
+      workspace: existsSync(workspacePath) ? workspacePath : evalPath,
       grading: join(__dirname, '..', 'grading', evalName),
       prompt: promptPath
     };
