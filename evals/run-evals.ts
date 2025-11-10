@@ -322,6 +322,26 @@ class UnifiedRunner {
           workdir
         );
 
+        // Check for quick exit with no changes (failsafe)
+        const executionDurationSec = (Date.now() - passStartTime) / 1000;
+        const outputLength = (executionResult.stdout + executionResult.stderr).length;
+        
+        if (executionDurationSec < 15 && outputLength < 500) {
+          console.log(`     WARNING:  WARNING: CLI exited very quickly (${executionDurationSec.toFixed(1)}s) with minimal output (${outputLength} chars)`);
+          console.log(`     This likely indicates a model misconfiguration or CLI error.`);
+          console.log(`     --- CLI STDOUT ---`);
+          console.log(executionResult.stdout || '(empty)');
+          console.log(`     --- CLI STDERR ---`);
+          console.log(executionResult.stderr || '(empty)');
+          console.log(`     --- EXIT CODE ---`);
+          console.log(executionResult.exitCode);
+          
+          if (pass === 1) {
+            console.log(`     Stopping multi-pass attempts - please fix the configuration`);
+            break;
+          }
+        }
+
         // Run grading
         const gradeResults = await this.runGrading(evalConfig.grading, workdir, config.args);
 

@@ -19,12 +19,19 @@ fi
 if [ -z "$SYN_API_KEY" ] && [ -z "$SYNTHETIC_KEY" ]; then
     if [ -f ~/.synthetic_key ]; then
         export SYN_API_KEY="$(cat ~/.synthetic_key)"
+        # Also export as SYNTHETIC_KEY for configurations that expect this name
+        export SYNTHETIC_KEY="$(cat ~/.synthetic_key)"
     fi
 fi
 
 # If SYNTHETIC_KEY is set but SYN_API_KEY isn't, use SYNTHETIC_KEY
 if [ -z "$SYN_API_KEY" ] && [ -n "$SYNTHETIC_KEY" ]; then
     export SYN_API_KEY="$SYNTHETIC_KEY"
+fi
+
+# If SYN_API_KEY is set but SYNTHETIC_KEY isn't, use SYN_API_KEY
+if [ -z "$SYNTHETIC_KEY" ] && [ -n "$SYN_API_KEY" ]; then
+    export SYNTHETIC_KEY="$SYN_API_KEY"
 fi
 
 # Load ZAI API key if not already set
