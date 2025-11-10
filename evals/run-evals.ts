@@ -472,8 +472,13 @@ class UnifiedRunner {
       );
 
       processedArgs.then(args => {
+        const resolvedCommand = config.cli.startsWith('/') ? config.cli : join(__dirname, '..', config.cli);
+        const actualCommand = resolvedCommand.endsWith('llxprt') && !resolvedCommand.startsWith('/usr/') 
+          ? '/usr/local/bin/llxprt' 
+          : resolvedCommand;
+        
         const commandDefinition: CommandDefinition = {
-          command: config.cli.startsWith('/') ? config.cli : join(__dirname, '..', config.cli),
+          command: actualCommand,
           args,
           timeout: config.timeout
         };

@@ -1,15 +1,14 @@
-#!/bin/bash
-# Wrapper for llxprt to work with eval harness
-# Try multiple possible locations for llxprt
+#!/usr/bin/env node
+// Wrapper for llxprt - just call the actual binary directly
+const { spawn } = require('child_process');
+const path = require('path');
 
-if [ -x "/usr/local/bin/llxprt" ]; then
-  exec /usr/local/bin/llxprt "$@"
-elif command -v llxprt >/dev/null 2>&1; then
-  exec llxprt "$@"
-else
-  echo "ERROR: llxprt not found in /usr/local/bin or PATH" >&2
-  echo "PATH=$PATH" >&2
-  echo "Available in /usr/local/bin:" >&2
-  ls -la /usr/local/bin/ | grep -i llxprt >&2 || echo "  (none found)" >&2
-  exit 127
-fi
+const llxprtPath = '/usr/local/bin/llxprt';
+const child = spawn(llxprtPath, process.argv.slice(2), {
+  stdio: 'inherit',
+  env: process.env
+});
+
+child.on('exit', (code) => {
+  process.exit(code || 0);
+});
