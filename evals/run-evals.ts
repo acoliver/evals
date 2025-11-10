@@ -456,7 +456,8 @@ class UnifiedRunner {
             cwd: workdir,
             encoding: 'utf8',
             timeout: commandDefinition.timeout,
-            env
+            env,
+            input: prompt
           }
         );
 
