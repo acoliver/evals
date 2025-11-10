@@ -182,7 +182,28 @@ class EvaluationLoader {
   private evalsPath: string;
 
   constructor() {
-    this.evalsPath = '/home/acoliver/projects/sitandevals/evals/problems';
+    // Use multiple fallback paths for problems directory
+    const possiblePaths = [
+      join(__dirname, '..', '..', 'problems'),
+      join(__dirname, '..', 'problems'),
+      resolve(__dirname, '..', '..', '..', 'problems'),
+      resolve(__dirname, '..', '..', '..', 'evals', 'problems'),
+    ];
+    
+    let foundPath = '';
+    for (const path of possiblePaths) {
+      if (existsSync(path)) {
+        foundPath = path;
+        break;
+      }
+    }
+    
+    if (foundPath) {
+      this.evalsPath = foundPath;
+    } else {
+      // Fallback to hardcoded path if none found
+      this.evalsPath = join(__dirname, '..', '..', 'problems');
+    }
   }
 
   getAllEvaluations(): string[] {
