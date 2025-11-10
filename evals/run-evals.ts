@@ -458,7 +458,7 @@ class UnifiedRunner {
     workdir: string
   ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
     return new Promise((resolve) => {
-      const env = { ...process.env };
+      const env = { ...process.env, DEBUG: 'llxprt:*' };
 
       // Process all arguments, resolving environment variables
       const processedArgs = Promise.all(
@@ -487,9 +487,12 @@ class UnifiedRunner {
           }
         );
 
+        let finalStderr = child.stderr || '';
+        try { const files = readdirSync('/tmp'); const errorFiles = files.filter(f => f.includes('llxprt-client-error')); for (const file of errorFiles) { try { const content = readFileSync(join('/tmp', file), 'utf8'); finalStderr = finalStderr + ' ERROR_REPORT: ' + file + ' ' + content; } catch (e) {} } } catch (e) {}
+
         resolve({
           stdout: child.stdout || '',
-          stderr: child.stderr || '',
+          stderr: finalStderr,
           exitCode: child.status || 0
         });
       }).catch(error => {
