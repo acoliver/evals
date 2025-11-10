@@ -464,7 +464,11 @@ class UnifiedRunner {
     workdir: string
   ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
     return new Promise((resolve) => {
-      const env = { ...process.env, DEBUG: 'llxprt:*' };
+      const env = { 
+        ...process.env, 
+        DEBUG: 'llxprt:*',
+        OPENAI_API_KEY: process.env.CEREBRAS_KEY || process.env.SYNTHETIC_KEY || process.env.ZAI_KEY || process.env.OPENAI_API_KEY
+      };
 
       // Process all arguments, resolving environment variables
       const processedArgs = Promise.all(
