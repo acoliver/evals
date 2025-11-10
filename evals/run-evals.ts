@@ -441,7 +441,7 @@ class UnifiedRunner {
 
       processedArgs.then(args => {
         const commandDefinition: CommandDefinition = {
-          command: config.cli,
+          command: config.cli.startsWith('/') ? config.cli : join(__dirname, '..', config.cli),
           args,
           timeout: config.timeout
         };
