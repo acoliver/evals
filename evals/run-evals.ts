@@ -573,7 +573,13 @@ class UnifiedRunner {
   private async archiveWorkspace(workdir: string, passNumber: number): Promise<string> {
     const archivePath = join(this.repoRoot, 'evals', 'outputs', `workspace-${passNumber}-${Date.now()}`);
     if (existsSync(workdir)) {
-      await cp(workdir, archivePath, { recursive: true });
+      await cp(workdir, archivePath, { 
+        recursive: true,
+        filter: (source) => {
+          // Skip node_modules to avoid symlink copy issues
+          return !source.includes('node_modules');
+        }
+      });
     }
     return archivePath;
   }
