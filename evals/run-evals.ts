@@ -114,8 +114,8 @@ class ConfigurationManager {
 
   constructor() {
     try {
-      // Use a hardcoded path based on actual file locations
-      const configPath = '/home/acoliver/projects/sitandevals/evals/evals/config/cli-config.json';
+      // Use a path relative to the script location
+      const configPath = join(__dirname, 'config', 'cli-config.json');
       
       if (!existsSync(configPath)) {
         console.error(`Config file not found at: ${configPath}`);
