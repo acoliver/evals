@@ -10,7 +10,7 @@ import { createHash } from 'crypto';
 import { VybesScoringEngine, VybesResult, VybesTaskConfig } from './vybes.js';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(import.meta.url);
+const __dirname = dirname(__filename);
 
 interface EnvArgConfig {
   env: string;
@@ -114,10 +114,23 @@ class ConfigurationManager {
 
   constructor() {
     try {
-      // Use a path relative to the script location
-      const configPath = join(__dirname, 'config', 'cli-config.json');
+      // Use multiple fallback paths for config file
+      const possiblePaths = [
+        join(__dirname, 'config', 'cli-config.json'),
+        join(__dirname, '..', 'config', 'cli-config.json'),
+        resolve(__dirname, '..', '..', 'config', 'cli-config.json'),
+        resolve(__dirname, '..', '..', '..', 'evals', 'config', 'cli-config.json'),
+      ];
       
-      if (!existsSync(configPath)) {
+      let configPath = '';
+      for (const path of possiblePaths) {
+        if (existsSync(path)) {
+          configPath = path;
+          break;
+        }
+      }
+      
+      if (!configPath) {
         console.error(`Config file not found at: ${configPath}`);
         console.error('File exists check:', existsSync(configPath));
         throw new Error(`Config file not found: ${configPath}`);
