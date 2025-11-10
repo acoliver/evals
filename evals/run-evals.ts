@@ -440,9 +440,15 @@ class UnifiedRunner {
   private async applyRemediation(workspaceArchive: string, targetDir: string): Promise<void> {
     // This is a placeholder - in a real implementation, you'd extract the previous workspace
     // and apply remediation changes based on the failure analysis
-    // For now, we'll just copy the previous workspace
+    // For now, we'll just copy the previous workspace, skipping node_modules to avoid symlink issues
     if (existsSync(workspaceArchive)) {
-      await cp(workspaceArchive, targetDir, { recursive: true });
+      await cp(workspaceArchive, targetDir, { 
+        recursive: true,
+        filter: (source) => {
+          // Skip node_modules to avoid symlink copy issues
+          return !source.includes('node_modules');
+        }
+      });
     }
   }
 
