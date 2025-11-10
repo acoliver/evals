@@ -431,9 +431,15 @@ class UnifiedRunner {
     // Only copy the workspace subdirectory if it exists, not the entire eval directory
     const workspaceSourceDir = join(sourceDir, 'workspace');
     if (existsSync(workspaceSourceDir)) {
-      await cp(workspaceSourceDir, targetDir, { recursive: true });
+      await cp(workspaceSourceDir, targetDir, { 
+        recursive: true,
+        filter: (source) => !source.includes('node_modules')
+      });
     } else {
-      await cp(sourceDir, targetDir, { recursive: true });
+      await cp(sourceDir, targetDir, { 
+        recursive: true,
+        filter: (source) => !source.includes('node_modules')
+      });
     }
   }
 
