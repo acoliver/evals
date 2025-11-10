@@ -345,9 +345,9 @@ class UnifiedRunner {
         // Run grading
         const gradeResults = await this.runGrading(evalConfig.grading, workdir, config.args);
 
-        // Save artifacts
+        // Save artifacts including llxprt output
         const workspaceArchive = await this.archiveWorkspace(workdir, pass);
-        const resultsArchive = await this.archiveGradingResults(workdir, gradeResults);
+        const resultsArchive = await this.archiveGradingResults(workdir, gradeResults, executionResult);
 
         const passDuration = Date.now() - passStartTime;
         const passed = gradeResults.every(result => result.success === true);
@@ -586,10 +586,22 @@ class UnifiedRunner {
 
   private async archiveGradingResults(
     workdir: string,
-    gradeResults: { label: string; stdout: string; stderr: string; success: boolean }[]
+    gradeResults: { label: string; stdout: string; stderr: string; success: boolean }[],
+    executionResult?: { stdout: string; stderr: string; exitCode: number }
   ): Promise<string> {
     const outputsDir = join(workdir, '.eval-outputs');
     mkdirSync(outputsDir, { recursive: true });
+
+    // Save llxprt/CLI execution outputs
+    if (executionResult) {
+      if (executionResult.stdout) {
+        await writeFile(join(outputsDir, 'llxprt-stdout.txt'), executionResult.stdout, 'utf8');
+      }
+      if (executionResult.stderr) {
+        await writeFile(join(outputsDir, 'llxprt-stderr.txt'), executionResult.stderr, 'utf8');
+      }
+      await writeFile(join(outputsDir, 'llxprt-exitcode.txt'), String(executionResult.exitCode), 'utf8');
+    }
 
     // Save grade step outputs
     for (let i = 0; i < gradeResults.length; i++) {
