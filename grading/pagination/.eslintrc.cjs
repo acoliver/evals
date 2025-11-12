@@ -1,11 +1,11 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const preferredWorkspaceRoot = path.resolve(__dirname, 'workspace');
-const fallbackWorkspaceRoot = path.resolve(__dirname, '../../problems/pagination/workspace');
-const workspaceRoot = fs.existsSync(preferredWorkspaceRoot)
-  ? preferredWorkspaceRoot
-  : fallbackWorkspaceRoot;
+const workspaceRoot = path.join(__dirname, 'workspace');
+const workspaceTsconfig = ['tsconfig.eslint.json', 'tsconfig.json']
+  .map(filename => path.join(workspaceRoot, filename))
+  .find(file => fs.existsSync(file))
+  || path.join(workspaceRoot, 'tsconfig.json');
 
 module.exports = {
   root: true,
@@ -13,8 +13,8 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 'latest',
     sourceType: 'module',
-    project: path.join(__dirname, 'tsconfig.json'),
-    tsconfigRootDir: __dirname
+    project: workspaceTsconfig,
+    tsconfigRootDir: workspaceRoot
   },
   plugins: ['@typescript-eslint', 'react-hooks'],
   extends: [

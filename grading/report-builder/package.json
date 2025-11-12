@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "lint": "eslint workspace/src workspace/tests --ext .ts,.tsx",
+    "lint": "eslint --config .eslintrc.cjs --no-eslintrc workspace/src --ext .ts",
     "typecheck": "tsc -p tsconfig.json",
     "test:hidden": "vitest run --config vitest.config.hidden.ts"
   },

@@ -1,8 +1,8 @@
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, readdirSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, readdirSync, accessSync, constants, statSync, symlinkSync, lstatSync } from 'fs';
 import { copyFile, readdir, readFile, writeFile, rm, cp, mkdtemp } from 'fs/promises';
-import { resolve, join, basename } from 'path';
+import { resolve, join, basename, delimiter } from 'path';
 import { spawnSync } from 'child_process';
 import { v4 as uuidv4 } from 'uuid';
 import { execSync } from 'child_process';
@@ -36,6 +36,82 @@ interface Configuration {
 
 const SENSITIVE_FLAGS = new Set(['--key', '--keyfile', '--auth-key', '--auth-keyfile']);
 const SENSITIVE_VALUE_SUBSTRINGS = ['key=', 'token=', 'secret=', 'authorization='];
+const MIN_AGENT_TIMEOUT_MS = 15 * 60 * 1000;
+
+function isExecutable(filePath: string): boolean {
+  try {
+    const stats = statSync(filePath);
+    if (!stats.isFile()) {
+      return false;
+    }
+    if (process.platform !== 'win32') {
+      accessSync(filePath, constants.X_OK);
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function findExecutable(command: string): string | null {
+  if (!command) {
+    return null;
+  }
+
+  if (command.includes('/') || command.includes('\\')) {
+    return isExecutable(command) ? command : null;
+  }
+
+  const pathEnv = process.env.PATH || '';
+  for (const segment of pathEnv.split(delimiter)) {
+    if (!segment) {
+      continue;
+    }
+    const candidate = join(segment, command);
+    if (isExecutable(candidate)) {
+      return candidate;
+    }
+
+    if (process.platform === 'win32') {
+      const extensions = ['.exe', '.cmd', '.bat', '.ps1'];
+      for (const ext of extensions) {
+        const winCandidate = candidate + ext;
+        if (isExecutable(winCandidate)) {
+          return winCandidate;
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+function resolveCliCommand(cli: string): string {
+  const candidates: (string | undefined)[] = [];
+
+  if (cli === 'llxprt') {
+    candidates.push(process.env.LLXPRT_PATH, process.env.LLXPRT_BIN);
+  }
+
+  if (cli.startsWith('/')) {
+    candidates.push(cli);
+  } else {
+    candidates.push(join(__dirname, '..', cli));
+  }
+
+  const pathResolved = findExecutable(cli);
+  if (pathResolved) {
+    candidates.push(pathResolved);
+  }
+
+  for (const candidate of candidates) {
+    if (candidate && isExecutable(candidate)) {
+      return candidate;
+    }
+  }
+
+  return candidates.find(Boolean) || cli;
+}
 
 interface CommandDefinition {
   command: string;
@@ -293,9 +369,31 @@ class UnifiedRunner {
       throw new Error(`Unknown evaluation: ${evalName}`);
     }
 
+    const basePromptContent = readFileSync(evalConfig.prompt, 'utf8');
+
     const uniqueId = uuidv4();
     const workdir = join(this.repoRoot, 'evals', 'outputs', `${evalName}-${new Date().toISOString().replace(/[:.]/g, '-')}-${uniqueId}`);
     mkdirSync(workdir, { recursive: true });
+
+    const remediationNotes: string[] = [];
+    const addRemediationNotes = (passNumber: number, notes: string[]) => {
+      if (!notes || notes.length === 0) {
+        return;
+      }
+      const filtered = notes
+        .map(note => note?.trim())
+        .filter((note): note is string => Boolean(note && note.length > 0));
+      if (filtered.length === 0) {
+        return;
+      }
+      for (const note of filtered) {
+        remediationNotes.push(`Pass ${passNumber}: ${note}`);
+      }
+      const MAX_NOTES = 10;
+      if (remediationNotes.length > MAX_NOTES) {
+        remediationNotes.splice(0, remediationNotes.length - MAX_NOTES);
+      }
+    };
 
     try {
       for (let pass = 1; pass <= this.maxPasses; pass++) {
@@ -312,8 +410,11 @@ class UnifiedRunner {
           await this.applyRemediation(passes[passes.length - 1].workspaceArchive || '', workdir);
         }
 
-        // Read the prompt
-        const promptContent = readFileSync(evalConfig.prompt, 'utf8');
+        // Build prompt with remediation context if available
+        const remediationContext = remediationNotes.length > 0
+          ? `\n\n## Previous Attempt Feedback\nYou previously attempted this task. Address each item before finishing:\n${remediationNotes.map(note => `- ${note}`).join('\n')}\n\nAlways rerun the requested npm commands (typecheck, lint, test:public, start) before exiting.\n`
+          : '';
+        const promptContent = `${basePromptContent}${remediationContext}`;
 
         // Execute CLI tool
         const executionResult = await this.executeCliWithTimeout(
@@ -336,18 +437,48 @@ class UnifiedRunner {
           console.log(`     --- EXIT CODE ---`);
           console.log(executionResult.exitCode);
           
+          await this.archiveGradingResults(workdir, [], executionResult);
+          const earlyWorkspaceArchive = await this.archiveWorkspace(workdir, pass);
+          const earlyResultsArchive = join(earlyWorkspaceArchive, '.eval-outputs');
+          const earlySavedOutputs = earlyResultsArchive;
+          if (existsSync(earlySavedOutputs)) {
+            console.log(`  → Archived CLI/build/grade outputs to ${earlySavedOutputs}`);
+          }
+
+          addRemediationNotes(pass, this.buildQuickExitNotes(executionResult, executionDurationSec, outputLength));
+
+          passes.push({
+            passNumber: pass,
+            duration: Date.now() - passStartTime,
+            success: false,
+            workspaceArchive: earlyWorkspaceArchive,
+            resultsArchive: earlyResultsArchive
+          });
+          
           if (pass === 1) {
             console.log(`     Stopping multi-pass attempts - please fix the configuration`);
             break;
           }
+
+          continue;
         }
 
         // Run grading
         const gradeResults = await this.runGrading(evalConfig.grading, workdir, config.args);
 
         // Save artifacts including llxprt output
+        await this.archiveGradingResults(workdir, gradeResults, executionResult);
         const workspaceArchive = await this.archiveWorkspace(workdir, pass);
-        const resultsArchive = await this.archiveGradingResults(workdir, gradeResults, executionResult);
+        const resultsArchive = join(workspaceArchive, '.eval-outputs');
+        if (existsSync(resultsArchive)) {
+          console.log(`  → Archived CLI/build/grade outputs to ${resultsArchive}`);
+        }
+
+        const harnessIssue = this.detectHarnessIssue(gradeResults);
+        const failureNotes = harnessIssue ? [] : this.buildFailureNotes(gradeResults, executionResult);
+        if (failureNotes.length > 0) {
+          addRemediationNotes(pass, failureNotes);
+        }
 
         const passDuration = Date.now() - passStartTime;
         const passed = gradeResults.every(result => result.success === true);
@@ -373,6 +504,11 @@ class UnifiedRunner {
           console.log(`   → Generating remediation and trying again...`);
         } else {
           console.log(`    FAILED after ${pass} passes`);
+        }
+
+        if (harnessIssue) {
+          console.log(`   Detected grading harness issue (${harnessIssue}) – stopping further passes until it is resolved.`);
+          break;
         }
       }
     } catch (error) {
@@ -476,15 +612,31 @@ class UnifiedRunner {
       );
 
       processedArgs.then(args => {
-        const resolvedCommand = config.cli.startsWith('/') ? config.cli : join(__dirname, '..', config.cli);
-        const actualCommand = resolvedCommand.endsWith('llxprt') && !resolvedCommand.startsWith('/usr/') 
-          ? '/usr/local/bin/llxprt' 
-          : resolvedCommand;
-        
+        const finalArgs = [...args];
+        const promptPrefixText = config.promptPrefix ? `${config.promptPrefix.trim()}\n\n` : '';
+        const finalPrompt = `${promptPrefixText}${prompt}`;
+        const promptFlagExists = finalArgs.some(arg => arg === '--prompt' || arg === '-p');
+        let stdinInput: string | undefined;
+        if (promptFlagExists) {
+          stdinInput = finalPrompt;
+        } else {
+          finalArgs.push('--prompt');
+          finalArgs.push(finalPrompt);
+        }
+
+        const augmentedEnv = { ...env };
+        const baseurlFlagIndex = finalArgs.indexOf('--baseurl');
+        if (baseurlFlagIndex >= 0 && baseurlFlagIndex + 1 < finalArgs.length) {
+          augmentedEnv.OPENAI_BASE_URL = finalArgs[baseurlFlagIndex + 1];
+        }
+
+        const resolvedCommand = resolveCliCommand(config.cli);
+        const effectiveTimeout = Math.max(config.timeout ?? 0, MIN_AGENT_TIMEOUT_MS);
+
         const commandDefinition: CommandDefinition = {
-          command: actualCommand,
-          args,
-          timeout: config.timeout
+          command: resolvedCommand,
+          args: finalArgs,
+          timeout: effectiveTimeout
         };
 
         const maskedCommand = maskSensitiveValues(commandDefinition);
@@ -497,18 +649,32 @@ class UnifiedRunner {
             cwd: workdir,
             encoding: 'utf8',
             timeout: commandDefinition.timeout,
-            env,
-            input: prompt
+            env: augmentedEnv,
+            input: stdinInput
           }
         );
 
         let finalStderr = child.stderr || '';
         try { const files = readdirSync('/tmp'); const errorFiles = files.filter(f => f.includes('llxprt-client-error')); for (const file of errorFiles) { try { const content = readFileSync(join('/tmp', file), 'utf8'); finalStderr = finalStderr + ' ERROR_REPORT: ' + file + ' ' + content; } catch (e) {} } } catch (e) {}
 
+        if (child.error) {
+          const errorMessage = `Error executing ${commandDefinition.command}: ${child.error.message}`;
+          finalStderr = finalStderr ? `${finalStderr}\n${errorMessage}` : errorMessage;
+        }
+
+        if (child.signal) {
+          const signalMessage = `Process terminated with signal ${child.signal}`;
+          finalStderr = finalStderr ? `${finalStderr}\n${signalMessage}` : signalMessage;
+        }
+
+        const exitCode = typeof child.status === 'number'
+          ? child.status
+          : (child.error || child.signal ? 1 : 0);
+
         resolve({
           stdout: child.stdout || '',
           stderr: finalStderr,
-          exitCode: child.status || 0
+          exitCode
         });
       }).catch(error => {
         console.error(`Error processing CLI arguments:`, error);
@@ -524,65 +690,147 @@ class UnifiedRunner {
   private async runGrading(
     gradingDir: string,
     workdir: string,
-    cliArgs: ArgValue[]
+    _cliArgs: ArgValue[]
   ): Promise<{ label: string; stdout: string; stderr: string; success: boolean }[]> {
+    const results: { label: string; stdout: string; stderr: string; success: boolean }[] = [];
+
+    const runNpmCommand = (
+      cwd: string,
+      args: string[],
+      label: string,
+      timeout = 120000
+    ) => {
+      const cmdResult = spawnSync(
+        'npm',
+        args,
+        {
+          cwd,
+          encoding: 'utf8',
+          timeout,
+          env: { ...process.env }
+        }
+      );
+
+      let stderrOutput = cmdResult.stderr || '';
+      if (cmdResult.error) {
+        const errorMessage = `Command failed: ${cmdResult.error.message}`;
+        stderrOutput = stderrOutput ? `${stderrOutput}\n${errorMessage}` : errorMessage;
+      }
+      if (cmdResult.signal) {
+        const signalMessage = `Process terminated with signal ${cmdResult.signal}`;
+        stderrOutput = stderrOutput ? `${stderrOutput}\n${signalMessage}` : signalMessage;
+      }
+
+      const exitCode = typeof cmdResult.status === 'number'
+        ? cmdResult.status
+        : (cmdResult.error || cmdResult.signal ? 1 : 0);
+
+      const wrapped = {
+        label,
+        stdout: cmdResult.stdout || '',
+        stderr: stderrOutput,
+        success: exitCode === 0
+      };
+
+      results.push(wrapped);
+      return wrapped;
+    };
+
+    const ensureDependencies = (cwd: string, label: string) => {
+      if (!existsSync(join(cwd, 'package.json'))) {
+        return;
+      }
+      if (existsSync(join(cwd, 'node_modules'))) {
+        return;
+      }
+      console.log(`     Installing npm dependencies in ${cwd}`);
+      runNpmCommand(cwd, ['install'], label, 180000);
+    };
+
+    const runScriptsIfAvailable = (
+      cwd: string,
+      packageJson: Record<string, any> | null,
+      scripts: string[],
+      labelPrefix: string
+    ) => {
+      if (!packageJson?.scripts) {
+        return;
+      }
+
+      for (const script of scripts) {
+        if (!packageJson.scripts[script]) {
+          continue;
+        }
+        console.log(`     Running ${labelPrefix} ${script} in ${cwd}`);
+        runNpmCommand(cwd, ['run', script], `${labelPrefix}-${script}`);
+      }
+    };
+
+    // Workspace-level commands
+    const workspacePackageJsonPath = join(workdir, 'package.json');
+    const workspacePackageJson = existsSync(workspacePackageJsonPath)
+      ? JSON.parse(readFileSync(workspacePackageJsonPath, 'utf8'))
+      : null;
+
+    if (workspacePackageJson) {
+      ensureDependencies(workdir, 'workspace-install');
+      runScriptsIfAvailable(
+        workdir,
+        workspacePackageJson,
+        ['typecheck', 'lint', 'test:public', 'build', 'test'],
+        'workspace'
+      );
+    } else {
+      results.push({
+        label: 'workspace',
+        stdout: '',
+        stderr: 'No package.json found in workspace',
+        success: false
+      });
+    }
+
+    // Grading-level commands
     if (!existsSync(gradingDir)) {
-      return [{
-        label: 'gradle',
+      results.push({
+        label: 'grading',
         stdout: '',
         stderr: 'No grading configuration found',
         success: false
-      }];
+      });
+      return results;
     }
 
-    const results: { label: string; stdout: string; stderr: string; success: boolean }[] = [];
+    const workspaceLinkPath = join(gradingDir, 'workspace');
+    let workspaceLinked = false;
 
-    // Look for package.json in the grading directory
-    const packageJsonPath = join(gradingDir, 'package.json');
-    if (existsSync(packageJsonPath)) {
-      console.log(`     Running npm test in ${gradingDir}`);
-      
-      const testResult = spawnSync(
-        'npm',
-        ['test'],
-        {
-          cwd: gradingDir,
-          encoding: 'utf8',
-          timeout: 30000,
-          env: { ...process.env }
-        }
-      );
+    try {
+      workspaceLinked = this.ensureGradingWorkspaceLink(workspaceLinkPath, workdir);
 
-      results.push({
-        label: 'test',
-        stdout: testResult.stdout || '',
-        stderr: testResult.stderr || '',
-        success: (testResult.status || 0) === 0
-      });
-    }
+      const gradingPackageJsonPath = join(gradingDir, 'package.json');
+      const gradingPackageJson = existsSync(gradingPackageJsonPath)
+        ? JSON.parse(readFileSync(gradingPackageJsonPath, 'utf8'))
+        : null;
 
-    // Look for build scripts
-    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
-    if (packageJson.scripts?.build) {
-      console.log(`     Running npm build in ${gradingDir}`);
-      
-      const buildResult = spawnSync(
-        'npm',
-        ['run', 'build'],
-        {
-          cwd: gradingDir,
-          encoding: 'utf8',
-          timeout: 30000,
-          env: { ...process.env }
-        }
-      );
-
-      results.push({
-        label: 'build',
-        stdout: buildResult.stdout || '',
-        stderr: buildResult.stderr || '',
-        success: (buildResult.status || 0) === 0
-      });
+      if (gradingPackageJson) {
+        ensureDependencies(gradingDir, 'grading-install');
+        runScriptsIfAvailable(
+          gradingDir,
+          gradingPackageJson,
+          ['lint', 'typecheck', 'test:hidden', 'test', 'build'],
+          'grading'
+        );
+      } else {
+        results.push({
+          label: 'grading',
+          stdout: '',
+          stderr: 'No grading package.json found',
+          success: false
+        });
+      }
+    } finally {
+      if (workspaceLinked) {
+        this.cleanupGradingWorkspaceLink(workspaceLinkPath);
+      }
     }
 
     return results;
@@ -635,6 +883,118 @@ class UnifiedRunner {
 
     console.log(`  → Saved CLI/build/grade outputs to ${outputsDir}`);
     return outputsDir;
+  }
+
+  private ensureGradingWorkspaceLink(linkPath: string, targetPath: string): boolean {
+    try {
+      if (existsSync(linkPath)) {
+        const linkStats = lstatSync(linkPath);
+        if (linkStats.isSymbolicLink() || linkStats.isDirectory()) {
+          rmSync(linkPath, { recursive: true, force: true });
+        }
+      }
+
+      const symlinkType = process.platform === 'win32' ? 'junction' : 'dir';
+      symlinkSync(targetPath, linkPath, symlinkType);
+      return true;
+    } catch (error) {
+      console.warn(`     Warning: failed to link grading workspace (${linkPath} -> ${targetPath}):`, error);
+      return false;
+    }
+  }
+
+  private cleanupGradingWorkspaceLink(linkPath: string): void {
+    try {
+      if (existsSync(linkPath)) {
+        rmSync(linkPath, { recursive: true, force: true });
+      }
+    } catch (error) {
+      console.warn(`     Warning: failed to remove grading workspace link ${linkPath}:`, error);
+    }
+  }
+
+  private buildFailureNotes(
+    gradeResults: { label: string; stdout: string; stderr: string; success: boolean }[],
+    executionResult?: { stdout: string; stderr: string; exitCode: number }
+  ): string[] {
+    const notes: string[] = [];
+
+    if (executionResult && executionResult.exitCode !== 0) {
+      notes.push(
+        `Command exited with status ${executionResult.exitCode}. Recent output: ${this.sanitizeFailureSnippet(executionResult.stderr || executionResult.stdout)}`
+      );
+    }
+
+    const failingSteps = gradeResults.filter(result => result.success === false);
+    for (const step of failingSteps) {
+      const friendlyLabel = this.getFriendlyStepName(step.label || 'step');
+      notes.push(
+        `${friendlyLabel} failed. Recent output: ${this.sanitizeFailureSnippet(step.stderr || step.stdout)}`
+      );
+    }
+
+    if (notes.length === 0 && gradeResults.length > 0) {
+      notes.push('Evaluation failed but no specific step reported errors. Inspect the saved .eval-outputs logs for details.');
+    }
+
+    return notes;
+  }
+
+  private buildQuickExitNotes(
+    executionResult: { stdout: string; stderr: string; exitCode: number },
+    durationSeconds: number,
+    outputLength: number
+  ): string[] {
+    const note = `Command exited after ${durationSeconds.toFixed(1)}s with ${outputLength} characters of output (exit ${executionResult.exitCode}). Recent output: ${this.sanitizeFailureSnippet(executionResult.stderr || executionResult.stdout)}`;
+    return [note];
+  }
+
+  private sanitizeFailureSnippet(text?: string, maxLines = 4): string {
+    if (!text) {
+      return '(see logs)';
+    }
+
+    const filtered = text
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .filter(line => !line.toLowerCase().includes('see the typescript-eslint docs'))
+      .filter(line => !/^https?:\/\//i.test(line))
+      .map(line => line.replace(/tests\/hidden/gi, 'tests'));
+
+    const snippet = filtered.slice(-maxLines).join(' | ');
+    return snippet.length > 400 ? snippet.slice(-400) : (snippet || '(see logs)');
+  }
+
+  private getFriendlyStepName(label: string): string {
+    const map: Record<string, string> = {
+      'workspace-lint': 'lint',
+      'grading-lint': 'lint',
+      'workspace-typecheck': 'typecheck',
+      'grading-typecheck': 'typecheck',
+      'workspace-test:public': 'tests',
+      'grading-test:hidden': 'tests',
+      'workspace-build': 'build'
+    };
+    if (map[label]) {
+      return map[label];
+    }
+    return label.replace(/^workspace-/, '').replace(/^grading-/, '');
+  }
+
+  private detectHarnessIssue(
+    gradeResults: { label: string; stdout: string; stderr: string; success: boolean }[]
+  ): string | null {
+    for (const result of gradeResults) {
+      if (result.label !== 'grading-lint') {
+        continue;
+      }
+      const text = (result.stderr || result.stdout || '').toLowerCase();
+      if (text.includes('tsconfig.eslint') || text.includes('cannot read file') || text.includes('parseroptions.project')) {
+        return 'lint configuration issue';
+      }
+    }
+    return null;
   }
 }
 

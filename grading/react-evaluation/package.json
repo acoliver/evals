@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "lint": "eslint workspace/src tests --ext .ts",
+    "lint": "eslint --config .eslintrc.cjs --no-eslintrc workspace/src workspace/tests --ext .ts",
     "typecheck": "tsc -p tsconfig.json",
     "test:hidden": "vitest run --config vitest.config.hidden.ts"
   },

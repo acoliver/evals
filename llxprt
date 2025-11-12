@@ -1,14 +1,78 @@
 #!/usr/bin/env node
-// Wrapper for llxprt - just call the actual binary directly
-const { spawn } = require('child_process');
-const path = require('path');
+// Wrapper for llxprt that locates the actual binary dynamically.
+import { spawn } from 'child_process';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 
-const llxprtPath = '/usr/local/bin/llxprt';
+const SCRIPT_PATH = path.resolve(fileURLToPath(import.meta.url));
+const PATH_EXTENSIONS = process.platform === 'win32' ? ['.exe', '.cmd', '.bat', '.ps1'] : [''];
+
+const seenCandidates = new Set();
+const candidates = [];
+
+function addCandidate(candidate) {
+  if (!candidate) {
+    return;
+  }
+  const resolved = path.resolve(candidate);
+  if (resolved === SCRIPT_PATH) {
+    return;
+  }
+  if (!seenCandidates.has(resolved)) {
+    seenCandidates.add(resolved);
+    candidates.push(resolved);
+  }
+}
+
+function isExecutable(filePath) {
+  try {
+    const stats = fs.statSync(filePath);
+    if (!stats.isFile()) {
+      return false;
+    }
+    if (process.platform !== 'win32') {
+      fs.accessSync(filePath, fs.constants.X_OK);
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+addCandidate(process.env.LLXPRT_PATH);
+addCandidate(process.env.LLXPRT_BIN);
+addCandidate('/usr/local/bin/llxprt');
+addCandidate('/opt/homebrew/bin/llxprt');
+
+const pathEntries = (process.env.PATH || '').split(path.delimiter);
+for (const entry of pathEntries) {
+  if (!entry) {
+    continue;
+  }
+  for (const ext of PATH_EXTENSIONS) {
+    const candidate = path.join(entry, `llxprt${ext}`);
+    addCandidate(candidate);
+  }
+}
+
+const llxprtPath = candidates.find(isExecutable);
+
+if (!llxprtPath) {
+  console.error('Unable to locate the llxprt executable. Set LLXPRT_PATH or install the CLI on your PATH.');
+  process.exit(1);
+}
+
 const child = spawn(llxprtPath, process.argv.slice(2), {
   stdio: 'inherit',
   env: process.env
 });
 
 child.on('exit', (code) => {
-  process.exit(code || 0);
+  process.exit(typeof code === 'number' ? code : 1);
+});
+
+child.on('error', (error) => {
+  console.error(`Failed to launch llxprt: ${error.message}`);
+  process.exit(1);
 });

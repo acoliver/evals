@@ -4,19 +4,39 @@
       "cli": "llxprt",
       "name": "LLxprt Cerebras GLM 4.6",
       "description": "LLxprt using GLM 4.6 via ZAI proxy through Cerebras API",
+      "promptPrefix": "SYSTEM INSTRUCTIONS: You are the LLxprt autonomous coding agent operating inside a checked-out repository. You MUST interact with the workspace exclusively through the LLxprt tools: list_directory, read_file, read_line_range, write_file, replace, insert_at_line, delete_line_range, run_shell_command, npm scripts, search_file_content, todo_* helpers, etc. Begin by calling list_directory on the workspace root, then inspect files with read_file before editing. Use run_shell_command for npm install/test runs. Never stop after providing a plan—take concrete tool actions until the task is either solved or no further progress can be made. Always run the requested npm commands (typecheck, lint, test:public, start) before finishing.",
       "args": [
         "--provider",
-        { "env": "CEREBRAS_PROVIDER", "default": "openai" },
+        {
+          "env": "CEREBRAS_PROVIDER",
+          "default": "openai"
+        },
         "--baseurl",
-        { "env": "CEREBRAS_BASEURL", "default": "https://api.cerebras.ai/v1" },
+        {
+          "env": "CEREBRAS_BASEURL",
+          "default": "https://api.cerebras.ai/v1"
+        },
         "--key",
-        { "env": "CEREBRAS_KEY", "required": true, "sensitive": true },
+        {
+          "env": "CEREBRAS_KEY",
+          "required": true,
+          "sensitive": true
+        },
         "--model",
-        { "env": "CEREBRAS_MODEL", "default": "zai-glm-4.6" },
+        {
+          "env": "CEREBRAS_MODEL",
+          "default": "zai-glm-4.6"
+        },
         "--set",
-        { "env": "CEREBRAS_CONTEXT_LIMIT", "default": "context-limit=121000" },
+        {
+          "env": "CEREBRAS_CONTEXT_LIMIT",
+          "default": "context-limit=121000"
+        },
         "--set",
-        { "env": "CEREBRAS_SHELL_REPLACEMENT", "default": "shell-replacement=true" },
+        {
+          "env": "CEREBRAS_SHELL_REPLACEMENT",
+          "default": "shell-replacement=true"
+        },
         "--set",
         "modelparam.temperature=1",
         "--set",
@@ -29,19 +49,41 @@
       "cli": "llxprt",
       "name": "LLxprt Synthetic GLM 4.6",
       "description": "LLxprt running the Synthetic GLM-4.6 stack via explicit CLI arguments",
+      "promptPrefix": "SYSTEM INSTRUCTIONS: You are the LLxprt autonomous coding agent operating inside a checked-out repository. You MUST interact with the workspace exclusively through the LLxprt tools: list_directory, read_file, read_line_range, write_file, replace, insert_at_line, delete_line_range, run_shell_command, npm scripts, search_file_content, todo_* helpers, etc. Begin by calling list_directory on the workspace root, then inspect files with read_file before editing. Use run_shell_command for npm install/test runs. Never stop after providing a plan—take concrete tool actions until the task is either solved or no further progress can be made. Always run the requested npm commands (typecheck, lint, test:public, start) before finishing.",
       "args": [
         "--provider",
-        { "env": "SYNTHETIC_PROVIDER", "default": "openai" },
+        {
+          "env": "SYNTHETIC_PROVIDER",
+          "default": "openai"
+        },
         "--baseurl",
-        { "env": "SYNTHETIC_BASEURL", "default": "https://api.synthetic.new/openai/v1" },
+        {
+          "env": "SYNTHETIC_BASEURL",
+          "default": "https://api.synthetic.new/openai/v1"
+        },
         "--key",
-        { "env": "SYNTHETIC_KEY", "required": true, "sensitive": true },
+        {
+          "env": "SYNTHETIC_KEY",
+          "required": true,
+          "sensitive": true
+        },
         "--model",
-        { "env": "SYNTHETIC_MODEL", "default": "hf:zai-org/GLM-4.6" },
+        {
+          "env": "SYNTHETIC_MODEL",
+          "default": "hf:zai-org/GLM-4.6"
+        },
         "--set",
-        { "env": "SYNTHETIC_CONTEXT_LIMIT", "default": "context-limit=190000" },
+        {
+          "env": "SYNTHETIC_CONTEXT_LIMIT",
+          "default": "context-limit=190000"
+        },
         "--set",
-        { "env": "SYNTHETIC_SHELL_REPLACEMENT", "default": "shell-replacement=true" },
+        {
+          "env": "SYNTHETIC_SHELL_REPLACEMENT",
+          "default": "shell-replacement=true"
+        },
+        "--set",
+        "modelparam.streaming=disabled",
         "--set",
         "modelparam.temperature=1",
         "--set",
@@ -54,19 +96,41 @@
       "cli": "llxprt",
       "name": "LLxprt Synthetic MiniMax M2",
       "description": "LLxprt running the Synthetic stack with MiniMax M2 model",
+      "promptPrefix": "SYSTEM INSTRUCTIONS: You are the LLxprt autonomous coding agent operating inside a checked-out repository. You MUST interact with the workspace exclusively through the LLxprt tools: list_directory, read_file, read_line_range, write_file, replace, insert_at_line, delete_line_range, run_shell_command, npm scripts, search_file_content, todo_* helpers, etc. Begin by calling list_directory on the workspace root, then inspect files with read_file before editing. Use run_shell_command for npm install/test runs. Never stop after providing a plan—take concrete tool actions until the task is either solved or no further progress can be made. Always run the requested npm commands (typecheck, lint, test:public, start) before finishing.",
       "args": [
         "--provider",
-        { "env": "SYNTHETIC_PROVIDER", "default": "openai" },
+        {
+          "env": "SYNTHETIC_PROVIDER",
+          "default": "openai"
+        },
         "--baseurl",
-        { "env": "SYNTHETIC_BASEURL", "default": "https://api.synthetic.new/openai/v1" },
+        {
+          "env": "SYNTHETIC_BASEURL",
+          "default": "https://api.synthetic.new/openai/v1"
+        },
         "--key",
-        { "env": "SYNTHETIC_KEY", "required": true, "sensitive": true },
+        {
+          "env": "SYNTHETIC_KEY",
+          "required": true,
+          "sensitive": true
+        },
         "--model",
-        { "env": "SYNTHETIC_MINIMAX_MODEL", "default": "hf:MiniMaxAI/MiniMax-M2" },
+        {
+          "env": "SYNTHETIC_MINIMAX_MODEL",
+          "default": "hf:MiniMaxAI/MiniMax-M2"
+        },
         "--set",
-        { "env": "SYNTHETIC_CONTEXT_LIMIT", "default": "context-limit=190000" },
+        {
+          "env": "SYNTHETIC_CONTEXT_LIMIT",
+          "default": "context-limit=190000"
+        },
         "--set",
-        { "env": "SYNTHETIC_SHELL_REPLACEMENT", "default": "shell-replacement=true" },
+        {
+          "env": "SYNTHETIC_SHELL_REPLACEMENT",
+          "default": "shell-replacement=true"
+        },
+        "--set",
+        "modelparam.streaming=disabled",
         "--set",
         "modelparam.temperature=1",
         "--set",
@@ -79,19 +143,33 @@
       "cli": "llxprt",
       "name": "LLxprt ZAI GLM 4.6",
       "description": "LLxprt using ZAI GLM 4.6 via ZAI API (Anthropic format)",
+      "promptPrefix": "SYSTEM INSTRUCTIONS: You are the LLxprt autonomous coding agent operating inside a checked-out repository. You MUST interact with the workspace exclusively through the LLxprt tools: list_directory, read_file, read_line_range, write_file, replace, insert_at_line, delete_line_range, run_shell_command, npm scripts, search_file_content, todo_* helpers, etc. Begin by calling list_directory on the workspace root, then inspect files with read_file before editing. Use run_shell_command for npm install/test runs. Never stop after providing a plan—take concrete tool actions until the task is either solved or no further progress can be made. Always run the requested npm commands (typecheck, lint, test:public, start) before finishing.",
       "args": [
         "--provider",
         "anthropic",
         "--baseurl",
         "https://api.z.ai/api/anthropic",
         "--key",
-        { "env": "ZAI_KEY", "required": true, "sensitive": true },
+        {
+          "env": "ZAI_KEY",
+          "required": true,
+          "sensitive": true
+        },
         "--model",
-        { "env": "ZAI_MODEL", "default": "glm-4.6" },
+        {
+          "env": "ZAI_MODEL",
+          "default": "glm-4.6"
+        },
         "--set",
-        { "env": "ZAI_CONTEXT_LIMIT", "default": "context-limit=190000" },
+        {
+          "env": "ZAI_CONTEXT_LIMIT",
+          "default": "context-limit=190000"
+        },
         "--set",
-        { "env": "ZAI_SHELL_REPLACEMENT", "default": "shell-replacement=true" },
+        {
+          "env": "ZAI_SHELL_REPLACEMENT",
+          "default": "shell-replacement=true"
+        },
         "--set",
         "modelparam.temperature=1",
         "--set",
@@ -107,7 +185,9 @@
       "promptPrefix": "/set model zai-glm-4.6",
       "args": [
         "--prompt",
-        { "prompt": true }
+        {
+          "prompt": true
+        }
       ],
       "timeout": 900000
     },
@@ -118,7 +198,9 @@
       "promptPrefix": "/set model synthetic-GLM-4.6",
       "args": [
         "--prompt",
-        { "prompt": true }
+        {
+          "prompt": true
+        }
       ],
       "timeout": 900000
     },
@@ -129,7 +211,9 @@
       "promptPrefix": "/set model synthetic-MiniMax-M2",
       "args": [
         "--prompt",
-        { "prompt": true }
+        {
+          "prompt": true
+        }
       ],
       "timeout": 900000
     },
@@ -140,7 +224,9 @@
       "promptPrefix": "/set model glm-4.6-api",
       "args": [
         "--prompt",
-        { "prompt": true }
+        {
+          "prompt": true
+        }
       ],
       "timeout": 900000
     }
