@@ -9,10 +9,6 @@ Implement a reactive programming system inspired by modern frontend frameworks l
 - Generic type systems
 - State management and coordination
 
-## Source
-
-This exercise is adapted from the React exercise on Exercism (MIT License). Original implementation by the Exercism community.
-
 ## Requirements
 
 ### Core Functions

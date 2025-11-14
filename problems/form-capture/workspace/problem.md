@@ -47,10 +47,10 @@ Build a TypeScript + Express web application that serves a friendly internationa
 - Keep CSS in `public/styles.css`. Ensure the file is non-empty and contains more than a reset.
 
 ### Server Lifecycle
-- The compiled server (`dist/server.js`) must read `process.env.PORT` (default to 3000) and listen on that port.
+- The compiled server (`dist/server.js`) must read `process.env.PORT` (default to 3535) and listen on that port.
 - Provide a way to stop the server gracefully (close Express + DB). Hook into `SIGTERM` so the harness can tear it down.
 
-### Commands To Run Before Finishing
+## Verification Checklist
 ```bash
 npm run lint
 npm run test:public
@@ -58,18 +58,7 @@ npm run typecheck
 npm run build
 ```
 
-## Testing Expectations
-- Public tests will:
-  - Ensure the form renders with all required fields.
-  - Submit a sample payload and verify a redirect to `/thank-you`.
-  - Query SQLite to check data persistence.
-- Hidden tests will:
-  - Submit international postal codes/phone numbers (including Argentine examples) to ensure validation passes.
-  - Confirm invalid emails trigger form errors.
-  - Check that `/thank-you` includes the expected humor and the first name.
-  - Launch the compiled server, perform live requests, and confirm server shutdown works.
-
-Stick to the provided dependencies and configuration files. Creativity in the copy and styling is encouraged—just meet the functional requirements and keep things tasteful (apart from the playful scam warning).
+After the automated checks, launch the compiled server, submit a few realistic forms (including international phone/postal combinations), and hit the `/thank-you` route to make sure the experience feels polished. Stick to the provided dependencies and configuration files. Creativity in the copy and styling is encouraged—just meet the functional requirements and keep things tasteful (apart from the playful scam warning).
 
 ### Constraints
 - **Do not** modify `tsconfig.json`, `package.json`, or the ESLint/Prettier configs.

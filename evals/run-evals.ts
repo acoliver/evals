@@ -32,6 +32,8 @@ interface Configuration {
   args: ArgValue[];
   timeout: number;
   promptPrefix?: string;
+  exec?: boolean;
+  execSubcommand?: string;
 }
 
 const SENSITIVE_FLAGS = new Set(['--key', '--keyfile', '--auth-key', '--auth-keyfile']);
@@ -749,7 +751,12 @@ class UnifiedRunner {
         const finalPrompt = `${promptPrefixText}${prompt}`;
         const promptFlagExists = finalArgs.some(arg => arg === '--prompt' || arg === '-p');
         let stdinInput: string | undefined;
-        if (promptFlagExists) {
+        if (config.exec) {
+          const subcommand = config.execSubcommand || 'exec';
+          finalArgs.unshift(subcommand);
+          finalArgs.push('--');
+          finalArgs.push(finalPrompt);
+        } else if (promptFlagExists) {
           stdinInput = finalPrompt;
         } else {
           finalArgs.push('--prompt');
@@ -775,11 +782,16 @@ class UnifiedRunner {
         const maskedArgsForSummary: string[] = [];
         for (let i = 0; i < maskedCommand.args.length; i++) {
           const arg = maskedCommand.args[i];
-          maskedArgsForSummary.push(arg);
-          if (arg === '--prompt' || arg === '-p') {
+          if (!config.exec && (arg === '--prompt' || arg === '-p')) {
+            maskedArgsForSummary.push(arg);
             maskedArgsForSummary.push('[PROMPT]');
             i += 1;
+            continue;
           }
+          maskedArgsForSummary.push(arg);
+        }
+        if (config.exec && maskedArgsForSummary.length > 0) {
+          maskedArgsForSummary[maskedArgsForSummary.length - 1] = '[PROMPT]';
         }
         const maskedCommandString = `${maskedCommand.command} ${maskedCommand.args.join(' ')}`.trim();
         const summaryCommandString = `${maskedCommand.command} ${maskedArgsForSummary.join(' ')}`.trim();

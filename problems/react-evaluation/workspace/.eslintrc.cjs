@@ -1,3 +1,13 @@
+const fs = require('node:fs');
+const path = require('node:path');
+
+const workspaceRoot = __dirname;
+const workspaceTsconfig =
+  ['tsconfig.eslint.json', 'tsconfig.json']
+    .map((filename) => path.join(workspaceRoot, filename))
+    .find((file) => fs.existsSync(file)) ||
+  path.join(workspaceRoot, 'tsconfig.json');
+
 module.exports = {
   root: true,
   env: {
@@ -6,14 +16,15 @@ module.exports = {
   },
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    project: './tsconfig.json'
+    ecmaVersion: 'latest',
+    sourceType: 'module',
+    project: workspaceTsconfig,
+    tsconfigRootDir: workspaceRoot
   },
   plugins: ['@typescript-eslint'],
   extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended'],
   rules: {
     '@typescript-eslint/explicit-function-return-type': 'off',
-    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-    'no-unused-vars': 'off'
-  },
-  ignorePatterns: ['vitest.config.*.ts', '*.config.ts']
+    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }]
+  }
 };

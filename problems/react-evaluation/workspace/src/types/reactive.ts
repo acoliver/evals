@@ -1,7 +1,5 @@
 /**
- * Type definitions for the reactive programming system
- * Adapted from Exercism TypeScript React exercise
- * MIT License - Original by Exercism community
+ * Type definitions for the reactive programming system.
  */
 
 export type EqualFn<T> = (lhs: T, rhs: T) => boolean

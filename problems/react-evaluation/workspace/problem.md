@@ -2,16 +2,12 @@
 
 ## Overview
 
-Implement a reactive programming system inspired by modern frontend frameworks like React and Solid. This exercise tests your ability to work with:
+Implement a reactive programming system inspired by modern frontend frameworks like React and Solid. This project exercises your ability to work with:
 
 - Functional programming patterns
 - Observer pattern implementation
 - Generic type systems
 - State management and coordination
-
-## Source
-
-This exercise is adapted from the React exercise on Exercism (MIT License). Original implementation by the Exercism community.
 
 ## Requirements
 
@@ -55,20 +51,18 @@ Implement the following functions in the specified files:
 - `src/core/computed.ts` - Implement createComputed function  
 - `src/core/callback.ts` - Implement createCallback function
 
-## Testing
-
-Run the following commands to verify your implementation:
+## Verification Checklist
 
 ```bash
-npm run lint        # Check code style
-npm run typecheck   # Verify TypeScript types
-npm run test:public # Run public tests
-npm run build       # Build the project
+npm run lint
+npm run typecheck
+npm run test:public
+npm run build
 ```
 
 ## Success Criteria
 
-- All public tests pass
+- The verification commands above complete successfully
 - Code follows TypeScript best practices
 - Implementation is type-safe
 - Observer pattern works correctly
@@ -76,7 +70,7 @@ npm run build       # Build the project
 
 ## Challenges
 
-This exercise tests advanced concepts:
+This project explores advanced concepts:
 - Generic programming with TypeScript
 - Observer pattern implementation
 - Functional programming patterns

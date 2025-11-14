@@ -1,7 +1,5 @@
 /**
- * Input closure implementation
- * Adapted from Exercism TypeScript React exercise
- * MIT License - Original by Exercism community
+ * Input closure implementation for reactive primitives.
  */
 
 import { 

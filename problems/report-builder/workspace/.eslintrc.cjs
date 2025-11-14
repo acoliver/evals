@@ -1,9 +1,21 @@
+const fs = require('node:fs');
+const path = require('node:path');
+
+const workspaceRoot = __dirname;
+const workspaceTsconfig =
+  ['tsconfig.eslint.json', 'tsconfig.json']
+    .map((filename) => path.join(workspaceRoot, filename))
+    .find((file) => fs.existsSync(file)) ||
+  path.join(workspaceRoot, 'tsconfig.json');
+
 module.exports = {
   root: true,
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 'latest',
-    sourceType: 'module'
+    sourceType: 'module',
+    project: workspaceTsconfig,
+    tsconfigRootDir: workspaceRoot
   },
   plugins: ['@typescript-eslint'],
   extends: [
@@ -15,5 +27,5 @@ module.exports = {
     node: true,
     es2021: true
   },
-  ignorePatterns: ['dist']
+  ignorePatterns: []
 };

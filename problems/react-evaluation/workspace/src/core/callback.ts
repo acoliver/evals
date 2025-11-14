@@ -1,7 +1,5 @@
 /**
- * Callback closure implementation
- * Adapted from Exercism TypeScript React exercise
- * MIT License - Original by Exercism community
+ * Callback closure implementation for reactive side effects.
  */
 
 import { UnsubscribeFn, Observer, UpdateFn, updateObserver } from '../types/reactive.js'

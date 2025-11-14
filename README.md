@@ -4,6 +4,11 @@ This repository houses the evaluation runner and dashboard builder logic. Genera
 artifacts (workspace archives, `vybes-*.json`, logs, etc.) are not kept in Git so
 the framework remains lightweight.
 
+## Third-Party Attributions
+
+Some problem workspaces incorporate MIT-licensed material from upstream projects.
+See `ATTRIBUTIONS.md` for the full list of sources and license details.
+
 ## Running evaluations
 
 1. Install dependencies if needed: `npm install`.

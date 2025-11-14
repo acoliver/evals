@@ -1,11 +1,21 @@
+const fs = require('node:fs');
+const path = require('node:path');
+
+const workspaceRoot = __dirname;
+const workspaceTsconfig =
+  ['tsconfig.eslint.json', 'tsconfig.json']
+    .map((filename) => path.join(workspaceRoot, filename))
+    .find((file) => fs.existsSync(file)) ||
+  path.join(workspaceRoot, 'tsconfig.json');
+
 module.exports = {
   root: true,
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 'latest',
     sourceType: 'module',
-    project: './tsconfig.eslint.json',
-    tsconfigRootDir: __dirname
+    project: workspaceTsconfig,
+    tsconfigRootDir: workspaceRoot
   },
   plugins: ['@typescript-eslint', 'react-hooks'],
   extends: [
@@ -18,5 +28,12 @@ module.exports = {
     es2021: true,
     browser: true
   },
-  ignorePatterns: ['dist']
+  ignorePatterns: [],
+  rules: {
+    '@typescript-eslint/explicit-function-return-type': [
+      'error',
+      { allowExpressions: true }
+    ],
+    '@typescript-eslint/no-explicit-any': 'error'
+  }
 };

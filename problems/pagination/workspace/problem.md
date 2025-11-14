@@ -1,6 +1,6 @@
 # Pagination Service Repair
 
-This project contains a small Express API backed by SQLite and a minimal React client rendered through tests. The current implementation is missing critical pagination behavior.
+This project contains a small Express API backed by SQLite and a minimal React client. The current implementation is missing critical pagination behavior.
 
 ## Requirements
 
@@ -11,9 +11,9 @@ This project contains a small Express API backed by SQLite and a minimal React c
 - React hook/component must request the selected page, update when the user navigates, and surface errors.
   - Provide “Previous” and “Next” controls that disable appropriately when there is no further data.
   - Ensure the UI renders empty states and propagates server validation errors.
-- Keep the database bootstrap (`createDatabase`) intact so tests can create a fresh DB each run, but feel free to add helpers.
+- Keep the database bootstrap (`createDatabase`) intact so the app can create a fresh DB each run, but feel free to add helpers.
 
-## Commands
+## Verification Checklist
 
 ```bash
 npm install
@@ -22,4 +22,4 @@ npm run lint
 npm run test:public
 ```
 
-Expect thorough review runs that exercise the API via Supertest and the React components via Testing Library with in-memory SQLite databases. Plan to coordinate edits across server, shared types, and client files to satisfy all requirements.
+After running the checks, hit the API and React client manually (Prev/Next navigation, invalid query params, empty states) to confirm the experience feels right.

@@ -1,7 +1,5 @@
 /**
- * Public exports for reactive programming system
- * Adapted from Exercism TypeScript React exercise
- * MIT License - Original by Exercism community
+ * Public exports for the reactive programming system.
  */
 
 export { createInput } from './core/input.js'

@@ -178,6 +178,43 @@
       ],
       "timeout": 900000
     },
+    "claude-sonnet": {
+      "cli": "claude",
+      "name": "Claude Sonnet CLI",
+      "description": "Anthropic Claude CLI using the Sonnet model",
+      "promptPrefix": "SYSTEM INSTRUCTIONS: You are the LLxprt autonomous coding agent operating inside a checked-out repository. You MUST interact with the workspace exclusively through the LLxprt tools: list_directory, read_file, read_line_range, write_file, replace, insert_at_line, delete_line_range, run_shell_command, npm scripts, search_file_content, todo_* helpers, etc. Begin by calling list_directory on the workspace root, then inspect files with read_file before editing. Use run_shell_command for npm install/test runs. Never stop after providing a plan—take concrete tool actions until the task is either solved or no further progress can be made. Always run the requested npm commands (typecheck, lint, test:public, start) before finishing.",
+      "args": [
+        "-p",
+        "--dangerously-skip-permissions",
+        "--model",
+        {
+          "env": "CLAUDE_MODEL",
+          "default": "sonnet"
+        }
+      ],
+      "timeout": 900000
+    },
+    "codex-gpt51medium": {
+      "cli": "codex",
+      "name": "Codex GPT-5.1 medium",
+      "description": "Codex CLI targeting GPT-5.1 Codex with medium reasoning effort",
+      "promptPrefix": "SYSTEM INSTRUCTIONS: You are the Codex autonomous coding agent operating inside a checked-out repository. You MUST interact with the workspace exclusively through Codex tools: list_directory, read_file, edit_file, exec, search, etc. Begin by calling list_directory on the workspace root, then inspect files before editing. Keep applying changes and running the required npm commands (typecheck, lint, test:public, start) until the task is solved.",
+      "exec": true,
+      "args": [
+        "--dangerously-bypass-approvals-and-sandbox",
+        "--model",
+        {
+          "env": "CODEX_MODEL",
+          "default": "gpt-5.1-codex"
+        },
+        "-c",
+        {
+          "env": "CODEX_EFFORT_CONFIG",
+          "default": "model_reasoning_effort=\"medium\""
+        }
+      ],
+      "timeout": 900000
+    },
     "codepuppy-cerebras-glm46": {
       "cli": "codepuppy-wrapper.sh",
       "name": "Code Puppy Cerebras GLM 4.6",

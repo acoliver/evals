@@ -11,6 +11,7 @@ const publicRoot = join(repoRoot, 'public');
 const stylesheetSource = join(repoRoot, 'vybestack.css');
 const stylesheetTarget = join(publicRoot, 'vybestack.css');
 const runsPublicRoot = join(publicRoot, 'runs');
+const WORKSPACE_ROOT_PLACEHOLDER = 'workspace/';
 
 const runsPath = join(publicRoot, 'vybes-runs.json');
 const dailyPath = join(publicRoot, 'vybes-daily.json');
@@ -22,17 +23,32 @@ function escapeRegExp(value) {
 
 const WORKSPACE_PATTERNS = [
   /\/?home\/runner\/work\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\//gi,
-  new RegExp(`${escapeRegExp(join(repoRoot, ''))}`, 'gi')
+  new RegExp(`${escapeRegExp(join(repoRoot, ''))}`, 'gi'),
+  /evals\/(grading|problems)\/[^/]+\/workspace\//gi
 ];
+
+function sanitizeFilePath(inputPath) {
+  if (typeof inputPath !== 'string' || !inputPath) {
+    return inputPath;
+  }
+  let normalized = inputPath.replace(/\\/g, '/');
+  const workspaceMatch = normalized.match(/evals\/(grading|problems)\/[^/]+\/workspace\//i);
+  if (workspaceMatch) {
+    const idx = workspaceMatch.index ?? 0;
+    return WORKSPACE_ROOT_PLACEHOLDER + normalized.slice(idx + workspaceMatch[0].length);
+  }
+  for (const pattern of WORKSPACE_PATTERNS) {
+    normalized = normalized.replace(pattern, WORKSPACE_ROOT_PLACEHOLDER);
+  }
+  normalized = normalized.replace(/\bworkspace\/\/+/, WORKSPACE_ROOT_PLACEHOLDER);
+  return normalized;
+}
 
 function sanitizeText(value) {
   if (typeof value !== 'string' || !value) {
     return value;
   }
-  let sanitized = value;
-  for (const pattern of WORKSPACE_PATTERNS) {
-    sanitized = sanitized.replace(pattern, 'workspace/');
-  }
+  let sanitized = sanitizeFilePath(value);
   sanitized = sanitized.replace(/::error\s+file=[^,]+,?/gi, '::error ');
   sanitized = sanitized.replace(/tests\/hidden/gi, 'tests');
   sanitized = sanitized.replace(/hidden(?=\s|$)/gi, 'private');

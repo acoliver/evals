@@ -40,14 +40,11 @@ Feel free to add helper functions (e.g., `runLuhnCheck`) but keep the exported s
 ### Constraints
 - **Do not** modify `tsconfig.json`, lint/format configs, or `package.json`.
 - Maintain strict typing—avoid introducing `any` unless a type truly cannot be expressed.
-
-## Constraints
 - TypeScript only. Do **not** downgrade files to JavaScript.
 - Dependencies limited to those listed in `package.json` (no new packages).
 - Do **not** modify `package.json`, `tsconfig.json`, `.eslintrc.cjs`, or `.prettierrc`.
-- Tests should pass without mutating the public test files.
 
-## Required Commands Before Finishing
+## Verification Checklist
 ```bash
 npm run lint
 npm run test:public
@@ -55,7 +52,4 @@ npm run typecheck
 npm run build
 ```
 
-## Eval Expectations
-- Hidden tests supply extensive edge cases (international numbers, tricky URLs, malformed inputs) and report pass/fail per task.
-- Follow the function contracts above; throwing or returning placeholder strings will fail grading.
-- Creativity in regex construction is encouraged—as long as the behaviour is correct.
+Run the commands above and try a handful of tricky strings yourself (international phone numbers, malicious-looking URLs, strange passwords) to confirm everything feels robust. Creativity in regex construction is encouraged—as long as the behaviour is correct.

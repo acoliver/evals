@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { createInput, createComputed, createCallback } from '../../src/index.js'
 
-describe('Reactive Programming - Additional Exercism Tests', () => {
-  // Key tests from Exercism that will guide models toward proper implementation
-  
+describe('Reactive Programming - Additional Regression Cases', () => {
+  // Extra regression coverage to catch edge cases in the reactive system
+ 
   it('compute cells can depend on other compute cells', () => {
     const [input, setInput] = createInput(1)
     const timesTwo = createComputed(() => input() * 2)

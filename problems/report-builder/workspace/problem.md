@@ -41,13 +41,15 @@ Implement a clean, idiomatic TypeScript command-line tool that renders reports f
 
 - Do **not** modify `package.json`, `tsconfig.json`, `.eslintrc.cjs`, or `.prettierrc` (no new dependencies, scripts, or settings).
 - Rely only on built-in Node modules.
-- Before finishing, run:
-  ```bash
-  npm run lint
-  npm run test:public
-  npm run typecheck
-  npm run build
-  node dist/cli/report.js fixtures/data.json --format markdown --includeTotals
-  ```
 
-Expect reviewers to exercise both formats and error handling by invoking the compiled CLI in `dist/`, so treat the build artifacts as the source of truth.
+## Verification Checklist
+
+```bash
+npm run lint
+npm run test:public
+npm run typecheck
+npm run build
+node dist/cli/report.js fixtures/data.json --format markdown --includeTotals
+```
+
+After the scripted checks, run the CLI manually in both formats (with and without `--includeTotals`) and point it at a malformed JSON file to confirm the error experience is polished.
