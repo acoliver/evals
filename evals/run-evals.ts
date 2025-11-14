@@ -2,12 +2,12 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, readdirSync, accessSync, constants, statSync, symlinkSync, lstatSync } from 'fs';
 import { copyFile, readdir, readFile, writeFile, rm, cp, mkdtemp } from 'fs/promises';
-import { resolve, join, basename, delimiter } from 'path';
+import { resolve, join, basename, delimiter, relative } from 'path';
 import { spawnSync } from 'child_process';
 import { v4 as uuidv4 } from 'uuid';
 import { execSync } from 'child_process';
 import { createHash } from 'crypto';
-import { VybesScoringEngine, VybesResult, VybesTaskConfig } from './vybes.js';
+import { VybesScoringEngine, VybesResult, VybesTaskConfig, CommandSummary } from './vybes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -117,6 +117,22 @@ interface CommandDefinition {
   command: string;
   args: string[];
   timeout: number;
+}
+
+interface StepResult {
+  label: string;
+  stdout: string;
+  stderr: string;
+  success: boolean;
+  exitCode: number;
+  command: string;
+  durationMs: number;
+}
+
+interface RunCommandSummary {
+  command: string;
+  exitCode: number;
+  durationMs: number;
 }
 
 interface EvaluationConfig {
@@ -318,6 +334,14 @@ interface PassExecutionRecord {
   success: boolean;
   workspaceArchive?: string;
   resultsArchive?: string;
+  appliedFeedback?: string[];
+  publicTestFailures?: string[];
+  hiddenTestFailures?: string[];
+  vybes?: VybesResult | null;
+  cliDurationMs?: number;
+  cliExitCode?: number;
+  cliCommand?: string;
+  partialSuccess?: boolean;
 }
 
 interface EvaluationRecord {
@@ -328,15 +352,55 @@ interface EvaluationRecord {
   passes: PassExecutionRecord[];
 }
 
+interface EvaluationArchiveRecord {
+  evalName: string;
+  configId: string;
+  runId: string;
+  startedAt: string;
+  finishedAt: string;
+  repoVersion: string;
+  runSessionId?: string;
+  runSessionStartedAt?: string;
+  commands: RunCommandSummary[];
+  multipass?: Record<string, any>;
+  passes: PassExecutionRecord[];
+  vybes?: VybesResult | null;
+  workspaceArchive?: string | null;
+  resultsArchive?: string | null;
+  remediationNotes?: string[];
+  overallSuccess: boolean;
+}
+
 class UnifiedRunner {
   private maxPasses: number;
   private multipassEnabled: boolean;
   private repoRoot: string;
+  private vybesEngine: VybesScoringEngine;
+  private repoVersion: string;
+  private runSessionId: string;
+  private runSessionStartedAt: string;
 
   constructor(options: { maxPasses?: number; multipassEnabled?: boolean } = {}) {
     this.repoRoot = resolve(__dirname, '..', '..');
     this.maxPasses = options.maxPasses || 3;
     this.multipassEnabled = options.multipassEnabled !== false;
+    this.vybesEngine = new VybesScoringEngine();
+    this.repoVersion = this.detectRepoVersion();
+    this.runSessionId = uuidv4();
+    this.runSessionStartedAt = new Date().toISOString();
+  }
+
+  private detectRepoVersion(): string {
+    try {
+      return execSync('git rev-parse HEAD', {
+        cwd: this.repoRoot,
+        stdio: ['ignore', 'pipe', 'ignore']
+      })
+        .toString()
+        .trim();
+    } catch {
+      return 'unknown';
+    }
   }
 
   getMaxPasses(): number {
@@ -370,12 +434,14 @@ class UnifiedRunner {
     }
 
     const basePromptContent = readFileSync(evalConfig.prompt, 'utf8');
-
+    const runStartTime = new Date();
     const uniqueId = uuidv4();
-    const workdir = join(this.repoRoot, 'evals', 'outputs', `${evalName}-${new Date().toISOString().replace(/[:.]/g, '-')}-${uniqueId}`);
+    const runId = `${evalName}-${runStartTime.toISOString().replace(/[:.]/g, '-')}-${uniqueId}`;
+    const workdir = join(this.repoRoot, 'evals', 'outputs', runId);
     mkdirSync(workdir, { recursive: true });
 
     const remediationNotes: string[] = [];
+    const commandHistory: RunCommandSummary[] = [];
     const addRemediationNotes = (passNumber: number, notes: string[]) => {
       if (!notes || notes.length === 0) {
         return;
@@ -422,9 +488,15 @@ class UnifiedRunner {
           promptContent,
           workdir
         );
+        const cliSummary = {
+          command: executionResult.commandString,
+          exitCode: executionResult.exitCode,
+          durationMs: executionResult.durationMs
+        };
+        commandHistory.push(cliSummary);
 
         // Check for quick exit with no changes (failsafe)
-        const executionDurationSec = (Date.now() - passStartTime) / 1000;
+        const executionDurationSec = executionResult.durationMs / 1000;
         const outputLength = (executionResult.stdout + executionResult.stderr).length;
         
         if (executionDurationSec < 15 && outputLength < 500) {
@@ -445,14 +517,22 @@ class UnifiedRunner {
             console.log(`  → Archived CLI/build/grade outputs to ${earlySavedOutputs}`);
           }
 
-          addRemediationNotes(pass, this.buildQuickExitNotes(executionResult, executionDurationSec, outputLength));
+          const quickNotes = this.buildQuickExitNotes(executionResult, executionDurationSec, outputLength);
+          addRemediationNotes(pass, quickNotes);
 
           passes.push({
             passNumber: pass,
             duration: Date.now() - passStartTime,
             success: false,
             workspaceArchive: earlyWorkspaceArchive,
-            resultsArchive: earlyResultsArchive
+            resultsArchive: earlyResultsArchive,
+            appliedFeedback: quickNotes,
+            publicTestFailures: [],
+            hiddenTestFailures: [],
+            vybes: null,
+            cliDurationMs: cliSummary.durationMs,
+            cliExitCode: cliSummary.exitCode,
+            cliCommand: cliSummary.command
           });
           
           if (pass === 1) {
@@ -482,13 +562,48 @@ class UnifiedRunner {
 
         const passDuration = Date.now() - passStartTime;
         const passed = gradeResults.every(result => result.success === true);
+        const { publicFailures, hiddenFailures } = this.collectTestFailures(gradeResults);
+        const workspaceSteps = gradeResults.filter(result => result.label.startsWith('workspace-'));
+        const gradingSteps = gradeResults.filter(result => result.label.startsWith('grading-'));
+        let vybesResult: VybesResult | null = null;
+
+        try {
+          if (workspaceArchive && existsSync(workspaceArchive)) {
+            vybesResult = this.vybesEngine.calculate({
+              evalName,
+              configId,
+              archivePath: workspaceArchive,
+              cliResult: {
+                command: cliSummary.command,
+                exitCode: cliSummary.exitCode,
+                duration: cliSummary.durationMs
+              },
+              buildResults: this.mapCommandSummaries(workspaceSteps),
+              gradeResults: this.mapCommandSummaries(gradingSteps),
+              overallSuccess: passed,
+              totalCliDuration: cliSummary.durationMs,
+              passCount: pass,
+              selectedPassIndex: pass - 1
+            });
+          }
+        } catch (error) {
+          console.warn(`     Warning: failed to calculate Vybes score for ${evalName} (${configId}) pass ${pass}:`, error);
+        }
 
         passes.push({
           passNumber: pass,
           duration: passDuration,
           success: passed,
           workspaceArchive,
-          resultsArchive
+          resultsArchive,
+          appliedFeedback: failureNotes,
+          publicTestFailures: publicFailures,
+          hiddenTestFailures: hiddenFailures,
+          vybes: vybesResult,
+          cliDurationMs: cliSummary.durationMs,
+          cliExitCode: cliSummary.exitCode,
+          cliCommand: cliSummary.command,
+          partialSuccess: !passed && (publicFailures.length > 0 || hiddenFailures.length > 0)
         });
 
         console.log(`     Result: ${passed ? 'PASS' : 'FAIL'} (${Math.round(passDuration / 1000)}s)`);
@@ -525,6 +640,20 @@ class UnifiedRunner {
       }
     }
 
+    const runResultRecord = this.buildRunResult({
+      evalName,
+      configId,
+      runId,
+      startedAt: runStartTime,
+      finishedAt: new Date(),
+      passes,
+      remediationNotes,
+      overallSuccess: finalSuccess,
+      commandHistory
+    });
+    const selectedPass = passes[this.selectPassIndex(passes)];
+    await this.persistRunResult(runId, configId, runResultRecord, selectedPass?.workspaceArchive);
+
     const totalDuration = Date.now() - startTime;
     
     return {
@@ -541,6 +670,8 @@ class UnifiedRunner {
     configIds: string[]
   ): Promise<EvaluationRecord[]> {
     const results: EvaluationRecord[] = [];
+    this.runSessionId = uuidv4();
+    this.runSessionStartedAt = new Date().toISOString();
 
     for (const evalName of evalNames) {
       for (const configId of configIds) {
@@ -598,13 +729,14 @@ class UnifiedRunner {
     config: Configuration,
     prompt: string,
     workdir: string
-  ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  ): Promise<{ stdout: string; stderr: string; exitCode: number; durationMs: number; commandString: string }> {
     return new Promise((resolve) => {
       const env = { 
         ...process.env, 
         DEBUG: 'llxprt:*',
         OPENAI_API_KEY: process.env.CEREBRAS_KEY || process.env.SYNTHETIC_KEY || process.env.ZAI_KEY || process.env.OPENAI_API_KEY
       };
+      const commandStart = Date.now();
 
       // Process all arguments, resolving environment variables
       const processedArgs = Promise.all(
@@ -640,7 +772,18 @@ class UnifiedRunner {
         };
 
         const maskedCommand = maskSensitiveValues(commandDefinition);
-        console.log(`     Executing: ${maskedCommand.command} ${maskedCommand.args.join(' ')}`);
+        const maskedArgsForSummary: string[] = [];
+        for (let i = 0; i < maskedCommand.args.length; i++) {
+          const arg = maskedCommand.args[i];
+          maskedArgsForSummary.push(arg);
+          if (arg === '--prompt' || arg === '-p') {
+            maskedArgsForSummary.push('[PROMPT]');
+            i += 1;
+          }
+        }
+        const maskedCommandString = `${maskedCommand.command} ${maskedCommand.args.join(' ')}`.trim();
+        const summaryCommandString = `${maskedCommand.command} ${maskedArgsForSummary.join(' ')}`.trim();
+        console.log(`     Executing: ${maskedCommandString}`);
 
         const child = spawnSync(
           commandDefinition.command,
@@ -671,10 +814,14 @@ class UnifiedRunner {
           ? child.status
           : (child.error || child.signal ? 1 : 0);
 
+        const durationMs = Date.now() - commandStart;
+
         resolve({
           stdout: child.stdout || '',
           stderr: finalStderr,
-          exitCode
+          exitCode,
+          durationMs,
+          commandString: summaryCommandString
         });
       }).catch(error => {
         console.error(`Error processing CLI arguments:`, error);
@@ -691,8 +838,8 @@ class UnifiedRunner {
     gradingDir: string,
     workdir: string,
     _cliArgs: ArgValue[]
-  ): Promise<{ label: string; stdout: string; stderr: string; success: boolean }[]> {
-    const results: { label: string; stdout: string; stderr: string; success: boolean }[] = [];
+  ): Promise<StepResult[]> {
+    const results: StepResult[] = [];
 
     const runNpmCommand = (
       cwd: string,
@@ -700,6 +847,7 @@ class UnifiedRunner {
       label: string,
       timeout = 120000
     ) => {
+      const start = Date.now();
       const cmdResult = spawnSync(
         'npm',
         args,
@@ -724,12 +872,17 @@ class UnifiedRunner {
       const exitCode = typeof cmdResult.status === 'number'
         ? cmdResult.status
         : (cmdResult.error || cmdResult.signal ? 1 : 0);
+      const durationMs = Date.now() - start;
+      const commandString = `npm ${args.join(' ')}`;
 
       const wrapped = {
         label,
         stdout: cmdResult.stdout || '',
         stderr: stderrOutput,
-        success: exitCode === 0
+        success: exitCode === 0,
+        exitCode,
+        command: commandString,
+        durationMs
       };
 
       results.push(wrapped);
@@ -785,7 +938,10 @@ class UnifiedRunner {
         label: 'workspace',
         stdout: '',
         stderr: 'No package.json found in workspace',
-        success: false
+        success: false,
+        exitCode: 1,
+        command: 'workspace',
+        durationMs: 0
       });
     }
 
@@ -795,7 +951,10 @@ class UnifiedRunner {
         label: 'grading',
         stdout: '',
         stderr: 'No grading configuration found',
-        success: false
+        success: false,
+        exitCode: 1,
+        command: 'grading',
+        durationMs: 0
       });
       return results;
     }
@@ -824,7 +983,10 @@ class UnifiedRunner {
           label: 'grading',
           stdout: '',
           stderr: 'No grading package.json found',
-          success: false
+          success: false,
+          exitCode: 1,
+          command: 'grading',
+          durationMs: 0
         });
       }
     } finally {
@@ -913,6 +1075,13 @@ class UnifiedRunner {
     }
   }
 
+  private relativePath(target?: string): string | null {
+    if (!target) {
+      return null;
+    }
+    return relative(this.repoRoot, target).replace(/\\/g, '/');
+  }
+
   private buildFailureNotes(
     gradeResults: { label: string; stdout: string; stderr: string; success: boolean }[],
     executionResult?: { stdout: string; stderr: string; exitCode: number }
@@ -995,6 +1164,127 @@ class UnifiedRunner {
       }
     }
     return null;
+  }
+
+  private collectTestFailures(stepResults: StepResult[]): { publicFailures: string[]; hiddenFailures: string[] } {
+    const publicFailures: string[] = [];
+    const hiddenFailures: string[] = [];
+    for (const result of stepResults) {
+      if (result.success) {
+        continue;
+      }
+      const snippet = this.sanitizeFailureSnippet(result.stderr || result.stdout);
+      if (result.label.includes('workspace-test:public')) {
+        publicFailures.push(snippet);
+      } else if (result.label.includes('grading-test:hidden')) {
+        hiddenFailures.push(snippet);
+      }
+    }
+    return { publicFailures, hiddenFailures };
+  }
+
+  private mapCommandSummaries(stepResults: StepResult[]): CommandSummary[] {
+    return stepResults.map((result) => ({
+      command: result.label || result.command,
+      exitCode: result.exitCode,
+      duration: result.durationMs
+    }));
+  }
+
+  private selectPassIndex(passes: PassExecutionRecord[]): number {
+    if (passes.length === 0) {
+      return 0;
+    }
+    const successIndex = passes.findIndex((pass) => pass.success);
+    if (successIndex >= 0) {
+      return successIndex;
+    }
+    return passes.length - 1;
+  }
+
+  private buildMultipassPayload(
+    passes: PassExecutionRecord[],
+    remediationNotes: string[],
+    selectedPass: number
+  ): Record<string, any> {
+    const totalCliDuration = passes.reduce((sum, pass) => sum + (pass.cliDurationMs ?? 0), 0);
+    return {
+      enabled: this.multipassEnabled,
+      maxPasses: this.maxPasses,
+      passCount: passes.length,
+      selectedPass,
+      totalCliDuration,
+      feedback: remediationNotes,
+      passes: passes.map((pass) => ({
+        passNumber: pass.passNumber,
+        duration: pass.duration,
+        success: pass.success,
+        partialSuccess: pass.partialSuccess ?? false,
+        publicTestFailures: pass.publicTestFailures ?? [],
+        hiddenTestFailures: pass.hiddenTestFailures ?? [],
+        appliedFeedback: pass.appliedFeedback ?? [],
+        workspaceArchive: this.relativePath(pass.workspaceArchive),
+        resultsArchive: this.relativePath(pass.resultsArchive),
+        vybes: pass.vybes ?? null
+      }))
+    };
+  }
+
+  private buildRunResult(params: {
+    evalName: string;
+    configId: string;
+    runId: string;
+    startedAt: Date;
+    finishedAt: Date;
+    passes: PassExecutionRecord[];
+    remediationNotes: string[];
+    overallSuccess: boolean;
+    commandHistory: RunCommandSummary[];
+  }): EvaluationArchiveRecord {
+    const selectedPass = this.selectPassIndex(params.passes);
+    const selected = params.passes[selectedPass] ?? params.passes[params.passes.length - 1];
+    return {
+      evalName: params.evalName,
+      configId: params.configId,
+      runId: params.runId,
+      startedAt: params.startedAt.toISOString(),
+      finishedAt: params.finishedAt.toISOString(),
+      repoVersion: this.repoVersion,
+      runSessionId: this.runSessionId,
+      runSessionStartedAt: this.runSessionStartedAt,
+      commands: params.commandHistory,
+      multipass: this.buildMultipassPayload(params.passes, params.remediationNotes, selectedPass),
+      passes: params.passes,
+      vybes: selected?.vybes ?? null,
+      workspaceArchive: this.relativePath(selected?.workspaceArchive),
+      resultsArchive: this.relativePath(selected?.resultsArchive),
+      remediationNotes: params.remediationNotes,
+      overallSuccess: params.overallSuccess
+    };
+  }
+
+  private async persistRunResult(runId: string, configId: string, result: EvaluationArchiveRecord, workspaceArchive?: string): Promise<void> {
+    const runBaseDir = join(this.repoRoot, 'evals', 'outputs', runId, configId);
+    const workspaceTarget = join(runBaseDir, 'workspace');
+    await rm(workspaceTarget, { recursive: true, force: true }).catch(() => {});
+    mkdirSync(runBaseDir, { recursive: true });
+    let finalWorkspacePath: string | null = null;
+    if (workspaceArchive && existsSync(workspaceArchive)) {
+      await cp(workspaceArchive, workspaceTarget, {
+        recursive: true
+      });
+      finalWorkspacePath = workspaceTarget;
+    }
+    const finalWorkspaceArchive = finalWorkspacePath ? this.relativePath(finalWorkspacePath) : result.workspaceArchive ?? null;
+    const finalResultsArchive = finalWorkspacePath
+      ? this.relativePath(join(finalWorkspacePath, '.eval-outputs'))
+      : result.resultsArchive ?? null;
+    const payload = {
+      ...result,
+      workspaceArchive: finalWorkspaceArchive,
+      resultsArchive: finalResultsArchive
+    };
+    await writeFile(join(runBaseDir, 'results.json'), JSON.stringify(payload, null, 2), 'utf8');
   }
 }
 
